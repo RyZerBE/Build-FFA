@@ -1,0 +1,8 @@
+name: "BuildFFA"
+version: "1.0"
+author: "xxAROX"
+website: "https://github.com/xxAROX/"
+description: "BuildFFA plugin by xxAROX."
+
+api: [ "4.0.0" ]
+main: xxAROX\BuildFFA\BuildFFA

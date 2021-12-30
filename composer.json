@@ -1,0 +1,11 @@
+{
+    "name": "ryzerbe/buildffa",
+    "autoload": {},
+    "authors": [
+        {
+            "name": "xxAROX",
+            "email": "janmichaelsohn@gmail.com"
+        }
+    ],
+    "require": {}
+}
