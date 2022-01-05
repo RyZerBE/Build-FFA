@@ -7,10 +7,7 @@
 
 declare(strict_types=1);
 namespace xxAROX\BuildFFA;
-use pocketmine\event\block\BlockBreakEvent;
-use pocketmine\event\block\BlockPlaceEvent;
-use pocketmine\event\block\BlockUpdateEvent;
-use xxAROX\BuildFFA\game\Game;
+use xxAROX\BuildFFA\event\BuildFFAPlayerRespawnEvent;
 
 
 /**
@@ -22,4 +19,6 @@ use xxAROX\BuildFFA\game\Game;
  * @project BuildFFA
  */
 class Listener implements \pocketmine\event\Listener{
+	public function BuildFFAPlayerRespawnEvent(BuildFFAPlayerRespawnEvent $event): void{
+	}
 }

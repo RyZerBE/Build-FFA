@@ -29,6 +29,19 @@ class BlockEntity extends FallingBlock{
 		parent::__construct(new Location($vec->x, $vec->y, $vec->z, $position->world, 0, 0), $block);
 	}
 
+	public function getBlock(): Block{
+		return $this->block;
+	}
+
+	/**
+	 * Function setBlock
+	 * @param Block $block
+	 * @return void
+	 */
+	public function setBlock(Block $block): void{
+		$this->block = $block;
+	}
+
 	protected function entityBaseTick(int $tickDiff = 1): bool{
 		if ($this->closed) {
 			return false;

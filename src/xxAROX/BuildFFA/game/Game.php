@@ -10,7 +10,10 @@ use pocketmine\block\Block;
 use pocketmine\block\VanillaBlocks;
 use pocketmine\item\enchantment\EnchantmentInstance;
 use pocketmine\item\enchantment\VanillaEnchantments;
+use pocketmine\item\ItemFactory;
 use pocketmine\item\VanillaItems;
+use pocketmine\network\mcpe\protocol\LevelEventPacket;
+use pocketmine\network\mcpe\protocol\types\LevelEvent;
 use pocketmine\player\GameMode;
 use pocketmine\player\Player;
 use pocketmine\scheduler\ClosureTask;
@@ -72,13 +75,20 @@ class Game{
 		$chest = VanillaItems::CHAINMAIL_CHESTPLATE()->setUnbreakable()->addEnchantment(new EnchantmentInstance(VanillaEnchantments::PROTECTION(), 2));
 		$leg = VanillaItems::LEATHER_PANTS()->setUnbreakable()->addEnchantment(new EnchantmentInstance(VanillaEnchantments::PROTECTION(), 1));
 		$feet = VanillaItems::LEATHER_PANTS()->setUnbreakable()->addEnchantment(new EnchantmentInstance(VanillaEnchantments::PROTECTION(), 1));
+		$offhand = ItemFactory::air();
 		$contents = [
 			"sword"   => VanillaItems::GOLDEN_SWORD()->setUnbreakable()->addEnchantment(new EnchantmentInstance(VanillaEnchantments::SHARPNESS(), 1)),
 			"stick"   => VanillaItems::STICK()->addEnchantment(new EnchantmentInstance(VanillaEnchantments::KNOCKBACK(), 1))->setCount(1),
 			"pickaxe" => VanillaItems::IRON_PICKAXE()->addEnchantment(new EnchantmentInstance(VanillaEnchantments::EFFICIENCY(), 2))->setUnbreakable(),
 			"web"     => VanillaBlocks::COBWEB()->asItem()->setCount(3),
+			"normal_blocks"     => VanillaBlocks::SANDSTONE()->asItem()->setCount(64),
+			"hard_blocks"     => VanillaBlocks::END_STONE()->asItem()->setCount(64),
 		];
-		$this->kits["%buildffa.kit.rusher"] = new Kit("%buildffa.kit.rusher", $contents, $head, $chest, $leg, $feet);
+		$this->kits["%buildffa.kit.rusher"] = new Kit("%buildffa.kit.rusher", $contents, $offhand, $head, $chest, $leg, $feet);
+	}
+
+	public function getKit(?string $name): Kit{
+		return $this->kits[$name] ?? $this->kits[array_rand($this->kits)];
 	}
 
 	private function tick(): void{
@@ -120,7 +130,7 @@ class Game{
 			default => 0
 		};
 		$this->placedBlocks[encodePosition($block->getPosition())] = new BlockEntry($block->getPosition(), microtime(true) +$this->arena->getSettings()->blocks_cooldown + $extraTime);
-		//TODO: break animation
+		Server::getInstance()->broadcastPackets(Server::getInstance()->getOnlinePlayers(), [LevelEventPacket::create(LevelEvent::BLOCK_START_BREAK, intval(round(65535 / (20 * ($this->arena->getSettings()->blocks_cooldown + $extraTime)))), $block->getPosition())]);
 	}
 
 	public function filterPlayer(Player $player): bool{
@@ -131,5 +141,37 @@ class Game{
 			return false;
 		}
 		return true;
+	}
+
+	/**
+	 * Function getArena
+	 * @return ?Arena
+	 */
+	public function getArena(): ?Arena{
+		return $this->arena;
+	}
+
+	/**
+	 * Function getKits
+	 * @return array
+	 */
+	public function getKits(): array{
+		return $this->kits;
+	}
+
+	/**
+	 * Function getLastArenaChange
+	 * @return int
+	 */
+	public function getLastArenaChange(): int{
+		return $this->lastArenaChange;
+	}
+
+	/**
+	 * Function getNextArenaChange
+	 * @return float|int
+	 */
+	public function getNextArenaChange(): float|int{
+		return $this->nextArenaChange;
 	}
 }

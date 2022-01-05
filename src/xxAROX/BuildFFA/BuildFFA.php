@@ -6,6 +6,14 @@
  */
 declare(strict_types=1);
 namespace xxAROX\BuildFFA;
+use pocketmine\block\BlockFactory;
+use pocketmine\block\VanillaBlocks;
+use pocketmine\entity\Entity;
+use pocketmine\entity\EntityDataHelper;
+use pocketmine\entity\EntityFactory;
+use pocketmine\entity\Location;
+use pocketmine\entity\object\FallingBlock;
+use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\plugin\PluginBase;
 use pocketmine\plugin\PluginDescription;
 use pocketmine\plugin\PluginLoader;
@@ -13,10 +21,12 @@ use pocketmine\plugin\ResourceProvider;
 use pocketmine\Server;
 use pocketmine\utils\SingletonTrait;
 use pocketmine\world\World;
+use xxAROX\BuildFFA\entity\BlockEntity;
 use xxAROX\BuildFFA\game\Arena;
 use xxAROX\BuildFFA\game\ArenaSettings;
 use xxAROX\BuildFFA\game\Game;
 use xxAROX\BuildFFA\listener\BlockListener;
+use xxAROX\BuildFFA\listener\PlayerListener;
 
 
 /**
@@ -28,7 +38,6 @@ use xxAROX\BuildFFA\listener\BlockListener;
  * @project BuildFFA
  */
 class BuildFFA extends PluginBase{
-	const IS_DEVELOPMENT = true;
 	use SingletonTrait;
 
 
@@ -51,10 +60,12 @@ class BuildFFA extends PluginBase{
 	}
 
 	protected function onEnable(): void{
-		$this->getServer()->getPluginManager()->registerEvents(new Listener(), $this);
-		$this->getServer()->getPluginManager()->registerEvents(new BlockListener(), $this);
+		$this->registerListeners();
+		$this->registerEntities();
+
 		$arena_data = $this->getConfig()->getAll();
 		$arenas = [];
+
 		foreach ($arena_data as $worldName => $obj) {
 			if ($this->getServer()->getWorldManager()->loadWorld($worldName)) {
 				$this->getLogger()->info("§3Preparing map $worldName..");
@@ -69,5 +80,18 @@ class BuildFFA extends PluginBase{
 	}
 
 	protected function onDisable(): void{
+	}
+
+	private function registerListeners(): void{
+		$this->getServer()->getPluginManager()->registerEvents(new Listener(), $this);
+		$this->getServer()->getPluginManager()->registerEvents(new BlockListener(), $this);
+		$this->getServer()->getPluginManager()->registerEvents(new PlayerListener(), $this);
+	}
+
+	private function registerEntities(): void{
+		EntityFactory::getInstance()->register(BlockEntity::class, function (World $world, CompoundTag $nbt): Entity{
+			return new BlockEntity(EntityDataHelper::parseLocation($nbt, $world), FallingBlock::parseBlockNBT(BlockFactory::getInstance(), $nbt));
+		}, ["buildffa:block"]);
+
 	}
 }
