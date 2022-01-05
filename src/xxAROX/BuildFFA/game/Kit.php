@@ -34,7 +34,7 @@ class Kit{
 	 */
 	public function __construct(protected string $display_name, protected array $contents, protected Item $offhand, protected ?Armor $head, protected ?Armor $chest, protected ?Armor $leg, protected ?Armor $feet){
 		foreach ($this->contents as $type => $item) {
-			$item->setNamedTag($item->getNamedTag()->setString("xxarox:sort_type", $type));
+			$item->setNamedTag($item->getNamedTag()->setString("xxarox:sort_type", $type));// JIC
 		}
 	}
 
@@ -50,7 +50,7 @@ class Kit{
 		$player->getCursorInventory()->clearAll();
 		$player->getOffHandInventory()->clearAll();
 		for ($slot = 9; $slot < $player->getInventory()->getSize(); $slot++) {
-			$player->getInventory()->setItem($slot, VanillaBlocks::BARRIER()->asItem());
+			$player->getInventory()->setItem($slot, VanillaBlocks::BARRIER()->asItem()->setCustomName("§r"));
 		}
 		foreach ($this->contents as $type => $item) {
 			if (isset($invSort[$type])) {

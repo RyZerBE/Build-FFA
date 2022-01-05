@@ -21,7 +21,7 @@ use xxAROX\BuildFFA\player\xPlayer;
  * @project BuildFFA
  */
 class LeaveArenaProtectionAreaEvent extends Event{
-	public function __construct(protected xPlayer $player, protected Arena $arena){
+	public function __construct(protected xPlayer $player, protected Arena $arena, protected bool $teleported = false){
 	}
 
 	/**
@@ -38,5 +38,13 @@ class LeaveArenaProtectionAreaEvent extends Event{
 	 */
 	public function getArena(): Arena{
 		return $this->arena;
+	}
+
+	/**
+	 * Function getTeleported
+	 * @return bool
+	 */
+	public function isTeleported(): bool{
+		return $this->teleported;
 	}
 }

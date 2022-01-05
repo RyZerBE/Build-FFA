@@ -26,12 +26,17 @@ class BlockListener implements Listener{
 	public function BlockBreakEvent(BlockBreakEvent $event): void{
 		if (Game::getInstance()->filterPlayer($event->getPlayer())) {
 			Game::getInstance()->breakBlock($event->getBlock());
+			$event->setDrops([]);
 		}
 	}
 	public function BlockPlaceEvent(BlockPlaceEvent $event): void{
-		if (Game::getInstance()->filterPlayer($event->getPlayer()))
+		if (!boolval($event->getItem()->getNamedTag()->getByte("pop", intval(false)))) {
+			$event->getItem()->pop();
+			$event->getItem()->setCount($event->getItem()->getCount() +1);
+			$event->getPlayer()->getInventory()->setItemInHand($event->getItem());
+		}
+		if (Game::getInstance()->filterPlayer($event->getPlayer())) {
 			Game::getInstance()->placeBlock($event->getBlock());
-	}
-	public function BlockUpdateEvent(BlockUpdateEvent $event): void{
+		}
 	}
 }

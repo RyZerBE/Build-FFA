@@ -7,9 +7,11 @@
 
 declare(strict_types=1);
 namespace xxAROX\BuildFFA\game;
+use pocketmine\math\Vector3;
 use pocketmine\Server;
 use pocketmine\world\World;
 use xxAROX\BuildFFA\event\MapChangeEvent;
+use xxAROX\BuildFFA\player\xPlayer;
 
 
 /**
@@ -58,13 +60,23 @@ class Arena{
 	public function setActive(bool $active): void{
 		$this->active = $active;
 
-		$ev = new MapChangeEvent();
-		$ev->call();
-
 		if ($this->active) {
+			$ev = new MapChangeEvent();
+			$ev->call();
+
+			foreach (Game::getInstance()->mapVotes as $k => $_) {
+				Game::getInstance()->mapVotes[$k] = 0;
+			}
+			/** @var xPlayer $onlinePlayer */
 			foreach (Server::getInstance()->getOnlinePlayers() as $onlinePlayer) {
 				$onlinePlayer->teleport($this->world->getSafeSpawn());
+				$onlinePlayer->voted_map = "";
+				$onlinePlayer->giveKit($onlinePlayer->getSelectedKit());
 			}
 		}
+	}
+
+	public function isInProtectionArea(Vector3 $vector3): bool{
+		return $this->world->getSpawnLocation()->asVector3()->distance($vector3) <= $this->settings->protection;
 	}
 }

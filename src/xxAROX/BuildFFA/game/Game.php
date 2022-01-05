@@ -50,6 +50,7 @@ class Game{
 	protected array $destroyedBlocks = [];
 	/** @var BlockEntry[] */
 	protected array $placedBlocks = [];
+	public array $mapVotes = [];
 
 	/**
 	 * Game constructor.
@@ -65,6 +66,9 @@ class Game{
 			getLogger()->info("§3Using default Arena");
 			$this->arena = new Arena(Server::getInstance()->getWorldManager()->getDefaultWorld(), new ArenaSettings());
 		}
+		foreach ($this->arenas as $a) {
+			$this->mapVotes[$a->getWorld()->getFolderName()] = 0;
+		}
 		$this->lastArenaChange = time();
 		$this->initKits();
 		BuildFFA::getInstance()->getScheduler()->scheduleRepeatingTask(new ClosureTask(fn() => $this->tick()), 1);
@@ -76,14 +80,23 @@ class Game{
 		$leg = VanillaItems::LEATHER_PANTS()->setUnbreakable()->addEnchantment(new EnchantmentInstance(VanillaEnchantments::PROTECTION(), 1));
 		$feet = VanillaItems::LEATHER_PANTS()->setUnbreakable()->addEnchantment(new EnchantmentInstance(VanillaEnchantments::PROTECTION(), 1));
 		$offhand = ItemFactory::air();
+
+		$basicBlocks = VanillaBlocks::SANDSTONE()->asItem()->setCount(64);
+		$basicStick = VanillaItems::STICK()->addEnchantment(new EnchantmentInstance(VanillaEnchantments::KNOCKBACK(), 1))->setCount(1);
+		$basicPickaxe = VanillaItems::IRON_PICKAXE()->addEnchantment(new EnchantmentInstance(VanillaEnchantments::EFFICIENCY(), 2))->setUnbreakable();
+		$basicSword = VanillaItems::GOLDEN_SWORD()->setUnbreakable()->addEnchantment(new EnchantmentInstance(VanillaEnchantments::SHARPNESS(), 1));
+		$basicWebs = VanillaBlocks::COBWEB()->asItem()->setCount(3);
+		$basicWebs->setNamedTag($basicWebs->getNamedTag()->setByte("pop", intval(true)));
+
 		$contents = [
-			"sword"   => VanillaItems::GOLDEN_SWORD()->setUnbreakable()->addEnchantment(new EnchantmentInstance(VanillaEnchantments::SHARPNESS(), 1)),
-			"stick"   => VanillaItems::STICK()->addEnchantment(new EnchantmentInstance(VanillaEnchantments::KNOCKBACK(), 1))->setCount(1),
-			"pickaxe" => VanillaItems::IRON_PICKAXE()->addEnchantment(new EnchantmentInstance(VanillaEnchantments::EFFICIENCY(), 2))->setUnbreakable(),
-			"web"     => VanillaBlocks::COBWEB()->asItem()->setCount(3),
-			"normal_blocks"     => VanillaBlocks::SANDSTONE()->asItem()->setCount(64),
-			"hard_blocks"     => VanillaBlocks::END_STONE()->asItem()->setCount(64),
+			"sword"   => $basicSword,
+			"stick"   => $basicStick,
+			"pickaxe" => $basicPickaxe,
+			"web"     => $basicWebs,
+			"blocks"     => $basicBlocks,
 		];
+		$extra_breaking_time_seconds = 0;
+		$basicBlocks->setNamedTag($basicBlocks->getNamedTag()->setInt("breaking_time", $extra_breaking_time_seconds));
 		$this->kits["%buildffa.kit.rusher"] = new Kit("%buildffa.kit.rusher", $contents, $offhand, $head, $chest, $leg, $feet);
 	}
 
@@ -92,6 +105,20 @@ class Game{
 	}
 
 	private function tick(): void{
+		if ($this->lastArenaChange != -1 && time() >= $this->nextArenaChange) {
+			$worldName = array_flip(max($this->mapVotes));
+			foreach ($this->arenas as $arena) {
+				if ($arena->getWorld()->getFolderName() == $worldName) {
+					$this->arena->setActive(false);
+					$arena->setActive(true);
+					unset($this->arena);
+					$this->arena = $arena;
+					$this->lastArenaChange = time();
+					$this->nextArenaChange = time() +Game::MAP_CHANGE_INTERVAL;
+					unset($current);
+				}
+			}
+		}
 		foreach ($this->placedBlocks as $encodedPos => $entry) {
 			if (microtime(true) >= $entry->getTimestamp()) {
 				$entry->getPosition()->getWorld()->addParticle($entry->getPosition(), new BlockBreakParticle($entry->getPosition()->getWorld()->getBlock($entry->getPosition())));
@@ -173,5 +200,13 @@ class Game{
 	 */
 	public function getNextArenaChange(): float|int{
 		return $this->nextArenaChange;
+	}
+
+	/**
+	 * Function getArenas
+	 * @return array
+	 */
+	public function getArenas(): array{
+		return $this->arenas;
 	}
 }
