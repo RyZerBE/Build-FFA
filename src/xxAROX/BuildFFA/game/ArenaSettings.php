@@ -7,6 +7,7 @@
 declare(strict_types=1);
 namespace xxAROX\BuildFFA\game;
 use JetBrains\PhpStorm\ArrayShape;
+use JsonSerializable;
 
 
 /**
@@ -17,23 +18,34 @@ use JetBrains\PhpStorm\ArrayShape;
  * @ide PhpStorm
  * @project BuildFFA
  */
-class ArenaSettings implements \JsonSerializable{
+class ArenaSettings implements JsonSerializable{
+	public int $respawn_height = 0;
+	public int $protection = 8;
+	public int $blocks_cooldown = 10;
+
 	/**
 	 * ArenaSettings constructor.
-	 * @param string $worldName
-	 * @param int $respawnHeight
+	 * @param array $data
 	 */
-	public function __construct(public string $worldName, public int $respawnHeight = 0){
+	public function __construct(array $data = []){
+		$this->respawn_height = $data["respawn_height"] ?? $this->respawn_height;
+		$this->protection = $data["protection"] ?? $this->protection;
+		$this->blocks_cooldown = $data["blocks_cooldown"] ?? $this->blocks_cooldown;
 	}
 
 	/**
 	 * Function jsonSerialize
 	 * @return array
 	 */
-	#[ArrayShape(["world" => "string", "respawnHeight" => "int"])] public function jsonSerialize(){
+	#[ArrayShape([
+		"respawnHeight"   => "int",
+		"protection"      => "int",
+		"blocks_cooldown" => "int",
+	])] public function jsonSerialize(): array{
 		return [
-			"world"         => $this->worldName,
-			"respawnHeight" => $this->respawnHeight,
+			"respawnHeight"   => $this->respawn_height,
+			"protection"      => $this->protection,
+			"blocks_cooldown" => $this->blocks_cooldown,
 		];
 	}
 }

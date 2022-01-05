@@ -7,7 +7,9 @@
 
 declare(strict_types=1);
 namespace xxAROX\BuildFFA\game;
+use pocketmine\Server;
 use pocketmine\world\World;
+use xxAROX\BuildFFA\event\MapChangeEvent;
 
 
 /**
@@ -21,7 +23,7 @@ use pocketmine\world\World;
 class Arena{
 	private bool $active = false;
 
-	public function __construct(private string $worldName, private ArenaSettings $settings){
+	public function __construct(private World $world, private ArenaSettings $settings){
 	}
 
 	/**
@@ -33,11 +35,11 @@ class Arena{
 	}
 
 	/**
-	 * Function getWorldName
-	 * @return string
+	 * Function getWorld
+	 * @return World
 	 */
-	public function getWorldName(): string{
-		return $this->worldName;
+	public function getWorld(): World{
+		return $this->world;
 	}
 
 	/**
@@ -46,5 +48,23 @@ class Arena{
 	 */
 	public function getSettings(): ArenaSettings{
 		return $this->settings;
+	}
+
+	/**
+	 * Function setActive
+	 * @param bool $active
+	 * @return void
+	 */
+	public function setActive(bool $active): void{
+		$this->active = $active;
+
+		$ev = new MapChangeEvent();
+		$ev->call();
+
+		if ($this->active) {
+			foreach (Server::getInstance()->getOnlinePlayers() as $onlinePlayer) {
+				$onlinePlayer->teleport($this->world->getSafeSpawn());
+			}
+		}
 	}
 }

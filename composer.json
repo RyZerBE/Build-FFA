@@ -7,5 +7,7 @@
             "email": "janmichaelsohn@gmail.com"
         }
     ],
-    "require": {}
+    "require": {
+		"ext-yaml": "*"
+	}
 }

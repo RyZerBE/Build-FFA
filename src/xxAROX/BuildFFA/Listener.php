@@ -7,19 +7,19 @@
 
 declare(strict_types=1);
 namespace xxAROX\BuildFFA;
+use pocketmine\event\block\BlockBreakEvent;
+use pocketmine\event\block\BlockPlaceEvent;
+use pocketmine\event\block\BlockUpdateEvent;
+use xxAROX\BuildFFA\game\Game;
+
+
 /**
- * Class Config
+ * Class Listener
  * @package xxAROX\BuildFFA
  * @author Jan Sohn / xxAROX
- * @date 30. Dezember, 2021 - 14:57
+ * @date 04. Januar, 2022 - 15:58
  * @ide PhpStorm
  * @project BuildFFA
  */
-class Config implements \JsonSerializable{
-	/**
-	 * @inheritDoc
-	 */
-	public function jsonSerialize(){
-		// TODO: Implement jsonSerialize() method.
-	}
+class Listener implements \pocketmine\event\Listener{
 }

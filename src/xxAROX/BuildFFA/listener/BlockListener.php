@@ -7,7 +7,11 @@
 
 declare(strict_types=1);
 namespace xxAROX\BuildFFA\listener;
+use pocketmine\event\block\BlockBreakEvent;
+use pocketmine\event\block\BlockPlaceEvent;
+use pocketmine\event\block\BlockUpdateEvent;
 use pocketmine\event\Listener;
+use xxAROX\BuildFFA\game\Game;
 
 
 /**
@@ -19,4 +23,15 @@ use pocketmine\event\Listener;
  * @project BuildFFA
  */
 class BlockListener implements Listener{
+	public function BlockBreakEvent(BlockBreakEvent $event): void{
+		if (Game::getInstance()->filterPlayer($event->getPlayer())) {
+			Game::getInstance()->breakBlock($event->getBlock());
+		}
+	}
+	public function BlockPlaceEvent(BlockPlaceEvent $event): void{
+		if (Game::getInstance()->filterPlayer($event->getPlayer()))
+			Game::getInstance()->placeBlock($event->getBlock());
+	}
+	public function BlockUpdateEvent(BlockUpdateEvent $event): void{
+	}
 }
