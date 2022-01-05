@@ -14,6 +14,9 @@ use pocketmine\entity\EntityFactory;
 use pocketmine\entity\Location;
 use pocketmine\entity\object\FallingBlock;
 use pocketmine\nbt\tag\CompoundTag;
+use pocketmine\permission\DefaultPermissionNames;
+use pocketmine\permission\Permission;
+use pocketmine\permission\PermissionManager;
 use pocketmine\plugin\PluginBase;
 use pocketmine\plugin\PluginDescription;
 use pocketmine\plugin\PluginLoader;
@@ -21,6 +24,7 @@ use pocketmine\plugin\ResourceProvider;
 use pocketmine\Server;
 use pocketmine\utils\SingletonTrait;
 use pocketmine\world\World;
+use xxAROX\BuildFFA\command\SetupCommand;
 use xxAROX\BuildFFA\entity\BlockEntity;
 use xxAROX\BuildFFA\game\Arena;
 use xxAROX\BuildFFA\game\ArenaSettings;
@@ -60,6 +64,8 @@ class BuildFFA extends PluginBase{
 	}
 
 	protected function onEnable(): void{
+		$this->registerPermissions();
+		$this->registerCommands();
 		$this->registerListeners();
 		$this->registerEntities();
 
@@ -93,5 +99,16 @@ class BuildFFA extends PluginBase{
 			return new BlockEntity(EntityDataHelper::parseLocation($nbt, $world), FallingBlock::parseBlockNBT(BlockFactory::getInstance(), $nbt));
 		}, ["buildffa:block"]);
 
+	}
+
+	private function registerPermissions(): void{
+		PermissionManager::getInstance()->addPermission(new Permission("game.setup", "Allow /setup"));
+		PermissionManager::getInstance()->getPermission(DefaultPermissionNames::GROUP_OPERATOR)->addChild("game.setup", true);
+	}
+
+	private function registerCommands(): void{
+		$this->getServer()->getCommandMap()->registerAll(strtoupper($this->getName()), [
+			new SetupCommand(),
+		]);
 	}
 }

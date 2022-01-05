@@ -62,6 +62,7 @@ class Game{
 			$this->arenas = $arenas;
 			$this->nextArenaChange = self::MAP_CHANGE_INTERVAL * 20;
 			$this->arena = $this->arenas[array_rand($this->arenas)];
+			$this->lastArenaChange = time();
 		} else {
 			getLogger()->info("§3Using default Arena");
 			$this->arena = new Arena(Server::getInstance()->getWorldManager()->getDefaultWorld(), new ArenaSettings());
@@ -69,7 +70,6 @@ class Game{
 		foreach ($this->arenas as $a) {
 			$this->mapVotes[$a->getWorld()->getFolderName()] = 0;
 		}
-		$this->lastArenaChange = time();
 		$this->initKits();
 		BuildFFA::getInstance()->getScheduler()->scheduleRepeatingTask(new ClosureTask(fn() => $this->tick()), 1);
 	}

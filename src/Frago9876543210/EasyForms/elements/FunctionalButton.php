@@ -7,7 +7,7 @@
 
 namespace Frago9876543210\EasyForms\elements;
 use Closure;
-use xxAROX\Core\player\CorePlayer;
+use xxAROX\BuildFFA\player\xPlayer;
 
 
 /**
@@ -34,10 +34,10 @@ class FunctionalButton extends Button{
 
 	/**
 	 * Function onClick
-	 * @param CorePlayer $player
+	 * @param xPlayer $player
 	 * @return void
 	 */
-	public function onClick(CorePlayer $player): void{
+	public function onClick(xPlayer $player): void{
 		if (!is_null($this->onClick)) {
 			($this->onClick)($player);
 		}

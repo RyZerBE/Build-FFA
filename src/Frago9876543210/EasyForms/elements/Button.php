@@ -1,6 +1,10 @@
 <?php
 declare(strict_types=1);
 namespace Frago9876543210\EasyForms\elements;
+use JetBrains\PhpStorm\ArrayShape;
+use JetBrains\PhpStorm\Pure;
+
+
 class Button extends Element{
 	/** @var Image|null */
 	protected $image;
@@ -11,7 +15,7 @@ class Button extends Element{
 	 * @param string $text
 	 * @param Image|null $image
 	 */
-	public function __construct(string $text, ?Image $image = null){
+	#[Pure] public function __construct(string $text, ?Image $image = null){
 		parent::__construct($text);
 		$this->image = $image;
 	}
@@ -21,7 +25,7 @@ class Button extends Element{
 	 *
 	 * @return Button[]
 	 */
-	public static function createFromList(string ...$texts): array{
+	#[Pure] public static function createFromList(string ...$texts): array{
 		$buttons = [];
 		foreach ($texts as $text) {
 			$buttons[] = new self($text);
@@ -46,7 +50,7 @@ class Button extends Element{
 	/**
 	 * @return array
 	 */
-	public function serializeElementData(): array{
+	#[Pure] #[ArrayShape(["text" => "string", "image" => "\Frago9876543210\EasyForms\elements\Image|null"])] public function serializeElementData(): array{
 		$data = ["text" => $this->text];
 		if ($this->hasImage()) {
 			$data["image"] = $this->image;

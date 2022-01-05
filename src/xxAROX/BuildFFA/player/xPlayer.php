@@ -12,6 +12,9 @@ use pocketmine\block\BlockLegacyIds;
 use pocketmine\block\VanillaBlocks;
 use pocketmine\event\entity\EntityDamageEvent;
 use pocketmine\event\player\PlayerDeathEvent;
+use pocketmine\item\Item;
+use pocketmine\item\ItemIdentifier;
+use pocketmine\item\ItemIds;
 use pocketmine\item\VanillaItems;
 use pocketmine\player\GameMode;
 use pocketmine\player\Player;
@@ -23,9 +26,11 @@ use xxAROX\BuildFFA\event\BuildFFAPlayerRespawnEvent;
 use xxAROX\BuildFFA\game\Arena;
 use xxAROX\BuildFFA\game\Game;
 use xxAROX\BuildFFA\game\Kit;
+use xxAROX\BuildFFA\game\Setup;
 use xxAROX\BuildFFA\items\InvSortItem;
 use xxAROX\BuildFFA\items\KitItem;
 use xxAROX\BuildFFA\items\MapItem;
+use xxAROX\BuildFFA\items\SetupItem;
 use xxAROX\BuildFFA\items\SpectateItem;
 
 
@@ -38,15 +43,12 @@ use xxAROX\BuildFFA\items\SpectateItem;
  * @project BuildFFA
  */
 class xPlayer extends Player{
+	public ?Setup $setup = null;
 	protected int $kill_streak = 0;
 	protected int $deaths = 0;
 	protected int $kills = 0;
 	protected ?Kit $selected_kit = null;
 	protected array $inv_sort = [
-		"sword"   => 0,
-		"pickaxe" => 1,
-		"stick"   => 2,
-		"web"     => 3,
 	];
 	// NOTE: this is for internal api stuff
 	/** @internal */
@@ -85,6 +87,9 @@ class xPlayer extends Player{
 	 * @return void
 	 */
 	public function giveKit(Kit $kit): void{
+		if ($this->gamemode->id() != GameMode::SURVIVAL()->id()) {
+			return;
+		}
 		$kit->equip($this);
 	}
 
@@ -103,7 +108,10 @@ class xPlayer extends Player{
 		$this->inventory->setItem(0, new InvSortItem());
 		$this->inventory->setItem(1, new MapItem());
 		$this->inventory->setItem(4, new KitItem());
-		$this->inventory->setItem(7, new SpectateItem());
+		if ($this->hasPermission("game.setup")) {
+			$this->inventory->setItem(7, new SetupItem());
+		}
+		$this->inventory->setItem(8, new SpectateItem());
 	}
 
 	/**
@@ -136,6 +144,11 @@ class xPlayer extends Player{
 		return parent::toggleSneak($sneak);
 	}
 
+	/**
+	 * Function sendMapSelect
+	 * @return void
+	 * @noinspection PhpExpressionResultUnusedInspection
+	 */
 	public function sendMapSelect(): void{
 		if (count(Game::getInstance()->getArenas()) == 0) {
 			$this->sendMessage("§cLazy owner(ping him), no maps found..");// TODO: language stuff
@@ -151,23 +164,45 @@ class xPlayer extends Player{
 			array_map(fn (Arena $arena) => new FunctionalButton($arena->getWorld()->getFolderName(), function (xPlayer $player) use ($arena): void{
 				if ($arena->getWorld()->getFolderName() == $player->voted_map) {
 					Game::getInstance()->mapVotes[$player->voted_map]--;
+					$player->voted_map = "";
 				} else {
 					if (!empty($player->voted_map)) {
 						Game::getInstance()->mapVotes[$player->voted_map]--;
 					}
 					Game::getInstance()->mapVotes[$player->voted_map]++;
+					$player->voted_map = $arena->getWorld()->getFolderName();
 				}
 			}), Game::getInstance()->getArenas())
 		));
 	}
 
 	public function sendKitSelect(): void{
-		// TODO
+		if (count(Game::getInstance()->getKits()) == 0) {
+			$this->sendMessage("§cLazy owner(ping him), no kits found..");// TODO: language stuff
+			return;
+		}
+		if (count(Game::getInstance()->getKits()) == 1) {
+			$this->sendMessage("§cOnly one kit found, you have no choice..");// TODO: language stuff
+			return;
+		}
+		$this->sendForm(new MenuForm(
+			"%ui.title.voting.kit",
+			"",
+			array_map(fn (Kit $kit) => new FunctionalButton($kit->getDisplayName(), function (xPlayer $player) use ($kit): void{
+				$player->setSelectedKit($kit);
+				$player->giveKit($kit);
+			}), Game::getInstance()->getArenas())
+		));
 	}
 
 	public function spectate(): void{
 		$this->sendMessage("§e// TODO: implement spectator mode");
 		$this->setGamemode(GameMode::SPECTATOR());
+		$this->inventory->clearAll();
+		$this->cursorInventory->clearAll();
+		$this->armorInventory->clearAll();
+		$this->offHandInventory->clearAll();
+		$this->inventory->setItem(8, VanillaBlocks::IRON_DOOR()->asItem()->setCustomName("§r"));
 	}
 
 	/**
@@ -217,6 +252,7 @@ class xPlayer extends Player{
 		$ev = new BuildFFAPlayerRespawnEvent($this, Game::getInstance()->getArena());
 		$ev->call();
 		$this->setHealth($this->getMaxHealth());
+		$this->setGamemode(GameMode::SURVIVAL());
 		$newSort = [];
 		$kitContents = $this->selected_kit->getContents();
 		foreach ($this->selected_kit->getContents() as $type => $item) {
