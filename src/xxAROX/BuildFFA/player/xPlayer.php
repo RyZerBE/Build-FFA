@@ -23,6 +23,7 @@ use pocketmine\world\sound\EntityLongFallSound;
 use pocketmine\world\sound\EntityShortFallSound;
 use xxAROX\BuildFFA\event\BuildFFAPlayerChangeInvSortEvent;
 use xxAROX\BuildFFA\event\BuildFFAPlayerRespawnEvent;
+use xxAROX\BuildFFA\event\BuildFFAPlayerSpectatorEvent;
 use xxAROX\BuildFFA\game\Arena;
 use xxAROX\BuildFFA\game\Game;
 use xxAROX\BuildFFA\game\Kit;
@@ -55,6 +56,7 @@ class xPlayer extends Player{
 	public bool $is_in_inv_sort = false;
 	/** @internal */
 	public bool $allow_no_fall_damage = true;
+	/** @internal */
 	public string $voted_map = "";
 
 	/**
@@ -98,13 +100,28 @@ class xPlayer extends Player{
 	 * @return void
 	 */
 	public function sendOtakaItems(){
+		if ($this->gamemode->id() == GameMode::SPECTATOR()->id()) {
+			return;
+		}
+		$barrier = applyReadonlyTag(VanillaBlocks::BARRIER()->asItem()->setCustomName("§r"));
+
 		$this->inventory->clearAll();
 		$this->armorInventory->clearAll();
 		$this->offHandInventory->clearAll();
 		$this->cursorInventory->clearAll();
+
+		$this->armorInventory->setHelmet($barrier);
+		$this->armorInventory->setChestplate($barrier);
+		$this->armorInventory->setLeggings($barrier);
+		$this->armorInventory->setBoots($barrier);
+
 		for ($slot=9; $slot<$this->inventory->getSize(); $slot++) {
-			$this->inventory->setItem($slot, VanillaBlocks::BARRIER()->asItem()->setCustomName("§r"));
+			$this->inventory->setItem($slot, $barrier);
 		}
+		for ($slot=0; $slot<$this->craftingGrid->getSize(); $slot++) {
+			$this->craftingGrid->setItem($slot, $barrier);
+		}
+
 		$this->inventory->setItem(0, new InvSortItem());
 		$this->inventory->setItem(1, new MapItem());
 		$this->inventory->setItem(4, new KitItem());
@@ -190,19 +207,37 @@ class xPlayer extends Player{
 			"",
 			array_map(fn (Kit $kit) => new FunctionalButton($kit->getDisplayName(), function (xPlayer $player) use ($kit): void{
 				$player->setSelectedKit($kit);
-				$player->giveKit($kit);
-			}), Game::getInstance()->getArenas())
+			}), Game::getInstance()->getKits())
 		));
 	}
 
 	public function spectate(): void{
-		$this->sendMessage("§e// TODO: implement spectator mode");
-		$this->setGamemode(GameMode::SPECTATOR());
-		$this->inventory->clearAll();
-		$this->cursorInventory->clearAll();
-		$this->armorInventory->clearAll();
-		$this->offHandInventory->clearAll();
-		$this->inventory->setItem(8, VanillaBlocks::IRON_DOOR()->asItem()->setCustomName("§r"));
+		$ev = new BuildFFAPlayerSpectatorEvent($this, Game::getInstance()->getArena());
+		$ev->call();
+
+		if (!$ev->isCancelled()) {
+			$barrier = applyReadonlyTag(VanillaBlocks::BARRIER()->asItem()->setCustomName("§r"));
+			$this->setGamemode(GameMode::SPECTATOR());
+
+			$this->inventory->clearAll();
+			$this->cursorInventory->clearAll();
+			$this->armorInventory->clearAll();
+			$this->offHandInventory->clearAll();
+			$this->craftingGrid->clearAll();
+
+			$this->armorInventory->setHelmet($barrier);
+			$this->armorInventory->setChestplate($barrier);
+			$this->armorInventory->setLeggings($barrier);
+			$this->armorInventory->setBoots($barrier);
+
+			for ($slot=9; $slot<$this->inventory->getSize(); $slot++) {
+				$this->inventory->setItem($slot, $barrier);
+			}
+			for ($slot=0; $slot<$this->craftingGrid->getSize(); $slot++) {
+				$this->craftingGrid->setItem($slot, $barrier);
+			}
+			$this->inventory->setItem(8, VanillaBlocks::IRON_DOOR()->asItem()->setCustomName("§r"));
+		}
 	}
 
 	/**

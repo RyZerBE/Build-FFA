@@ -4,6 +4,9 @@
  * All rights reserved.
  * I don't want anyone to use my source code without permission.
  */
+use pocketmine\item\Item;
+
+
 /**
  * Function encodePosition
  * @param \pocketmine\world\Position $position
@@ -40,4 +43,15 @@ function getLogger(): Logger{
 	} else {
 		return GlobalLogger::get();
 	}
+}
+
+/**
+ * Function applyReadonlyTag
+ * @param Item $item
+ * @param bool $readonly
+ * @return Item
+ */
+function applyReadonlyTag(Item $item, bool $readonly = true): Item{
+	$item->setNamedTag($item->getNamedTag()->setByte("xxarox:inv:readonly", intval($readonly)));
+	return $item;
 }
