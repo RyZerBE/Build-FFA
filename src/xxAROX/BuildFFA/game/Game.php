@@ -21,6 +21,8 @@ use pocketmine\Server;
 use pocketmine\utils\SingletonTrait;
 use pocketmine\world\particle\BlockBreakParticle;
 use pocketmine\world\particle\PortalParticle;
+use pocketmine\world\World;
+use xenialdan\apibossbar\BossBar;
 use xxAROX\BuildFFA\BuildFFA;
 use xxAROX\BuildFFA\entity\BlockEntity;
 use xxAROX\BuildFFA\generic\entry\BlockBreakEntry;
@@ -40,6 +42,7 @@ class Game{
 	use SingletonTrait;
 
 
+	protected ?BossBar $bossBar = null;
 	/** @var Kit[] */
 	protected array $kits = [];
 	protected int $nextArenaChange = -1;
@@ -63,6 +66,7 @@ class Game{
 			$this->nextArenaChange = self::MAP_CHANGE_INTERVAL * 20;
 			$this->arena = $this->arenas[array_rand($this->arenas)];
 			$this->lastArenaChange = time();
+			$this->bossBar = new BossBar();
 		} else {
 			getLogger()->info("§3Preparing default Arena..");
 			$this->arena = new Arena(Server::getInstance()->getWorldManager()->getDefaultWorld(), new ArenaSettings());
@@ -108,6 +112,9 @@ class Game{
 	}
 
 	private function tick(): void{
+		if (!is_null($this->bossBar)) {
+			$this->bossBar->setPercentage(time() -$this->nextArenaChange);
+		}
 		if ($this->lastArenaChange != -1 && time() >= $this->nextArenaChange) {
 			$worldName = array_flip(max($this->mapVotes));
 			foreach ($this->arenas as $arena) {
