@@ -64,8 +64,11 @@ class Game{
 			$this->arena = $this->arenas[array_rand($this->arenas)];
 			$this->lastArenaChange = time();
 		} else {
-			getLogger()->info("§3Using default Arena");
+			getLogger()->info("§3Preparing default Arena..");
 			$this->arena = new Arena(Server::getInstance()->getWorldManager()->getDefaultWorld(), new ArenaSettings());
+			$this->arena->getWorld()->setTime(World::TIME_NOON);
+			$this->arena->getWorld()->stopTime();
+			$this->arena->getWorld()->setAutoSave(false);
 		}
 		foreach ($this->arenas as $a) {
 			$this->mapVotes[$a->getWorld()->getFolderName()] = 0;
