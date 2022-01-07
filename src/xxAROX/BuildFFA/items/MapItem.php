@@ -28,7 +28,8 @@ use xxAROX\BuildFFA\player\xPlayer;
 class MapItem extends Item{
 	public function __construct(){
 		parent::__construct(new ItemIdentifier(ItemIds::MAP, 0), "Choose map");
-		$this->setCustomName("§eMap");//TODO: language
+		$this->setCustomName("§eMap");//TODO: language	stuff
+		applyReadonlyTag($this);
 	}
 
 	/**

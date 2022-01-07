@@ -4,9 +4,14 @@
  * All rights reserved.
  * I don't want anyone to use my source code without permission.
  */
-use pocketmine\item\Item;
-
-
+/**
+ * Function encodeItem
+ * @param \pocketmine\item\Item $item
+ * @return string
+ */
+function encodeItem(\pocketmine\item\Item $item): string{
+	return "{$item->getVanillaName()}:{$item->getId()}:{$item->getMeta()}";
+}
 /**
  * Function encodePosition
  * @param \pocketmine\world\Position $position
@@ -47,11 +52,11 @@ function getLogger(): Logger{
 
 /**
  * Function applyReadonlyTag
- * @param Item $item
+ * @param \pocketmine\item\Item $item
  * @param bool $readonly
- * @return Item
+ * @return \pocketmine\item\Item
  */
-function applyReadonlyTag(Item $item, bool $readonly = true): Item{
-	$item->setNamedTag($item->getNamedTag()->setByte("xxarox:inv:readonly", intval($readonly)));
+function applyReadonlyTag(\pocketmine\item\Item $item, bool $readonly = true): \pocketmine\item\Item{
+	$item->setNamedTag($item->getNamedTag()->setByte(\xxAROX\BuildFFA\BuildFFA::TAG_READONLY, intval($readonly)));
 	return $item;
 }

@@ -30,12 +30,11 @@ class BlockListener implements Listener{
 		}
 	}
 	public function BlockPlaceEvent(BlockPlaceEvent $event): void{
-		if (!boolval($event->getItem()->getNamedTag()->getByte("pop", intval(false)))) {
-			$event->getItem()->pop();
-			$event->getItem()->setCount($event->getItem()->getCount() +1);
-			$event->getPlayer()->getInventory()->setItemInHand($event->getItem());
-		}
 		if (Game::getInstance()->filterPlayer($event->getPlayer())) {
+			if (!boolval($event->getItem()->getNamedTag()->getByte("pop", intval(false)))) {
+				$event->getItem()->setCount((random_int(1, 3) == 1) ? 64 : $event->getItem()->getCount());
+				$event->getPlayer()->getInventory()->setItemInHand($event->getItem());
+			}
 			Game::getInstance()->placeBlock($event->getBlock());
 		}
 	}

@@ -21,6 +21,7 @@ use pocketmine\player\Player;
 use pocketmine\world\sound\EntityLandSound;
 use pocketmine\world\sound\EntityLongFallSound;
 use pocketmine\world\sound\EntityShortFallSound;
+use xxAROX\BuildFFA\BuildFFA;
 use xxAROX\BuildFFA\event\BuildFFAPlayerChangeInvSortEvent;
 use xxAROX\BuildFFA\event\BuildFFAPlayerRespawnEvent;
 use xxAROX\BuildFFA\event\BuildFFAPlayerSpectatorEvent;
@@ -31,6 +32,7 @@ use xxAROX\BuildFFA\game\Setup;
 use xxAROX\BuildFFA\items\InvSortItem;
 use xxAROX\BuildFFA\items\KitItem;
 use xxAROX\BuildFFA\items\MapItem;
+use xxAROX\BuildFFA\items\PlaceHolderItem;
 use xxAROX\BuildFFA\items\SetupItem;
 use xxAROX\BuildFFA\items\SpectateItem;
 
@@ -58,6 +60,8 @@ class xPlayer extends Player{
 	public bool $allow_no_fall_damage = true;
 	/** @internal */
 	public string $voted_map = "";
+	/** @internal */
+	public array $itemCountdowns = [];
 
 	/**
 	 * Function load
@@ -93,6 +97,7 @@ class xPlayer extends Player{
 			return;
 		}
 		$kit->equip($this);
+		$this->saveInvSort();
 	}
 
 	/**
@@ -138,27 +143,58 @@ class xPlayer extends Player{
 	 */
 	public function toggleSneak(bool $sneak): bool{
 		if ($this->is_in_inv_sort && !$sneak) {
-			$newSort = [];
-			$kitContents = $this->selected_kit->getContents();
-			foreach ($this->selected_kit->getContents() as $type => $item) {
-				for ($hotbar_slot = 0; $hotbar_slot < $this->inventory->getHotbarSize(); $hotbar_slot++) {
-					$hotbar_item = $this->inventory->getItem($hotbar_slot);
-					if ($hotbar_item->equals($kitContents[$type], true, false) && ($this->inv_sort[$type] ?? -1) != $hotbar_slot) {
-						$newSort[$type] = $hotbar_slot;
-					}
-				}
-			}
-			$ev1 = new BuildFFAPlayerChangeInvSortEvent($this, $this->inv_sort, $newSort);
-			$ev1->call();
-			if (!$ev1->isCancelled()) {
-				foreach ($newSort as $type => $slot) {
-					$this->inv_sort[$type] = $slot;
-				}
-			}
+			$this->saveInvSort();
 			$this->is_in_inv_sort = false;
 			$this->sendOtakaItems();
 		}
 		return parent::toggleSneak($sneak);
+	}
+
+	public function saveInvSort(): void{
+		$newSort = [];
+		$sameSlot = [];
+		foreach ($this->selected_kit->getContents() as $type => $item) {
+			$toSort[$type] = false;
+			for ($hotbar_slot = 0; $hotbar_slot < $this->inventory->getHotbarSize(); $hotbar_slot++) {
+				$hotbar_item = $this->inventory->getItem($hotbar_slot);
+				$hotbar_type = $hotbar_item->getNamedTag()->getString(BuildFFA::TAG_SORT_TYPE, "");
+				$hotbar_placeholderId = $hotbar_item->getNamedTag()->getString("__placeholderId", "");
+				if (!empty($hotbar_type) && !empty($hotbar_placeholderId)) {
+					if ($hotbar_placeholderId == $item->getNamedTag()->getString("__placeholderId", "") && $hotbar_item instanceof PlaceHolderItem) {
+						$this->inventory->setItem($hotbar_slot, $hotbar_item->getPlaceholdersItem());
+					}
+					if ($hotbar_type == $type/* && ($this->inv_sort[$type] ?? -1) != $hotbar_slot*/) {
+						if (!isset(array_flip($this->inv_sort)[$hotbar_slot])) {
+							$newSort[$type] = $hotbar_slot;
+						/*} else {
+							$sameSlot[] = $type;*/
+						}
+					}
+				}
+				/*if ($hotbar_item->equals($kitContents[$type], true, false) && ($this->inv_sort[$type] ?? -1) != $hotbar_slot) {
+					$newSort[$type] = $hotbar_slot;
+				}*/
+			}
+		}
+		/*foreach ($sameSlot as $type) {
+			if (isset($this->selected_kit->getContents()[$type])) {
+				$this->inventory->addItem($this->selected_kit->getContents()[$type]);
+				unset($sameSlot[$type]);
+			}
+		}
+		var_dump($sameSlot);
+		return;
+		if (count($sameSlot) > 0) {
+			$this->saveInvSort();
+			return;
+		}*/
+		$ev1 = new BuildFFAPlayerChangeInvSortEvent($this, $this->inv_sort, $newSort);
+		$ev1->call();
+		if (!$ev1->isCancelled()) {
+			foreach ($newSort as $type => $slot) {
+				$this->inv_sort[$type] = $slot;
+			}
+		}
 	}
 
 	/**
@@ -240,6 +276,15 @@ class xPlayer extends Player{
 		}
 	}
 
+	public function itemCooldown(Item $item): void{
+		$placeHolderItem = $this->selected_kit->getPlaceholderByIdentifier($item->getNamedTag()->getString("__placeholderId", ""));
+		if (!is_null($placeHolderItem) && $placeHolderItem->hasCountdown() && !isset($player->itemCountdowns[encodeItem($item)])) {
+			$this->itemCountdowns[encodeItem($item)] = [$placeHolderItem->getCountdown(), $item, $this->inventory->getHeldItemIndex(), $placeHolderItem];
+			$placeHolderItem->setCount($placeHolderItem->getCountdown());
+		}
+		$this->inventory->setItemInHand($placeHolderItem);
+	}
+
 	/**
 	 * Function onDeath
 	 * @return void
@@ -276,6 +321,25 @@ class xPlayer extends Player{
 		if ($this->getPosition()->y <= Game::getInstance()->getArena()->getSettings()->respawn_height) {
 			$this->__respawn();
 		}
+		if ($this->server->getTick() %20 == 0) {
+			foreach ($this->itemCountdowns as $_ => $obj) {
+				$this->itemCountdowns[$_][0]--;
+				$secondsLeft = $this->itemCountdowns[$_][0];
+				$slot = $this->itemCountdowns[$_][2];
+				/** @var PlaceHolderItem $placeholder_item */
+				$placeholder_item = $this->itemCountdowns[$_][3];
+
+				if ($secondsLeft <= 0) {
+					unset($this->itemCountdowns[$_]);
+					$this->inventory->setItem($slot, $placeholder_item->getPlaceholdersItem());
+				} else {
+					$item = clone $placeholder_item;
+					$item->setCount(intval(round($secondsLeft)));
+					$item->setCustomName("§r§8{$secondsLeft} seconds left");
+					$this->inventory->setItem($slot, $item);
+				}
+			}
+		}
 		return parent::entityBaseTick($tickDiff);
 	}
 
@@ -288,23 +352,9 @@ class xPlayer extends Player{
 		$ev->call();
 		$this->setHealth($this->getMaxHealth());
 		$this->setGamemode(GameMode::SURVIVAL());
-		$newSort = [];
-		$kitContents = $this->selected_kit->getContents();
-		foreach ($this->selected_kit->getContents() as $type => $item) {
-			for ($hotbar_slot = 0; $hotbar_slot < $this->inventory->getHotbarSize(); $hotbar_slot++) {
-				$hotbar_item = $this->inventory->getItem($hotbar_slot);
-				if ($hotbar_item->equals($kitContents[$type], true, false) && ($this->inv_sort[$type] ?? -1) != $hotbar_slot) {
-					$newSort[$type] = $hotbar_slot;
-				}
-			}
-		}
-		$ev1 = new BuildFFAPlayerChangeInvSortEvent($this, $this->inv_sort, $newSort);
-		$ev1->call();
-		if (!$ev1->isCancelled()) {
-			foreach ($newSort as $type => $slot) {
-				$this->inv_sort[$type] = $slot;
-			}
-		}
+		$this->saveInvSort();
+		unset($this->itemCountdowns);
+		$this->itemCountdowns = [];
 		if (!$ev->isCancelled()) {
 			$this->teleport(Game::getInstance()->getArena()->getWorld()->getSafeSpawn());
 			$this->sendOtakaItems();

@@ -8,14 +8,25 @@ declare(strict_types=1);
 namespace xxAROX\BuildFFA\listener;
 use pocketmine\block\VanillaBlocks;
 use pocketmine\event\entity\EntityTeleportEvent;
+use pocketmine\event\entity\ProjectileLaunchEvent;
+use pocketmine\event\inventory\InventoryTransactionEvent;
 use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerCreationEvent;
 use pocketmine\event\player\PlayerExhaustEvent;
+use pocketmine\event\player\PlayerInteractEvent;
 use pocketmine\event\player\PlayerItemHeldEvent;
 use pocketmine\event\player\PlayerLoginEvent;
 use pocketmine\event\player\PlayerMoveEvent;
 use pocketmine\event\player\PlayerQuitEvent;
+use pocketmine\inventory\ArmorInventory;
+use pocketmine\inventory\PlayerInventory;
+use pocketmine\inventory\PlayerOffHandInventory;
+use pocketmine\inventory\transaction\action\DropItemAction;
+use pocketmine\inventory\transaction\action\SlotChangeAction;
+use pocketmine\item\Item;
+use pocketmine\item\ProjectileItem;
 use pocketmine\player\GameMode;
+use xxAROX\BuildFFA\BuildFFA;
 use xxAROX\BuildFFA\event\EnterArenaProtectionAreaEvent;
 use xxAROX\BuildFFA\event\LeaveArenaProtectionAreaEvent;
 use xxAROX\BuildFFA\game\Game;
@@ -73,7 +84,6 @@ class PlayerListener implements Listener{
 	public function PlayerMoveEvent(PlayerMoveEvent $event): void{
 		/** @var xPlayer $player */
 		$player = $event->getPlayer();
-
 		if (Game::getInstance()->getArena()->isInProtectionArea($event->getFrom()) && !Game::getInstance()->getArena()->isInProtectionArea($event->getTo())) {
 			$ev = new LeaveArenaProtectionAreaEvent($player, Game::getInstance()->getArena());
 			$ev->call();
@@ -132,7 +142,6 @@ class PlayerListener implements Listener{
 	public function PlayerQuitEvent(PlayerQuitEvent $event): void{
 		/** @var xPlayer $player */
 		$player = $event->getPlayer();
-
 		if (!empty($player->voted_map)) {
 			/** @noinspection PhpExpressionResultUnusedInspection */
 			Game::getInstance()->mapVotes[$player->voted_map]--;
@@ -148,12 +157,59 @@ class PlayerListener implements Listener{
 	public function PlayerItemHeldEvent(PlayerItemHeldEvent $event): void{
 		/** @var xPlayer $player */
 		$player = $event->getPlayer();
-
 		if ($event->getPlayer()->getGamemode()->id() == GameMode::SPECTATOR()->id() && $event->getItem()->getId() == VanillaBlocks::IRON_DOOR()->asItem()->getId()) {
 			$player->__respawn();
 		}
-		if (!is_null($player->setup)) {
+		if (!is_null($player->setup)) {//WTF?!
 			$player->setup->leave();
+		}
+	}
+
+	public function InventoryTransactionEvent(InventoryTransactionEvent $event): void{
+		if (!Game::getInstance()->filterPlayer($event->getTransaction()->getSource())) {
+			return;
+		}
+		foreach ($event->getTransaction()->getActions() as $action) {
+			if ($action instanceof DropItemAction) {
+				$event->cancel();
+				return;
+			}
+			if (!$action instanceof SlotChangeAction) {
+				return;
+			}
+			if ($action->getInventory() instanceof PlayerOffHandInventory) {
+				$event->cancel();
+				return;
+			}
+			if ($action->getInventory() instanceof ArmorInventory) {
+				$event->cancel();
+				return;
+			}
+			/** @var xPlayer $player */
+			$player = $event->getTransaction()->getSource();
+			/** @var Item $item */
+			foreach ([$action->getSourceItem(), $action->getTargetItem()] as $item) {
+				if (boolval($item->getNamedTag()->getByte(BuildFFA::TAG_READONLY, intval(false)))) {
+					$event->cancel();
+				}
+			}
+			if ($action->getInventory() instanceof PlayerInventory && !$event->isCancelled()) {
+				if (!$event->isCancelled()) {
+					/** @noinspection PhpPossiblePolymorphicInvocationInspection */
+					$event->getTransaction()->getSource()->saveInvSort();
+				}
+			}
+		}
+	}
+
+	public function PlayerInteractEvent(PlayerInteractEvent $event): void{
+		/** @var xPlayer $player */
+		$player = $event->getPlayer();
+		$item = $event->getItem();
+		if (!is_null($placeHolderItem = $player->getSelectedKit()->getPlaceholderByIdentifier($item->getNamedTag()->getString("__placeholderId", "")))) {
+			if ($item->getCount() == 1) {
+				$player->itemCooldown($placeHolderItem, $item);
+			}
 		}
 	}
 }

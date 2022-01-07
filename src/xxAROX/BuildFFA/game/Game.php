@@ -7,12 +7,18 @@
 declare(strict_types=1);
 namespace xxAROX\BuildFFA\game;
 use pocketmine\block\Block;
+use pocketmine\block\BlockLegacyIds;
 use pocketmine\block\VanillaBlocks;
 use pocketmine\item\enchantment\EnchantmentInstance;
 use pocketmine\item\enchantment\VanillaEnchantments;
 use pocketmine\item\ItemFactory;
+use pocketmine\item\ItemIdentifier;
+use pocketmine\item\ItemIds;
 use pocketmine\item\VanillaItems;
 use pocketmine\network\mcpe\protocol\LevelEventPacket;
+use pocketmine\network\mcpe\protocol\PlaySoundPacket;
+use pocketmine\network\mcpe\protocol\SpawnParticleEffectPacket;
+use pocketmine\network\mcpe\protocol\types\DimensionIds;
 use pocketmine\network\mcpe\protocol\types\LevelEvent;
 use pocketmine\player\GameMode;
 use pocketmine\player\Player;
@@ -20,13 +26,16 @@ use pocketmine\scheduler\ClosureTask;
 use pocketmine\Server;
 use pocketmine\utils\SingletonTrait;
 use pocketmine\world\particle\BlockBreakParticle;
+use pocketmine\world\particle\HugeExplodeSeedParticle;
 use pocketmine\world\particle\PortalParticle;
+use pocketmine\world\sound\FizzSound;
 use pocketmine\world\World;
 use xenialdan\apibossbar\BossBar;
 use xxAROX\BuildFFA\BuildFFA;
 use xxAROX\BuildFFA\entity\BlockEntity;
 use xxAROX\BuildFFA\generic\entry\BlockBreakEntry;
 use xxAROX\BuildFFA\generic\entry\BlockEntry;
+use xxAROX\BuildFFA\items\PlaceHolderItem;
 
 
 /**
@@ -80,20 +89,22 @@ class Game{
 		$this->initKits();
 		BuildFFA::getInstance()->getScheduler()->scheduleRepeatingTask(new ClosureTask(fn() => $this->tick()), 1);
 	}
-
 	private function initKits(): void{
 		$head = VanillaItems::LEATHER_CAP()->setUnbreakable()->addEnchantment(new EnchantmentInstance(VanillaEnchantments::PROTECTION(), 1));
 		$chest = VanillaItems::CHAINMAIL_CHESTPLATE()->setUnbreakable()->addEnchantment(new EnchantmentInstance(VanillaEnchantments::PROTECTION(), 2));
 		$leg = VanillaItems::LEATHER_PANTS()->setUnbreakable()->addEnchantment(new EnchantmentInstance(VanillaEnchantments::PROTECTION(), 1));
-		$feet = VanillaItems::LEATHER_PANTS()->setUnbreakable()->addEnchantment(new EnchantmentInstance(VanillaEnchantments::PROTECTION(), 1));
-		$offhand = ItemFactory::air();
+		$feet = VanillaItems::LEATHER_BOOTS()->setUnbreakable()->addEnchantment(new EnchantmentInstance(VanillaEnchantments::PROTECTION(), 1));
+		$air = ItemFactory::air();
 
 		$basicBlocks = VanillaBlocks::SANDSTONE()->asItem()->setCount(64);
 		$basicStick = VanillaItems::STICK()->addEnchantment(new EnchantmentInstance(VanillaEnchantments::KNOCKBACK(), 1))->setCount(1);
-		$basicPickaxe = VanillaItems::IRON_PICKAXE()->addEnchantment(new EnchantmentInstance(VanillaEnchantments::EFFICIENCY(), 2))->setUnbreakable();
+		$basicPickaxe = VanillaItems::IRON_PICKAXE()->setUnbreakable()->addEnchantment(new EnchantmentInstance(VanillaEnchantments::EFFICIENCY(), 2));
 		$basicSword = VanillaItems::GOLDEN_SWORD()->setUnbreakable()->addEnchantment(new EnchantmentInstance(VanillaEnchantments::SHARPNESS(), 1));
-		$basicWebs = VanillaBlocks::COBWEB()->asItem()->setCount(3);
-		$basicWebs->setNamedTag($basicWebs->getNamedTag()->setByte("pop", intval(true)));
+		$basicWebs = (new PlaceHolderItem(new ItemIdentifier(ItemIds::BARRIER, 0), $w=VanillaBlocks::COBWEB()->asItem()->setCount(3), 3));
+		$w->setNamedTag($w->getNamedTag()->setByte("pop", intval(true)));
+		$basicEnderpearl = (new PlaceHolderItem(new ItemIdentifier(ItemIds::ENDER_EYE, 0), $w=VanillaItems::ENDER_PEARL()->setCount(1), 16));
+		$w->setNamedTag($w->getNamedTag()->setByte("pop", intval(true)));
+		$basicBow = VanillaItems::BOW()->setUnbreakable()->addEnchantment(new EnchantmentInstance(VanillaEnchantments::INFINITY(), 1));
 
 		$contents = [
 			"sword"   => $basicSword,
@@ -102,10 +113,38 @@ class Game{
 			"web"     => $basicWebs,
 			"blocks"     => $basicBlocks,
 		];
-		$extra_breaking_time_seconds = 0;
-		$basicBlocks->setNamedTag($basicBlocks->getNamedTag()->setInt("breaking_time", $extra_breaking_time_seconds));
-		$this->kits["%buildffa.kit.rusher"] = new Kit("%buildffa.kit.rusher", $contents, $offhand, $head, $chest, $leg, $feet);
+		$this->kits["%buildffa.kit.rusher"] = new Kit("%buildffa.kit.rusher", $contents, $air, $head, $chest, $leg, $feet);
+
+		$contents = [
+			"sword"   => $basicSword,
+			"stick"   => $basicStick,
+			"bow"   => $basicBow,
+			"pickaxe" => $basicPickaxe,
+			"web"     => $basicWebs,
+			"blocks"     => $basicBlocks,
+		];
+		$this->kits["%buildffa.kit.archer"] = new Kit("%buildffa.kit.archer", $contents, VanillaItems::ARROW()->setCount(1), $head, $chest, $leg, $feet);
+
+		$contents = [
+			"sword"   => $basicSword,
+			"stick"   => $basicStick->addEnchantment(new EnchantmentInstance(VanillaEnchantments::KNOCKBACK(), 2)),
+			"pickaxe" => $basicPickaxe,
+			"web"     => $basicWebs,
+			"blocks"     => $basicBlocks,
+		];
+		$this->kits["%buildffa.kit.knocker"] = new Kit("%buildffa.kit.knocker", $contents, $air, $head, $chest, $leg, $feet);
+
+		$contents = [
+			"sword"   => $basicSword,
+			"stick"   => $basicStick,
+			"enderpearl"     => $basicEnderpearl,
+			"pickaxe" => $basicPickaxe,
+			"web"     => $basicWebs,
+			"blocks"     => $basicBlocks,
+		];
+		$this->kits["%buildffa.kit.enderpearl"] = new Kit("%buildffa.kit.enderpearl", $contents, $air, $head, $chest, $leg, $feet);
 	}
+
 
 	public function getKit(?string $name): Kit{
 		return $this->kits[$name] ?? $this->kits[array_rand($this->kits)];
@@ -140,8 +179,12 @@ class Game{
 		}
 		foreach ($this->destroyedBlocks as $encodedPos => $entry) {
 			if (microtime(true) >= $entry->getTimestamp()) {
-				$entry->getPosition()->getWorld()->addParticle($entry->getPosition(), new PortalParticle());
-				$entry->getPosition()->getWorld()->setBlock($entry->getPosition(), $entry->getLegacy());
+				$current = $entry->getPosition()->getWorld()->getBlock($entry->getPosition());
+				if ($current->getId() != BlockLegacyIds::AIR) {
+					$entry->getPosition()->getWorld()->addParticle($entry->getPosition(), new BlockBreakParticle($current));
+					$entry->getPosition()->getWorld()->addSound($entry->getPosition(), new FizzSound());
+					$entry->getPosition()->getWorld()->setBlock($entry->getPosition(), $entry->getLegacy());
+				}
 				unset($this->destroyedBlocks[$encodedPos]);
 			}
 		}

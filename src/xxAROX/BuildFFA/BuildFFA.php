@@ -13,6 +13,7 @@ use pocketmine\entity\EntityDataHelper;
 use pocketmine\entity\EntityFactory;
 use pocketmine\entity\Location;
 use pocketmine\entity\object\FallingBlock;
+use pocketmine\item\ItemFactory;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\permission\DefaultPermissionNames;
 use pocketmine\permission\Permission;
@@ -29,6 +30,7 @@ use xxAROX\BuildFFA\entity\BlockEntity;
 use xxAROX\BuildFFA\game\Arena;
 use xxAROX\BuildFFA\game\ArenaSettings;
 use xxAROX\BuildFFA\game\Game;
+use xxAROX\BuildFFA\items\overwrite\EnderPearl;
 use xxAROX\BuildFFA\listener\BlockListener;
 use xxAROX\BuildFFA\listener\PlayerListener;
 
@@ -42,6 +44,9 @@ use xxAROX\BuildFFA\listener\PlayerListener;
  * @project BuildFFA
  */
 class BuildFFA extends PluginBase{
+	const TAG_SORT_TYPE = "xxarox:inv:sort_type";
+	const TAG_READONLY = "xxarox:inv:readonly";
+	const TAG_COUNTDOWN = "xxarox:inv:countdown";
 	use SingletonTrait;
 
 
@@ -66,6 +71,7 @@ class BuildFFA extends PluginBase{
 	protected function onEnable(): void{
 		$this->registerPermissions();
 		$this->registerCommands();
+		$this->registerItems();
 		$this->registerListeners();
 		$this->registerEntities();
 
@@ -88,19 +94,6 @@ class BuildFFA extends PluginBase{
 	protected function onDisable(): void{
 	}
 
-	private function registerListeners(): void{
-		$this->getServer()->getPluginManager()->registerEvents(new Listener(), $this);
-		$this->getServer()->getPluginManager()->registerEvents(new BlockListener(), $this);
-		$this->getServer()->getPluginManager()->registerEvents(new PlayerListener(), $this);
-	}
-
-	private function registerEntities(): void{
-		EntityFactory::getInstance()->register(BlockEntity::class, function (World $world, CompoundTag $nbt): Entity{
-			return new BlockEntity(EntityDataHelper::parseLocation($nbt, $world), FallingBlock::parseBlockNBT(BlockFactory::getInstance(), $nbt));
-		}, ["buildffa:block"]);
-
-	}
-
 	private function registerPermissions(): void{
 		PermissionManager::getInstance()->addPermission(new Permission("game.setup", "Allow /setup"));
 		PermissionManager::getInstance()->getPermission(DefaultPermissionNames::GROUP_OPERATOR)->addChild("game.setup", true);
@@ -110,5 +103,23 @@ class BuildFFA extends PluginBase{
 		$this->getServer()->getCommandMap()->registerAll(strtoupper($this->getName()), [
 			new SetupCommand(),
 		]);
+	}
+
+	private function registerItems(): void{
+		ItemFactory::getInstance()->register(new EnderPearl(), true);
+	}
+
+	private function registerListeners(): void{
+		// NOTE: custom events for this plugin
+		// $this->getServer()->getPluginManager()->registerEvents(new Listener(), $this);
+		$this->getServer()->getPluginManager()->registerEvents(new BlockListener(), $this);
+		$this->getServer()->getPluginManager()->registerEvents(new PlayerListener(), $this);
+	}
+
+	private function registerEntities(): void{
+		EntityFactory::getInstance()->register(BlockEntity::class, function (World $world, CompoundTag $nbt): Entity{
+			return new BlockEntity(EntityDataHelper::parseLocation($nbt, $world), FallingBlock::parseBlockNBT(BlockFactory::getInstance(), $nbt));
+		}, ["buildffa:block"]);
+
 	}
 }

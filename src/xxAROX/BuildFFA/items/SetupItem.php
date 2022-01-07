@@ -30,7 +30,8 @@ use xxAROX\BuildFFA\player\xPlayer;
 class SetupItem extends Item{
 	public function __construct(){
 		parent::__construct(new ItemIdentifier(ItemIds::COMMAND_BLOCK, 0), "Setup");
-		$this->setCustomName("§6Setup");//TODO: language
+		$this->setCustomName("§6Setup");//TODO: language stuff
+		applyReadonlyTag($this);
 	}
 
 	/**

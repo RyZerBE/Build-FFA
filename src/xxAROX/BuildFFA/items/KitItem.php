@@ -29,6 +29,7 @@ class KitItem extends Item{
 	public function __construct(){
 		parent::__construct(new ItemIdentifier(ItemIds::NETHER_STAR, 0), "Choose kit");
 		$this->setCustomName("§9Kit");// TODO: language stuff
+		applyReadonlyTag($this);
 	}
 
 	/**

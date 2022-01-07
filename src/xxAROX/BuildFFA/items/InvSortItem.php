@@ -29,6 +29,7 @@ class InvSortItem extends Item{
 	public function __construct(){
 		parent::__construct(new ItemIdentifier(ItemIds::CHEST, 0), "Inventory sort");
 		$this->setCustomName("§cInv sort");//TODO: language stuff
+		applyReadonlyTag($this);
 	}
 
 	/**
