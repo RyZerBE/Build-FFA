@@ -206,10 +206,8 @@ class PlayerListener implements Listener{
 		/** @var xPlayer $player */
 		$player = $event->getPlayer();
 		$item = $event->getItem();
-		if (!is_null($placeHolderItem = $player->getSelectedKit()->getPlaceholderByIdentifier($item->getNamedTag()->getString("__placeholderId", "")))) {
-			if ($item->getCount() == 1) {
-				$player->itemCooldown($placeHolderItem, $item);
-			}
+		if ($item->getCount() == 1) {
+			$player->itemCooldown($item);
 		}
 	}
 }

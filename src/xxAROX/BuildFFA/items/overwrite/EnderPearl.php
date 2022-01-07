@@ -42,9 +42,7 @@ class EnderPearl extends \pocketmine\item\EnderPearl{
 	 */
 	public function onClickAir(Player $player, Vector3 $directionVector): ItemUseResult{
 		$location = $player->getLocation();
-		var_dump(get_class($player->getInventory()->getItemInHand()->getNamedTag()));
 		$player->itemCooldown($player->getInventory()->getItemInHand());
-		//if ($player->has)
 
 		$projectile = $this->createEntity(Location::fromObject($player->getEyePos(), $player->getWorld(), $location->yaw, $location->pitch), $player);
 		$projectile->setMotion($directionVector->multiply($this->getThrowForce()));
@@ -55,11 +53,9 @@ class EnderPearl extends \pocketmine\item\EnderPearl{
 			$projectile->flagForDespawn();
 			return ItemUseResult::FAIL();
 		}
-
+		$player->enderpearls[] = $projectile;
 		$projectile->spawnToAll();
-
 		$location->getWorld()->addSound($location, new ThrowSound());
-
 		$this->pop();
 
 		return ItemUseResult::SUCCESS();

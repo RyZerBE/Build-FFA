@@ -100,11 +100,13 @@ class Game{
 		$basicStick = VanillaItems::STICK()->addEnchantment(new EnchantmentInstance(VanillaEnchantments::KNOCKBACK(), 1))->setCount(1);
 		$basicPickaxe = VanillaItems::IRON_PICKAXE()->setUnbreakable()->addEnchantment(new EnchantmentInstance(VanillaEnchantments::EFFICIENCY(), 2));
 		$basicSword = VanillaItems::GOLDEN_SWORD()->setUnbreakable()->addEnchantment(new EnchantmentInstance(VanillaEnchantments::SHARPNESS(), 1));
+		$basicBow = VanillaItems::BOW()->setUnbreakable()->addEnchantment(new EnchantmentInstance(VanillaEnchantments::INFINITY(), 1));
 		$basicWebs = (new PlaceHolderItem(new ItemIdentifier(ItemIds::BARRIER, 0), $w=VanillaBlocks::COBWEB()->asItem()->setCount(3), 3));
 		$w->setNamedTag($w->getNamedTag()->setByte("pop", intval(true)));
 		$basicEnderpearl = (new PlaceHolderItem(new ItemIdentifier(ItemIds::ENDER_EYE, 0), $w=VanillaItems::ENDER_PEARL()->setCount(1), 16));
 		$w->setNamedTag($w->getNamedTag()->setByte("pop", intval(true)));
-		$basicBow = VanillaItems::BOW()->setUnbreakable()->addEnchantment(new EnchantmentInstance(VanillaEnchantments::INFINITY(), 1));
+		$platform = (new PlaceHolderItem(new ItemIdentifier(ItemIds::STICK, 0), $w=VanillaItems::BLAZE_ROD()->setCount(1), 16));
+		$w->setNamedTag($w->getNamedTag()->setByte("pop", intval(true)));
 
 		$contents = [
 			"sword"   => $basicSword,
@@ -143,6 +145,16 @@ class Game{
 			"blocks"     => $basicBlocks,
 		];
 		$this->kits["%buildffa.kit.enderpearl"] = new Kit("%buildffa.kit.enderpearl", $contents, $air, $head, $chest, $leg, $feet);
+
+		$contents = [
+			"sword"   => $basicSword,
+			"stick"   => $basicStick,
+			"platform"     => $platform,
+			"pickaxe" => $basicPickaxe,
+			"web"     => $basicWebs,
+			"blocks"     => $basicBlocks,
+		];
+		$this->kits["%buildffa.kit.platform"] = new Kit("%buildffa.kit.platform", $contents, $air, $head, $chest, $leg, $feet);
 	}
 
 

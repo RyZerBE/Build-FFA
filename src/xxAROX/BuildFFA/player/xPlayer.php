@@ -10,6 +10,7 @@ use Frago9876543210\EasyForms\elements\FunctionalButton;
 use Frago9876543210\EasyForms\forms\MenuForm;
 use pocketmine\block\BlockLegacyIds;
 use pocketmine\block\VanillaBlocks;
+use pocketmine\entity\projectile\EnderPearl;
 use pocketmine\event\entity\EntityDamageEvent;
 use pocketmine\event\player\PlayerDeathEvent;
 use pocketmine\item\Item;
@@ -62,6 +63,8 @@ class xPlayer extends Player{
 	public string $voted_map = "";
 	/** @internal */
 	public array $itemCountdowns = [];
+	/** @internal */
+	public array $enderpearls = [];
 
 	/**
 	 * Function load
@@ -134,6 +137,19 @@ class xPlayer extends Player{
 			$this->inventory->setItem(7, new SetupItem());
 		}
 		$this->inventory->setItem(8, new SpectateItem());
+	}
+
+	public function spawnPlatform(): bool{
+		if (!$this->isOnGround()) {
+			$y = $this->getPosition()->y -6;
+			for ($xx=-2; $xx<2; $xx++) {
+				for ($zz=-2; $zz<2; $zz++) {
+					var_dump($this->getPosition()->x +$xx . ":" . $y . ":" . $this->getPosition()->z +$zz);
+					$this->getWorld()->setBlockAt($this->getPosition()->x +$xx, $y, $this->getPosition()->z +$zz, VanillaBlocks::GLASS());
+				}
+			}
+		}
+		return !$this->isOnGround();
 	}
 
 	/**
@@ -281,8 +297,8 @@ class xPlayer extends Player{
 		if (!is_null($placeHolderItem) && $placeHolderItem->hasCountdown() && !isset($player->itemCountdowns[encodeItem($item)])) {
 			$this->itemCountdowns[encodeItem($item)] = [$placeHolderItem->getCountdown(), $item, $this->inventory->getHeldItemIndex(), $placeHolderItem];
 			$placeHolderItem->setCount($placeHolderItem->getCountdown());
+			$this->inventory->setItemInHand($placeHolderItem);
 		}
-		$this->inventory->setItemInHand($placeHolderItem);
 	}
 
 	/**
@@ -353,6 +369,14 @@ class xPlayer extends Player{
 		$this->setHealth($this->getMaxHealth());
 		$this->setGamemode(GameMode::SURVIVAL());
 		$this->saveInvSort();
+		/** @var EnderPearl $enderpearl */
+		foreach ($this->enderpearls as $enderpearl) {
+			if (!$enderpearl->isFlaggedForDespawn()) {
+				$enderpearl->flagForDespawn();
+			}
+		}
+		unset($this->enderpearls);
+		$this->enderpearls = [];
 		unset($this->itemCountdowns);
 		$this->itemCountdowns = [];
 		if (!$ev->isCancelled()) {
