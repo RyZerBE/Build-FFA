@@ -80,7 +80,7 @@ class Arena{
 				$onlinePlayer->sendOtakaItems();
 			}
 		} else {
-			//TODO: unload
+			//TODO: unload world
 		}
 	}
 
