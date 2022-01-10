@@ -67,12 +67,20 @@ class Arena{
 			foreach (Game::getInstance()->mapVotes as $k => $_) {
 				Game::getInstance()->mapVotes[$k] = 0;
 			}
+			$block_speed = Game::getInstance()->getArena()->settings->blocks_cooldown;
 			/** @var xPlayer $onlinePlayer */
 			foreach (Server::getInstance()->getOnlinePlayers() as $onlinePlayer) {
+				if ($this->settings->blocks_cooldown > $block_speed) {
+					$onlinePlayer->sendMessage("§9Blocks despawn takes longer"); //TODO: language stuff
+				} else if ($this->settings->blocks_cooldown < $block_speed) {
+					$onlinePlayer->sendMessage("§9Blocks despawn faster"); //TODO: language stuff
+				}
 				$onlinePlayer->teleport($this->world->getSafeSpawn());
 				$onlinePlayer->voted_map = "";
-				$onlinePlayer->giveKit($onlinePlayer->getSelectedKit());
+				$onlinePlayer->sendOtakaItems();
 			}
+		} else {
+			//TODO: unload
 		}
 	}
 

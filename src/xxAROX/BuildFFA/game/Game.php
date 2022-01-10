@@ -172,12 +172,11 @@ class Game{
 			$this->bossBar->setPercentage(((self::MAP_CHANGE_INTERVAL +20) /100 *$this->nextArenaChange));
 			foreach (Server::getInstance()->getOnlinePlayers() as $onlinePlayer) {
 				$minutes = intval(round((($this->nextArenaChange -time()) /60)));
-				$seconds = intval(round((($this->nextArenaChange -time()) /60 /60)));
 				$onlinePlayer->sendActionBarMessage("Map reset in " . $minutes . " minutes.");
 				if ($minutes > 0) {
 					$onlinePlayer->sendActionBarMessage("Map reset in " . $minutes . " minutes.");
 				} else {
-					$onlinePlayer->sendActionBarMessage("Map reset in " . $seconds . " seconds.");
+					$onlinePlayer->sendActionBarMessage("Map reset in > 0 minutes.");
 				}
 				$this->bossBar->addPlayer($onlinePlayer);
 			}
