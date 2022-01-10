@@ -50,7 +50,7 @@ use xxAROX\BuildFFA\player\xPlayer;
  * @project BuildFFA
  */
 class Game{
-	const MAP_CHANGE_INTERVAL = (20 * 60 * 15);
+	const MAP_CHANGE_INTERVAL = (60 * 15);
 	use SingletonTrait;
 
 
@@ -73,12 +73,14 @@ class Game{
 	 */
 	public function __construct(array $arenas){
 		self::setInstance($this);
-		if (count($arenas) > 1) {
+		if (count($arenas) >= 1) {
+			if (count($arenas) > 1) {
+				$this->nextArenaChange = self::MAP_CHANGE_INTERVAL * 20;
+				$this->lastArenaChange = time();
+				$this->bossBar = new BossBar();
+			}
 			$this->arenas = $arenas;
-			$this->nextArenaChange = self::MAP_CHANGE_INTERVAL * 20;
 			$this->arena = $this->arenas[array_rand($this->arenas)];
-			$this->lastArenaChange = time();
-			$this->bossBar = new BossBar();
 		} else {
 			getLogger()->info("§3Preparing default Arena..");
 			$this->arena = new Arena(Server::getInstance()->getWorldManager()->getDefaultWorld(), new ArenaSettings());
@@ -167,10 +169,24 @@ class Game{
 
 	private function tick(): void{
 		if (!is_null($this->bossBar)) {
-			$this->bossBar->setPercentage(time() -$this->nextArenaChange);
+			$this->bossBar->setPercentage(((self::MAP_CHANGE_INTERVAL +20) /100 *$this->nextArenaChange));
+			foreach (Server::getInstance()->getOnlinePlayers() as $onlinePlayer) {
+				$minutes = intval(round((($this->nextArenaChange -time()) /60)));
+				$seconds = intval(round((($this->nextArenaChange -time()) /60 /60)));
+				$onlinePlayer->sendActionBarMessage("Map reset in " . $minutes . " minutes.");
+				if ($minutes > 0) {
+					$onlinePlayer->sendActionBarMessage("Map reset in " . $minutes . " minutes.");
+				} else {
+					$onlinePlayer->sendActionBarMessage("Map reset in " . $seconds . " seconds.");
+				}
+				$this->bossBar->addPlayer($onlinePlayer);
+			}
 		}
 		if ($this->lastArenaChange != -1 && time() >= $this->nextArenaChange) {
-			$worldName = array_flip(max($this->mapVotes));
+			$maps = array_flip($this->mapVotes);
+			shuffle($maps);
+			$worldName = $maps[max($this->mapVotes)];
+			unset($maps);
 			foreach ($this->arenas as $arena) {
 				if ($arena->getWorld()->getFolderName() == $worldName) {
 					$this->arena->setActive(false);
@@ -180,6 +196,7 @@ class Game{
 					$this->lastArenaChange = time();
 					$this->nextArenaChange = time() +Game::MAP_CHANGE_INTERVAL;
 					unset($current);
+					break;
 				}
 			}
 		}
@@ -205,17 +222,29 @@ class Game{
 		}
 	}
 
-	public function breakBlock(Block $block): void{
+	/**
+	 * Function breakBlock
+	 * @param Block $block
+	 * @param int $additionalSeconds
+	 * @return void
+	 */
+	public function breakBlock(Block $block, int $additionalSeconds = 0): void{
 		if (isset($this->placedBlocks[encodePosition($block->getPosition())])) {
 			unset($this->placedBlocks[encodePosition($block->getPosition())]);
 			return;
 		}
 		if (!isset($this->destroyedBlocks[encodePosition($block->getPosition())])) { //JIC
-			$this->destroyedBlocks[encodePosition($block->getPosition())] = new BlockBreakEntry($block, $block->getPosition(), microtime(true) +$this->arena->getSettings()->blocks_cooldown);
+			$this->destroyedBlocks[encodePosition($block->getPosition())] = new BlockBreakEntry($block, $block->getPosition(), microtime(true) +$this->arena->getSettings()->blocks_cooldown +$additionalSeconds);
 		}
 	}
 
-	public function placeBlock(Block $block): void{
+	/**
+	 * Function placeBlock
+	 * @param Block $block
+	 * @param int $additionalSeconds
+	 * @return void
+	 */
+	public function placeBlock(Block $block, int $additionalSeconds = 0): void{
 		if (isset($this->destroyedBlocks[encodePosition($block->getPosition())])) {
 			return;
 		}
@@ -224,8 +253,8 @@ class Game{
 			$block->getId() == VanillaBlocks::EMERALD()->getId() => 10,
 			default => 0
 		};
-		$this->placedBlocks[encodePosition($block->getPosition())] = new BlockEntry($block->getPosition(), microtime(true) +$this->arena->getSettings()->blocks_cooldown + $extraTime);
-		Server::getInstance()->broadcastPackets(Server::getInstance()->getOnlinePlayers(), [LevelEventPacket::create(LevelEvent::BLOCK_START_BREAK, intval(round(65535 / (20 * ($this->arena->getSettings()->blocks_cooldown + $extraTime)))), $block->getPosition())]);
+		$this->placedBlocks[encodePosition($block->getPosition())] = new BlockEntry($block->getPosition(), microtime(true) +$this->arena->getSettings()->blocks_cooldown + $extraTime +$additionalSeconds);
+		Server::getInstance()->broadcastPackets(Server::getInstance()->getOnlinePlayers(), [LevelEventPacket::create(LevelEvent::BLOCK_START_BREAK, intval(round(65535 / (20 * ($this->arena->getSettings()->blocks_cooldown +$extraTime +$additionalSeconds)))), $block->getPosition())]);
 	}
 
 	public function filterPlayer(Player $player): bool{

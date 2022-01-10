@@ -238,7 +238,7 @@ class xPlayer extends Player{
 		$this->sendForm(new MenuForm(
 			"%ui.title.voting.map",
 			"",
-			array_map(fn (Arena $arena) => new FunctionalButton($arena->getWorld()->getFolderName(), function (xPlayer $player) use ($arena): void{
+			array_map(fn (Arena $arena) => new FunctionalButton($arena->getWorld()->getFolderName() . "\n§c" . Game::getInstance()->mapVotes[$arena->getWorld()->getFolderName()] . " vote/s", function (xPlayer $player) use ($arena): void{
 				if ($arena->getWorld()->getFolderName() == $player->voted_map) {
 					Game::getInstance()->mapVotes[$player->voted_map]--;
 					$player->voted_map = "";
@@ -246,8 +246,8 @@ class xPlayer extends Player{
 					if (!empty($player->voted_map)) {
 						Game::getInstance()->mapVotes[$player->voted_map]--;
 					}
-					Game::getInstance()->mapVotes[$player->voted_map]++;
 					$player->voted_map = $arena->getWorld()->getFolderName();
+					Game::getInstance()->mapVotes[$player->voted_map]++;
 				}
 			}), Game::getInstance()->getArenas())
 		));
