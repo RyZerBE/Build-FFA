@@ -36,7 +36,9 @@ use xxAROX\BuildFFA\BuildFFA;
 use xxAROX\BuildFFA\entity\BlockEntity;
 use xxAROX\BuildFFA\generic\entry\BlockBreakEntry;
 use xxAROX\BuildFFA\generic\entry\BlockEntry;
+use xxAROX\BuildFFA\items\overwrite\PlatformItem;
 use xxAROX\BuildFFA\items\PlaceHolderItem;
+use xxAROX\BuildFFA\player\xPlayer;
 
 
 /**
@@ -106,7 +108,7 @@ class Game{
 		$w->setNamedTag($w->getNamedTag()->setByte("pop", intval(true)));
 		$basicEnderpearl = (new PlaceHolderItem(new ItemIdentifier(ItemIds::ENDER_EYE, 0), $w=VanillaItems::ENDER_PEARL()->setCount(1), 16));
 		$w->setNamedTag($w->getNamedTag()->setByte("pop", intval(true)));
-		$platform = (new PlaceHolderItem(new ItemIdentifier(ItemIds::STICK, 0), $w=VanillaItems::BLAZE_ROD()->setCount(1), 16));
+		$platform = (new PlaceHolderItem(new ItemIdentifier(ItemIds::STICK, 0), $w=new PlatformItem(), 16, \Closure::fromCallable([$w, "applyCountdown"])));
 		$w->setNamedTag($w->getNamedTag()->setByte("pop", intval(true)));
 
 		$contents = [

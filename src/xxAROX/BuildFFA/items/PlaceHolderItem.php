@@ -7,13 +7,17 @@
 
 declare(strict_types=1);
 namespace xxAROX\BuildFFA\items;
-use pocketmine\block\Block;
-use pocketmine\inventory\Inventory;
+use Closure;
+use DaveRandom\CallbackValidator\BuiltInTypes;
+use DaveRandom\CallbackValidator\CallbackType;
+use DaveRandom\CallbackValidator\ParameterType;
+use DaveRandom\CallbackValidator\ReturnType;
 use pocketmine\item\Item;
 use pocketmine\item\ItemIdentifier;
 use pocketmine\item\ItemUseResult;
 use pocketmine\math\Vector3;
 use pocketmine\player\Player;
+use pocketmine\utils\Utils;
 use Ramsey\Uuid\Uuid;
 use xxAROX\BuildFFA\BuildFFA;
 use xxAROX\BuildFFA\player\xPlayer;
@@ -32,7 +36,10 @@ class PlaceHolderItem extends Item{
 
 	private string $placeholderIdentifier;
 
-	public function __construct(ItemIdentifier $identifier, protected Item $placeholdersItem, protected int $countdown = 0){
+	public function __construct(ItemIdentifier $identifier, protected Item $placeholdersItem, protected int $countdown = 0, protected ?Closure $allowItemCooldown = null){
+		if (!is_null($this->allowItemCooldown)) {
+			Utils::validateCallableSignature(new CallbackType(new ReturnType(BuiltInTypes::BOOL), new ParameterType("player", xPlayer::class)), $this->allowItemCooldown);
+		}
 		$this->placeholderIdentifier = Uuid::uuid4()->toString();
 		$this->placeholdersItem->getNamedTag()->setInt(BuildFFA::TAG_COUNTDOWN, $this->countdown);
 		parent::__construct($identifier, "Placeholder:{$identifier->getId()}:{$identifier->getMeta()}");
@@ -40,6 +47,15 @@ class PlaceHolderItem extends Item{
 		applyReadonlyTag($this);
 		$this->placeholdersItem->setNamedTag($this->placeholdersItem->getNamedTag()->setString("__placeholderId", $this->placeholderIdentifier));
 		$this->setNamedTag($this->getNamedTag()->setString("__placeholderId", $this->placeholderIdentifier));
+	}
+
+	/**
+	 * Function allowItemCooldown
+	 * @param xPlayer $player
+	 * @return bool
+	 */
+	public function allowItemCooldown(xPlayer $player): bool{
+		return is_null($this->allowItemCooldown) ? true : ($this->allowItemCooldown)($player);
 	}
 
 	/**

@@ -7,6 +7,7 @@
 
 declare(strict_types=1);
 namespace xxAROX\BuildFFA\items\overwrite;
+use JetBrains\PhpStorm\Pure;
 use pocketmine\block\Block;
 use pocketmine\item\BlazeRod;
 use pocketmine\item\ItemIdentifier;
@@ -34,6 +35,15 @@ class PlatformItem extends BlazeRod{
 	}
 
 	/**
+	 * Function applyCountdown
+	 * @param xPlayer $player
+	 * @return bool
+	 */
+	#[Pure] public function applyCountdown(xPlayer $player): bool{
+		return !$player->isOnGround();
+	}
+
+	/**
 	 * Function onClickAir
 	 * @param xPlayer $player
 	 * @param Vector3 $directionVector
@@ -41,7 +51,6 @@ class PlatformItem extends BlazeRod{
 	 */
 	public function onClickAir(Player $player, Vector3 $directionVector): ItemUseResult{
 		$player->spawnPlatform();
-		var_dump("HURENSOHn");
 		return ItemUseResult::FAIL();
 	}
 

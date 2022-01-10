@@ -15,7 +15,7 @@ use pocketmine\item\ItemIds;
 use pocketmine\item\ItemUseResult;
 use pocketmine\math\Vector3;
 use pocketmine\player\Player;
-use pocketmine\Server;
+use xxAROX\BuildFFA\game\Game;
 use xxAROX\BuildFFA\player\xPlayer;
 
 
@@ -42,10 +42,10 @@ class SetupItem extends Item{
 	 */
 	public function onClickAir(Player $player, Vector3 $directionVector): ItemUseResult{
 		if (!$player->hasItemCooldown($this)) {
-			Server::getInstance()->dispatchCommand($player, "setup");
+			Game::getInstance()->setup($player);
+			$player->resetItemCooldown($this);
 			return ItemUseResult::FAIL();
 		}
-		$player->resetItemCooldown($this);
 		return parent::onClickAir($player, $directionVector);
 	}
 
@@ -60,10 +60,10 @@ class SetupItem extends Item{
 	 */
 	public function onInteractBlock(Player $player, Block $blockReplace, Block $blockClicked, int $face, Vector3 $clickVector): ItemUseResult{
 		if (!$player->hasItemCooldown($this)) {
-			Server::getInstance()->dispatchCommand($player, "setup");
+			Game::getInstance()->setup($player);
+			$player->resetItemCooldown($this);
 			return ItemUseResult::FAIL();
 		}
-		$player->resetItemCooldown($this);
 		return parent::onInteractBlock($player, $blockReplace, $blockClicked, $face, $clickVector);
 	}
 }

@@ -139,13 +139,23 @@ class xPlayer extends Player{
 
 	public function spawnPlatform(): bool{
 		if (!$this->isOnGround()) {
-			$y = $this->getPosition()->y -6;
-			for ($xx=-2; $xx<2; $xx++) {
-				for ($zz=-2; $zz<2; $zz++) {
-					var_dump($this->getPosition()->x +$xx . ":" . $y . ":" . $this->getPosition()->z +$zz);
-					$this->getWorld()->setBlockAt($this->getPosition()->x +$xx, $y, $this->getPosition()->z +$zz, VanillaBlocks::GLASS());
+			$hand = $this->inventory->getItemInHand();
+			if (!is_null($this->selected_kit->getPlaceholderByIdentifier($hand->getNamedTag()->getString("__placeholderId", "")))) {
+				$this->itemCooldown($hand);
+			}
+			$y = $this->getPosition()->y -7;
+			for ($xx=-2; $xx<=2; $xx++) {
+				for ($zz=-2; $zz<=2; $zz++) {
+					$vector3 = new Vector3($this->getPosition()->x +$xx, $y, $this->getPosition()->z +$zz);
+					$blockBefore = $this->getWorld()->getBlock($vector3);
+					if ($blockBefore->getId() == BlockLegacyIds::AIR) {
+						$this->getWorld()->setBlock($vector3, VanillaBlocks::GLASS());
+						Game::getInstance()->placeBlock($this->getWorld()->getBlock($vector3), 5);
+					}
 				}
 			}
+			$this->teleport(new Vector3($this->getPosition()->x, $y +2, $this->getPosition()->z));
+			$this->fallDistance = 0.0;
 		}
 		return !$this->isOnGround();
 	}
