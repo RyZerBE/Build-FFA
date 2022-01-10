@@ -19,9 +19,9 @@ use JsonSerializable;
  * @project BuildFFA
  */
 class ArenaSettings implements JsonSerializable{
-	public int $respawn_height = 0;
-	public int $protection = 8;
-	public int $blocks_cooldown = 10;
+	public int|float $respawn_height = 0;
+	public int|float $protection = 8;
+	public int|float $blocks_cooldown = 10;
 
 	/**
 	 * ArenaSettings constructor.

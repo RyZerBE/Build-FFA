@@ -14,9 +14,7 @@ use pocketmine\entity\projectile\EnderPearl;
 use pocketmine\event\entity\EntityDamageEvent;
 use pocketmine\event\player\PlayerDeathEvent;
 use pocketmine\item\Item;
-use pocketmine\item\ItemIdentifier;
-use pocketmine\item\ItemIds;
-use pocketmine\item\VanillaItems;
+use pocketmine\math\Vector3;
 use pocketmine\player\GameMode;
 use pocketmine\player\Player;
 use pocketmine\world\sound\EntityLandSound;
@@ -47,14 +45,14 @@ use xxAROX\BuildFFA\items\SpectateItem;
  * @project BuildFFA
  */
 class xPlayer extends Player{
-	public ?Setup $setup = null;
 	protected int $kill_streak = 0;
 	protected int $deaths = 0;
 	protected int $kills = 0;
 	protected ?Kit $selected_kit = null;
-	protected array $inv_sort = [
-	];
+	protected array $inv_sort = [];
 	// NOTE: this is for internal api stuff
+	/** @internal */
+	public ?Setup $setup = null;
 	/** @internal */
 	public bool $is_in_inv_sort = false;
 	/** @internal */

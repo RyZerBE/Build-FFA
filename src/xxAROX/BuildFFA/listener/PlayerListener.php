@@ -160,9 +160,6 @@ class PlayerListener implements Listener{
 		if ($event->getPlayer()->getGamemode()->id() == GameMode::SPECTATOR()->id() && $event->getItem()->getId() == VanillaBlocks::IRON_DOOR()->asItem()->getId()) {
 			$player->__respawn();
 		}
-		if (!is_null($player->setup)) {//WTF?!
-			$player->setup->leave();
-		}
 	}
 
 	public function InventoryTransactionEvent(InventoryTransactionEvent $event): void{

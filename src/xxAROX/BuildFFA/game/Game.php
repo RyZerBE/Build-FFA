@@ -6,9 +6,15 @@
  */
 declare(strict_types=1);
 namespace xxAROX\BuildFFA\game;
+use Frago9876543210\EasyForms\elements\FunctionalButton;
+use Frago9876543210\EasyForms\elements\Slider;
+use Frago9876543210\EasyForms\forms\CustomForm;
+use Frago9876543210\EasyForms\forms\CustomFormResponse;
+use Frago9876543210\EasyForms\forms\MenuForm;
 use pocketmine\block\Block;
 use pocketmine\block\BlockLegacyIds;
 use pocketmine\block\VanillaBlocks;
+use pocketmine\event\block\BlockBreakEvent;
 use pocketmine\item\enchantment\EnchantmentInstance;
 use pocketmine\item\enchantment\VanillaEnchantments;
 use pocketmine\item\ItemFactory;
@@ -16,9 +22,6 @@ use pocketmine\item\ItemIdentifier;
 use pocketmine\item\ItemIds;
 use pocketmine\item\VanillaItems;
 use pocketmine\network\mcpe\protocol\LevelEventPacket;
-use pocketmine\network\mcpe\protocol\PlaySoundPacket;
-use pocketmine\network\mcpe\protocol\SpawnParticleEffectPacket;
-use pocketmine\network\mcpe\protocol\types\DimensionIds;
 use pocketmine\network\mcpe\protocol\types\LevelEvent;
 use pocketmine\player\GameMode;
 use pocketmine\player\Player;
@@ -26,8 +29,6 @@ use pocketmine\scheduler\ClosureTask;
 use pocketmine\Server;
 use pocketmine\utils\SingletonTrait;
 use pocketmine\world\particle\BlockBreakParticle;
-use pocketmine\world\particle\HugeExplodeSeedParticle;
-use pocketmine\world\particle\PortalParticle;
 use pocketmine\world\sound\FizzSound;
 use pocketmine\world\World;
 use xenialdan\apibossbar\BossBar;
@@ -233,6 +234,49 @@ class Game{
 			return false;
 		}
 		return true;
+	}
+
+	public function setup(xPlayer $player): void{
+		$worlds = [];
+		foreach (array_diff(scandir(Server::getInstance()->getDataPath() . "worlds/"), ["..", "."]) as $world) {
+			if (!in_array($world, array_map(fn(Arena $arena) => $arena->getWorld()->getFolderName(), Game::getInstance()->getArenas()))) {
+				$worlds[] = new FunctionalButton($world, function (xPlayer $player) use ($world): void{
+					$player->sendMessage("now break block at respawn_height");
+					$player->setup = new Setup($player, BuildFFA::getInstance()->getDataFolder() . "config.yml", $world, 3, [
+						BlockBreakEvent::class => function (BlockBreakEvent $event): void{
+							/** @var xPlayer $player */
+							$player = $event->getPlayer();
+							if ($player->setup->getCurrentStage() == 1) {
+								$player->setup->configuration["respawn_height"] = $event->getBlock()->getPosition()->y;
+								$player->setup->sendMessage("respawn_height set to " . $event->getBlock()->getPosition()->y);
+								$player->setup->sendMessage("now break block at spawn protection border");
+							} else if ($player->setup->getCurrentStage() == 2) {
+								$player->setup->configuration["protection"] = $event->getBlock()->getPosition()->distance($player->getWorld()->getSpawnLocation());
+								$player->setup->sendMessage("spawn protection set to " . $event->getBlock()->getPosition()->distance($player->getWorld()->getSpawnLocation()));
+								$player->sendForm(new CustomForm("Select block cooldown", [new Slider("Seconds", 0.5, 10, 0.5, 5)], function (xPlayer $player, CustomFormResponse $response): void{
+									$count = $response->getSlider()->getValue();
+									$player->setup->configuration["blocks_cooldown"] = $count;
+									$player->setup->sendMessage("blocks_cooldown set to " . $count);
+									$player->setup->nextStage();
+								}, function (xPlayer $player): void{
+									$player->setup->leave();
+								}));
+							}
+							$player->setup->nextStage();
+						},
+					]);
+				});
+			}
+		}
+		if (count($worlds) == 0) {
+			$player->sendMessage("§cNo new maps found!");
+			return;
+		}
+		$player->sendForm(new MenuForm("New Map", "", $worlds));
+	}
+
+	public function addArena(Arena $arena): void{
+		$this->arenas[] = $arena;
 	}
 
 	/**

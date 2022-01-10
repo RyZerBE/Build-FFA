@@ -52,41 +52,6 @@ class SetupCommand extends \pocketmine\command\Command{
 			$sender->sendMessage("§o§n§cNot f-f-f-for y-y-you!");
 			return;
 		}
-		$worlds = [];
-		foreach (array_diff(scandir(Server::getInstance()->getDataPath() . "worlds/"), ["..", "."]) as $world) {
-			if (!in_array($world, array_map(fn(Arena $arena) => $arena->getWorld()->getFolderName(), Game::getInstance()->getArenas()))) {
-				$worlds[] = new FunctionalButton($world, function (xPlayer $player) use ($world): void{
-					$player->sendMessage("now break block at respawn_height");
-					$player->setup = new Setup($player, BuildFFA::getInstance()->getDataFolder() . "config.yml", $world, 3, [
-						BlockBreakEvent::class => function (BlockBreakEvent $event): void{
-							/** @var xPlayer $player */
-							$player = $event->getPlayer();
-							if ($player->setup->getCurrentStage() == 1) {
-								$player->setup->configuration["respawn_height"] = $event->getBlock()->getPosition()->y;
-								$player->setup->sendMessage("respawn_height set to " . $event->getBlock()->getPosition()->y);
-								$player->setup->sendMessage("now break block at spawn protection border");
-							} else if ($player->setup->getCurrentStage() == 2) {
-								$player->setup->configuration["protection"] = $event->getBlock()->getPosition()->distance($player->getWorld()->getSpawnLocation());
-								$player->setup->sendMessage("spawn protection set to " . $event->getBlock()->getPosition()->distance($player->getWorld()->getSpawnLocation()));
-								$player->sendForm(new CustomForm("Select block cooldown", [new Slider("Seconds", 0.5, 10, 0.5, 5)], function (xPlayer $player, CustomFormResponse $response): void{
-									$count = $response->getSlider()->getValue();
-									$player->setup->configuration["blocks_cooldown"] = $count;
-									$player->setup->sendMessage("blocks_cooldown set to " . $count);
-									$player->setup->nextStage();
-								}, function (xPlayer $player): void{
-									$player->setup->leave();
-								}));
-							}
-							$player->setup->nextStage();
-						},
-					]);
-				});
-			}
-		}
-		if (count($worlds) == 0) {
-			$sender->sendMessage("§cNo new maps found!");
-			return;
-		}
-		$sender->sendForm(new MenuForm("New Map", "", $worlds));
+		Game::getInstance()->setup($sender);
 	}
 }

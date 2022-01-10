@@ -84,22 +84,17 @@ class Setup{
 				$plugin_manager->registerEvent($eventClass, function (Event $event) use ($eventListener): void{
 					if (method_exists($event, "getPlayer")) {
 						$player = $event->getPlayer();
-						if ($player instanceof xPlayer && !is_null($player->setup)) {
-							if ($player->setup->id == $this->id) {
-								if ($event instanceof Cancellable && method_exists($event, "cancel")) {
-									$event->cancel();
-								}
-								if ($player->isSneaking()) {
-									$this->sendMessage("Ignored.");
-									return;
-								}
-								if ($event instanceof Cancellable) {
-									$event->cancel();
-								}
-								($eventListener)($event);
-								if ($event instanceof Cancellable) {
-									$event->cancel();
-								}
+						if ($player instanceof xPlayer && !is_null($player->setup) && $player->setup->id == $this->id) {
+							if ($event instanceof Cancellable && method_exists($event, "cancel")) {
+								$event->cancel();
+							}
+							if ($player->isSneaking()) {
+								$this->sendMessage("Ignored.");
+								return;
+							}
+							($eventListener)($event);
+							if ($event instanceof Cancellable) {
+								$event->cancel();
 							}
 						}
 					}
@@ -134,8 +129,17 @@ class Setup{
 		if ($this->currentStage == $this->maxStage +1) {
 			$this->saveConfiguration();
 			$this->player->teleport($this->player->getServer()->getWorldManager()->getDefaultWorld()->getSafeSpawn());
+			if ($this->world->getFolderName() != Server::getInstance()->getWorldManager()->getDefaultWorld()->getFolderName()) {
+				$worldName = $this->world->getFolderName();
+				Server::getInstance()->getWorldManager()->unloadWorld($this->world);
+				Server::getInstance()->getWorldManager()->loadWorld($worldName);
+				$this->world = Server::getInstance()->getWorldManager()->getWorldByName($worldName);
+			} else {
+				$this->sendMessage("Please restart server!");
+			}
 			$this->player->getNetworkSession()->sendDataPacket(PlaySoundPacket::create("block.composter.fill_success", $this->player->getPosition()->x, $this->player->getPosition()->y, $this->player->getPosition()->z, 1, 1));
 			$this->sendMessage("Setup done!");
+			Game::getInstance()->addArena(new Arena($this->world, new ArenaSettings($this->configuration)));
 			$this->player->setup = null;
 		} else {
 			$this->player->getNetworkSession()->sendDataPacket(PlaySoundPacket::create("block.composter.fill", $this->player->getPosition()->x, $this->player->getPosition()->y, $this->player->getPosition()->z, 1, 1));
