@@ -276,6 +276,7 @@ class xPlayer extends Player{
 		$ev->call();
 
 		if (!$ev->isCancelled()) {
+			$this->inventory->setHeldItemIndex(0);
 			$barrier = applyReadonlyTag(VanillaBlocks::BARRIER()->asItem()->setCustomName("§r"));
 			$this->setGamemode(GameMode::SPECTATOR());
 
