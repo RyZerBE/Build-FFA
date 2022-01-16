@@ -10,6 +10,7 @@ namespace xxAROX\BuildFFA;
 use xxAROX\BuildFFA\event\BuildFFAPlayerChangeInvSortEvent;
 use xxAROX\BuildFFA\event\BuildFFAPlayerRespawnEvent;
 use xxAROX\BuildFFA\event\BuildFFAPlayerSpectatorEvent;
+use xxAROX\BuildFFA\event\BuildFFASpawnPlatformEvent;
 use xxAROX\BuildFFA\event\EnterArenaProtectionAreaEvent;
 use xxAROX\BuildFFA\event\LeaveArenaProtectionAreaEvent;
 use xxAROX\BuildFFA\event\MapChangeEvent;
@@ -70,5 +71,13 @@ class Listener implements \pocketmine\event\Listener{
 	 * @return void
 	 */
 	public function BuildFFAPlayerSpectatorEvent(BuildFFAPlayerSpectatorEvent $event): void{
+	}
+
+	/**
+	 * Function BuildFFASpawnPlatformEvent
+	 * @param BuildFFASpawnPlatformEvent $event
+	 * @return void
+	 */
+	public function BuildFFASpawnPlatformEvent(BuildFFASpawnPlatformEvent $event): void{
 	}
 }

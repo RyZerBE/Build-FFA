@@ -8,6 +8,7 @@ declare(strict_types=1);
 namespace xxAROX\BuildFFA\player;
 use Frago9876543210\EasyForms\elements\FunctionalButton;
 use Frago9876543210\EasyForms\forms\MenuForm;
+use pocketmine\block\BlockFactory;
 use pocketmine\block\BlockLegacyIds;
 use pocketmine\block\VanillaBlocks;
 use pocketmine\entity\projectile\EnderPearl;
@@ -24,6 +25,7 @@ use xxAROX\BuildFFA\BuildFFA;
 use xxAROX\BuildFFA\event\BuildFFAPlayerChangeInvSortEvent;
 use xxAROX\BuildFFA\event\BuildFFAPlayerRespawnEvent;
 use xxAROX\BuildFFA\event\BuildFFAPlayerSpectatorEvent;
+use xxAROX\BuildFFA\event\BuildFFASpawnPlatformEvent;
 use xxAROX\BuildFFA\game\Arena;
 use xxAROX\BuildFFA\game\Game;
 use xxAROX\BuildFFA\game\Kit;
@@ -143,19 +145,29 @@ class xPlayer extends Player{
 			if (!is_null($this->selected_kit->getPlaceholderByIdentifier($hand->getNamedTag()->getString("__placeholderId", "")))) {
 				$this->itemCooldown($hand);
 			}
+			$size = 1;
+			$affectedBlocks = [];
 			$y = $this->getPosition()->y -7;
-			for ($xx=-2; $xx<=2; $xx++) {
-				for ($zz=-2; $zz<=2; $zz++) {
+			for ($xx=-$size; $xx<=$size; $xx++) {
+				for ($zz=-$size; $zz<=$size; $zz++) {
 					$vector3 = new Vector3($this->getPosition()->x +$xx, $y, $this->getPosition()->z +$zz);
 					$blockBefore = $this->getWorld()->getBlock($vector3);
 					if ($blockBefore->getId() == BlockLegacyIds::AIR) {
-						$this->getWorld()->setBlock($vector3, VanillaBlocks::GLASS());
-						Game::getInstance()->placeBlock($this->getWorld()->getBlock($vector3), 5);
+						$affectedBlocks[] = $this->getWorld()->getBlock($vector3);
 					}
 				}
 			}
-			$this->teleport(new Vector3($this->getPosition()->x, $y +2, $this->getPosition()->z));
-			$this->fallDistance = 0.0;
+			$ev = new BuildFFASpawnPlatformEvent($this, $hand, $affectedBlocks,VanillaBlocks::GLASS()->getIdInfo());
+			$ev->call();
+
+			if (!$ev->isCancelled()) {
+				foreach ($ev->getAffectedBlocks() as $affectedBlock) {
+					$this->getWorld()->setBlock($affectedBlock->getPosition(), BlockFactory::getInstance()->get($ev->getBlockIdentifier()->getBlockId(), $ev->getBlockIdentifier()->getVariant()));
+					Game::getInstance()->placeBlock($this->getWorld()->getBlock($affectedBlock->getPosition()), 5);
+				}
+				$this->teleport(new Vector3($this->getPosition()->x, $y +2, $this->getPosition()->z));
+				$this->fallDistance = 0.0;
+			}
 		}
 		return !$this->isOnGround();
 	}
