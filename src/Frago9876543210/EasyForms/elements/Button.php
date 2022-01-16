@@ -43,8 +43,9 @@ class Button extends Element{
 	/**
 	 * @return array
 	 */
-	#[Pure] #[ArrayShape(["text"  => "string",
-						  "image" => "\Frago9876543210\EasyForms\elements\Image|null",
+	#[Pure] #[ArrayShape([
+		"text"  => "string",
+		"image" => "\Frago9876543210\EasyForms\elements\Image|null",
 	])] public function serializeElementData(): array{
 		$data = ["text" => $this->text];
 		if ($this->hasImage()) {

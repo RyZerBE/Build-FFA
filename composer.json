@@ -1,13 +1,13 @@
 {
-    "name": "ryzerbe/buildffa",
-    "autoload": {},
-    "authors": [
-        {
-            "name": "xxAROX",
-            "email": "janmichaelsohn@gmail.com"
-        }
-    ],
-    "require": {
+	"name": "ryzerbe/buildffa",
+	"autoload": {},
+	"authors": [
+		{
+			"name": "xxAROX",
+			"email": "janmichaelsohn@gmail.com"
+		}
+	],
+	"require": {
 		"ext-yaml": "*",
 		"ext-mbstring": "*"
 	}
