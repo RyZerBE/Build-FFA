@@ -7,11 +7,9 @@
 declare(strict_types=1);
 namespace xxAROX\BuildFFA\entity;
 use pocketmine\block\Block;
-use pocketmine\block\utils\Fallable;
 use pocketmine\entity\Entity;
 use pocketmine\entity\Location;
 use pocketmine\entity\object\FallingBlock;
-use pocketmine\event\entity\EntityBlockChangeEvent;
 use pocketmine\world\Position;
 
 

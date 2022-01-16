@@ -4,7 +4,6 @@
  * All rights reserved.
  * I don't want anyone to use my source code without permission.
  */
-
 declare(strict_types=1);
 namespace xxAROX\BuildFFA;
 use xxAROX\BuildFFA\event\BuildFFAPlayerChangeInvSortEvent;

@@ -29,7 +29,7 @@ class ArenaSettings implements JsonSerializable{
 	 */
 	public function __construct(array $data = []){
 		$this->respawn_height = $data["respawn_height"] ?? $this->respawn_height;
-		$this->protection = ($data["protection"] ?? $this->protection) +1; //NO-CONFUSE: plus one, because xPlayer::from_spawn maths.
+		$this->protection = ($data["protection"] ?? $this->protection) + 1; //NO-CONFUSE: plus one, because xPlayer::from_spawn maths.
 		$this->blocks_cooldown = $data["blocks_cooldown"] ?? $this->blocks_cooldown;
 	}
 

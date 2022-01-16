@@ -4,7 +4,6 @@
  * All rights reserved.
  * I don't want anyone to use my source code without permission.
  */
-
 declare(strict_types=1);
 namespace xxAROX\BuildFFA\game;
 use pocketmine\math\Vector3;
@@ -37,33 +36,15 @@ class Arena{
 	}
 
 	/**
-	 * Function getWorld
-	 * @return World
-	 */
-	public function getWorld(): World{
-		return $this->world;
-	}
-
-	/**
-	 * Function getSettings
-	 * @return ArenaSettings
-	 */
-	public function getSettings(): ArenaSettings{
-		return $this->settings;
-	}
-
-	/**
 	 * Function setActive
 	 * @param bool $active
 	 * @return void
 	 */
 	public function setActive(bool $active): void{
 		$this->active = $active;
-
 		if ($this->active) {
 			$ev = new MapChangeEvent();
 			$ev->call();
-
 			foreach (Game::getInstance()->mapVotes as $k => $_) {
 				Game::getInstance()->mapVotes[$k] = 0;
 			}
@@ -92,6 +73,22 @@ class Arena{
 				$worldManager->loadWorld($worldName);
 			}*/
 		}
+	}
+
+	/**
+	 * Function getWorld
+	 * @return World
+	 */
+	public function getWorld(): World{
+		return $this->world;
+	}
+
+	/**
+	 * Function getSettings
+	 * @return ArenaSettings
+	 */
+	public function getSettings(): ArenaSettings{
+		return $this->settings;
 	}
 
 	public function isInProtectionArea(Vector3 $vector3): bool{

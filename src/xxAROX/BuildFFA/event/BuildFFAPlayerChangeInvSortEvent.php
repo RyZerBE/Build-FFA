@@ -4,10 +4,11 @@
  * All rights reserved.
  * I don't want anyone to use my source code without permission.
  */
-
 declare(strict_types=1);
 namespace xxAROX\BuildFFA\event;
+use pocketmine\event\Cancellable;
 use pocketmine\event\CancellableTrait;
+use pocketmine\event\Event;
 use xxAROX\BuildFFA\player\xPlayer;
 
 
@@ -19,8 +20,9 @@ use xxAROX\BuildFFA\player\xPlayer;
  * @ide PhpStorm
  * @project BuildFFA
  */
-class BuildFFAPlayerChangeInvSortEvent extends \pocketmine\event\Event implements \pocketmine\event\Cancellable{
+class BuildFFAPlayerChangeInvSortEvent extends Event implements Cancellable{
 	use CancellableTrait;
+
 
 	public function __construct(protected xPlayer $player, protected array $oldSort, protected array $newSort){
 	}

@@ -7,11 +7,9 @@
 declare(strict_types=1);
 namespace xxAROX\BuildFFA;
 use pocketmine\block\BlockFactory;
-use pocketmine\block\VanillaBlocks;
 use pocketmine\entity\Entity;
 use pocketmine\entity\EntityDataHelper;
 use pocketmine\entity\EntityFactory;
-use pocketmine\entity\Location;
 use pocketmine\entity\object\FallingBlock;
 use pocketmine\item\ItemFactory;
 use pocketmine\nbt\tag\CompoundTag;
@@ -45,7 +43,7 @@ use xxAROX\BuildFFA\listener\PlayerListener;
  */
 class BuildFFA extends PluginBase{
 	const TAG_SORT_TYPE = "xxarox:inv:sort_type";
-	const TAG_READONLY = "xxarox:inv:readonly";
+	const TAG_READONLY  = "xxarox:inv:readonly";
 	const TAG_COUNTDOWN = "xxarox:inv:countdown";
 	use SingletonTrait;
 
@@ -74,10 +72,8 @@ class BuildFFA extends PluginBase{
 		$this->registerItems();
 		$this->registerListeners();
 		$this->registerEntities();
-
 		$arena_data = $this->getConfig()->getAll();
 		$arenas = [];
-
 		foreach ($arena_data as $worldName => $obj) {
 			if ($this->getServer()->getWorldManager()->loadWorld($worldName)) {
 				$this->getLogger()->info("§3Preparing map $worldName..");
@@ -89,9 +85,6 @@ class BuildFFA extends PluginBase{
 			}
 		}
 		new Game($arenas);
-	}
-
-	protected function onDisable(): void{
 	}
 
 	private function registerPermissions(): void{
@@ -120,6 +113,8 @@ class BuildFFA extends PluginBase{
 		EntityFactory::getInstance()->register(BlockEntity::class, function (World $world, CompoundTag $nbt): Entity{
 			return new BlockEntity(EntityDataHelper::parseLocation($nbt, $world), FallingBlock::parseBlockNBT(BlockFactory::getInstance(), $nbt));
 		}, ["buildffa:block"]);
+	}
 
+	protected function onDisable(): void{
 	}
 }

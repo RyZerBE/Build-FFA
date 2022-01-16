@@ -6,20 +6,9 @@
  */
 declare(strict_types=1);
 namespace xxAROX\BuildFFA\command;
-use Frago9876543210\EasyForms\elements\FunctionalButton;
-use Frago9876543210\EasyForms\elements\Slider;
-use Frago9876543210\EasyForms\elements\StepSlider;
-use Frago9876543210\EasyForms\forms\CustomForm;
-use Frago9876543210\EasyForms\forms\CustomFormResponse;
-use Frago9876543210\EasyForms\forms\MenuForm;
+use pocketmine\command\Command;
 use pocketmine\command\CommandSender;
-use pocketmine\event\block\BlockBreakEvent;
-use pocketmine\event\player\PlayerChatEvent;
-use pocketmine\Server;
-use xxAROX\BuildFFA\BuildFFA;
-use xxAROX\BuildFFA\game\Arena;
 use xxAROX\BuildFFA\game\Game;
-use xxAROX\BuildFFA\game\Setup;
 use xxAROX\BuildFFA\player\xPlayer;
 
 
@@ -31,7 +20,7 @@ use xxAROX\BuildFFA\player\xPlayer;
  * @ide PhpStorm
  * @project BuildFFA
  */
-class SetupCommand extends \pocketmine\command\Command{
+class SetupCommand extends Command{
 	public function __construct(){
 		parent::__construct("setup", "Setup command", null, []);
 		$this->setPermission("game.setup");

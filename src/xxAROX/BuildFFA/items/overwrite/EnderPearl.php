@@ -4,7 +4,6 @@
  * All rights reserved.
  * I don't want anyone to use my source code without permission.
  */
-
 declare(strict_types=1);
 namespace xxAROX\BuildFFA\items\overwrite;
 use pocketmine\entity\Location;
@@ -43,13 +42,11 @@ class EnderPearl extends \pocketmine\item\EnderPearl{
 	public function onClickAir(Player $player, Vector3 $directionVector): ItemUseResult{
 		$location = $player->getLocation();
 		$player->itemCooldown($player->getInventory()->getItemInHand());
-
 		$projectile = $this->createEntity(Location::fromObject($player->getEyePos(), $player->getWorld(), $location->yaw, $location->pitch), $player);
 		$projectile->setMotion($directionVector->multiply($this->getThrowForce()));
-
 		$projectileEv = new ProjectileLaunchEvent($projectile);
 		$projectileEv->call();
-		if($projectileEv->isCancelled()){
+		if ($projectileEv->isCancelled()) {
 			$projectile->flagForDespawn();
 			return ItemUseResult::FAIL();
 		}
@@ -57,7 +54,6 @@ class EnderPearl extends \pocketmine\item\EnderPearl{
 		$projectile->spawnToAll();
 		$location->getWorld()->addSound($location, new ThrowSound());
 		$this->pop();
-
 		return ItemUseResult::SUCCESS();
 	}
 }

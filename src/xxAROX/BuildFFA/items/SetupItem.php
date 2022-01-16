@@ -4,10 +4,8 @@
  * All rights reserved.
  * I don't want anyone to use my source code without permission.
  */
-
 declare(strict_types=1);
 namespace xxAROX\BuildFFA\items;
-use Frago9876543210\EasyForms\forms\CustomForm;
 use pocketmine\block\Block;
 use pocketmine\item\Item;
 use pocketmine\item\ItemIdentifier;

@@ -6,6 +6,7 @@
  */
 declare(strict_types=1);
 namespace xxAROX\BuildFFA\game;
+use Closure;
 use Frago9876543210\EasyForms\elements\FunctionalButton;
 use Frago9876543210\EasyForms\elements\Slider;
 use Frago9876543210\EasyForms\forms\CustomForm;
@@ -52,8 +53,7 @@ use xxAROX\BuildFFA\player\xPlayer;
 class Game{
 	const MAP_CHANGE_INTERVAL = (60 * 1);
 	use SingletonTrait;
-
-
+	public array $mapVotes = [];
 	protected ?BossBar $bossBar = null;
 	/** @var Kit[] */
 	protected array $kits = [];
@@ -65,7 +65,6 @@ class Game{
 	protected array $destroyedBlocks = [];
 	/** @var BlockEntry[] */
 	protected array $placedBlocks = [];
-	public array $mapVotes = [];
 
 	/**
 	 * Game constructor.
@@ -76,7 +75,7 @@ class Game{
 		if (count($arenas) >= 1) {
 			if (count($arenas) > 1) {
 				$this->lastArenaChange = time();
-				$this->nextArenaChange = Server::getInstance()->getTick() +(self::MAP_CHANGE_INTERVAL * 20);
+				$this->nextArenaChange = Server::getInstance()->getTick() + (self::MAP_CHANGE_INTERVAL * 20);
 				$this->bossBar = new BossBar();
 			}
 			$this->arenas = $arenas;
@@ -94,84 +93,77 @@ class Game{
 		$this->initKits();
 		BuildFFA::getInstance()->getScheduler()->scheduleRepeatingTask(new ClosureTask(fn() => $this->tick()), 1);
 	}
+
 	private function initKits(): void{
 		$head = VanillaItems::LEATHER_CAP()->setUnbreakable()->addEnchantment(new EnchantmentInstance(VanillaEnchantments::PROTECTION(), 1));
 		$chest = VanillaItems::CHAINMAIL_CHESTPLATE()->setUnbreakable()->addEnchantment(new EnchantmentInstance(VanillaEnchantments::PROTECTION(), 2));
 		$leg = VanillaItems::LEATHER_PANTS()->setUnbreakable()->addEnchantment(new EnchantmentInstance(VanillaEnchantments::PROTECTION(), 1));
 		$feet = VanillaItems::LEATHER_BOOTS()->setUnbreakable()->addEnchantment(new EnchantmentInstance(VanillaEnchantments::PROTECTION(), 1));
 		$air = ItemFactory::air();
-
 		$basicBlocks = VanillaBlocks::SANDSTONE()->asItem()->setCount(64);
 		$basicStick = VanillaItems::STICK()->addEnchantment(new EnchantmentInstance(VanillaEnchantments::KNOCKBACK(), 1))->setCount(1);
 		$basicPickaxe = VanillaItems::IRON_PICKAXE()->setUnbreakable()->addEnchantment(new EnchantmentInstance(VanillaEnchantments::EFFICIENCY(), 2));
 		$basicSword = VanillaItems::GOLDEN_SWORD()->setUnbreakable()->addEnchantment(new EnchantmentInstance(VanillaEnchantments::SHARPNESS(), 1));
 		$basicBow = VanillaItems::BOW()->setUnbreakable()->addEnchantment(new EnchantmentInstance(VanillaEnchantments::INFINITY(), 1));
-		$basicWebs = (new PlaceHolderItem(new ItemIdentifier(ItemIds::BARRIER, 0), $w=VanillaBlocks::COBWEB()->asItem()->setCount(3), 3));
+		$basicWebs = (new PlaceHolderItem(new ItemIdentifier(ItemIds::BARRIER, 0), $w = VanillaBlocks::COBWEB()->asItem()->setCount(3), 3));
 		$w->setNamedTag($w->getNamedTag()->setByte("pop", intval(true)));
-		$basicEnderpearl = (new PlaceHolderItem(new ItemIdentifier(ItemIds::ENDER_EYE, 0), $w=VanillaItems::ENDER_PEARL()->setCount(1), 16));
+		$basicEnderpearl = (new PlaceHolderItem(new ItemIdentifier(ItemIds::ENDER_EYE, 0), $w = VanillaItems::ENDER_PEARL()->setCount(1), 16));
 		$w->setNamedTag($w->getNamedTag()->setByte("pop", intval(true)));
-		$platform = (new PlaceHolderItem(new ItemIdentifier(ItemIds::STICK, 0), $w=new PlatformItem(), 16, \Closure::fromCallable([$w, "applyCountdown"])));
+		$platform = (new PlaceHolderItem(new ItemIdentifier(ItemIds::STICK, 0), $w = new PlatformItem(), 16, Closure::fromCallable([
+			$w,
+			"applyCountdown",
+		])));
 		$w->setNamedTag($w->getNamedTag()->setByte("pop", intval(true)));
-
 		$contents = [
 			"sword"   => $basicSword,
 			"stick"   => $basicStick,
 			"pickaxe" => $basicPickaxe,
 			"web"     => $basicWebs,
-			"blocks"     => $basicBlocks,
+			"blocks"  => $basicBlocks,
 		];
 		$this->kits["%buildffa.kit.rusher"] = new Kit("%buildffa.kit.rusher", $contents, $air, $head, $chest, $leg, $feet);
-
 		$contents = [
 			"sword"   => $basicSword,
 			"stick"   => $basicStick,
-			"bow"   => $basicBow,
+			"bow"     => $basicBow,
 			"pickaxe" => $basicPickaxe,
 			"web"     => $basicWebs,
-			"blocks"     => $basicBlocks,
+			"blocks"  => $basicBlocks,
 		];
 		$this->kits["%buildffa.kit.archer"] = new Kit("%buildffa.kit.archer", $contents, VanillaItems::ARROW()->setCount(1), $head, $chest, $leg, $feet);
-
 		$contents = [
 			"sword"   => $basicSword,
 			"stick"   => $basicStick->addEnchantment(new EnchantmentInstance(VanillaEnchantments::KNOCKBACK(), 2)),
 			"pickaxe" => $basicPickaxe,
 			"web"     => $basicWebs,
-			"blocks"     => $basicBlocks,
+			"blocks"  => $basicBlocks,
 		];
 		$this->kits["%buildffa.kit.knocker"] = new Kit("%buildffa.kit.knocker", $contents, $air, $head, $chest, $leg, $feet);
-
 		$contents = [
-			"sword"   => $basicSword,
-			"stick"   => $basicStick,
-			"enderpearl"     => $basicEnderpearl,
-			"pickaxe" => $basicPickaxe,
-			"web"     => $basicWebs,
+			"sword"      => $basicSword,
+			"stick"      => $basicStick,
+			"enderpearl" => $basicEnderpearl,
+			"pickaxe"    => $basicPickaxe,
+			"web"        => $basicWebs,
 			"blocks"     => $basicBlocks,
 		];
 		$this->kits["%buildffa.kit.enderpearl"] = new Kit("%buildffa.kit.enderpearl", $contents, $air, $head, $chest, $leg, $feet);
-
 		$contents = [
-			"sword"   => $basicSword,
-			"stick"   => $basicStick,
-			"platform"     => $platform,
-			"pickaxe" => $basicPickaxe,
-			"web"     => $basicWebs,
-			"blocks"     => $basicBlocks,
+			"sword"    => $basicSword,
+			"stick"    => $basicStick,
+			"platform" => $platform,
+			"pickaxe"  => $basicPickaxe,
+			"web"      => $basicWebs,
+			"blocks"   => $basicBlocks,
 		];
 		$this->kits["%buildffa.kit.platform"] = new Kit("%buildffa.kit.platform", $contents, $air, $head, $chest, $leg, $feet);
 	}
 
-
-	public function getKit(?string $name): Kit{
-		return $this->kits[$name] ?? $this->kits[array_rand($this->kits)];
-	}
-
 	private function tick(): void{
 		if (!is_null($this->bossBar)) {
-			$this->bossBar->setPercentage(((self::MAP_CHANGE_INTERVAL *20) /100 *($this->nextArenaChange -Server::getInstance()->getTick())) /100);
+			$this->bossBar->setPercentage(((self::MAP_CHANGE_INTERVAL * 20) / 100 * ($this->nextArenaChange - Server::getInstance()->getTick())) / 100);
 			foreach (Server::getInstance()->getOnlinePlayers() as $onlinePlayer) {
-				$minutes = intval(round((($this->nextArenaChange -Server::getInstance()->getTick()) /20 /60)));
+				$minutes = intval(round((($this->nextArenaChange - Server::getInstance()->getTick()) / 20 / 60)));
 				if ($minutes > 0) {
 					$onlinePlayer->sendActionBarMessage("Map reset in " . $minutes . " minutes.");
 				} else {
@@ -200,7 +192,7 @@ class Game{
 					unset($this->arena);
 					$this->arena = $arena;
 					$this->lastArenaChange = time();
-					$this->nextArenaChange = Server::getInstance()->getTick() +(Game::MAP_CHANGE_INTERVAL *20);
+					$this->nextArenaChange = Server::getInstance()->getTick() + (Game::MAP_CHANGE_INTERVAL * 20);
 					unset($current);
 					break;
 				}
@@ -228,6 +220,10 @@ class Game{
 		}
 	}
 
+	public function getKit(?string $name): Kit{
+		return $this->kits[$name] ?? $this->kits[array_rand($this->kits)];
+	}
+
 	/**
 	 * Function breakBlock
 	 * @param Block $block
@@ -240,7 +236,7 @@ class Game{
 			return;
 		}
 		if (!isset($this->destroyedBlocks[encodePosition($block->getPosition())])) { //JIC
-			$this->destroyedBlocks[encodePosition($block->getPosition())] = new BlockBreakEntry($block, $block->getPosition(), microtime(true) +$this->arena->getSettings()->blocks_cooldown +$additionalSeconds);
+			$this->destroyedBlocks[encodePosition($block->getPosition())] = new BlockBreakEntry($block, $block->getPosition(), microtime(true) + $this->arena->getSettings()->blocks_cooldown + $additionalSeconds);
 		}
 	}
 
@@ -259,8 +255,8 @@ class Game{
 			$block->getId() == VanillaBlocks::EMERALD()->getId() => 10,
 			default => 0
 		};
-		$this->placedBlocks[encodePosition($block->getPosition())] = new BlockEntry($block->getPosition(), microtime(true) +$this->arena->getSettings()->blocks_cooldown + $extraTime +$additionalSeconds);
-		Server::getInstance()->broadcastPackets(Server::getInstance()->getOnlinePlayers(), [LevelEventPacket::create(LevelEvent::BLOCK_START_BREAK, intval(round(65535 / (20 * ($this->arena->getSettings()->blocks_cooldown +$extraTime +$additionalSeconds)))), $block->getPosition())]);
+		$this->placedBlocks[encodePosition($block->getPosition())] = new BlockEntry($block->getPosition(), microtime(true) + $this->arena->getSettings()->blocks_cooldown + $extraTime + $additionalSeconds);
+		Server::getInstance()->broadcastPackets(Server::getInstance()->getOnlinePlayers(), [LevelEventPacket::create(LevelEvent::BLOCK_START_BREAK, intval(round(65535 / (20 * ($this->arena->getSettings()->blocks_cooldown + $extraTime + $additionalSeconds)))), $block->getPosition())]);
 	}
 
 	public function filterPlayer(Player $player): bool{
@@ -312,6 +308,14 @@ class Game{
 		$player->sendForm(new MenuForm("New Map", "", $worlds));
 	}
 
+	/**
+	 * Function getArenas
+	 * @return array
+	 */
+	public function getArenas(): array{
+		return $this->arenas;
+	}
+
 	public function addArena(Arena $arena): void{
 		$this->arenas[] = $arena;
 	}
@@ -346,13 +350,5 @@ class Game{
 	 */
 	public function getNextArenaChange(): float|int{
 		return $this->nextArenaChange;
-	}
-
-	/**
-	 * Function getArenas
-	 * @return array
-	 */
-	public function getArenas(): array{
-		return $this->arenas;
 	}
 }

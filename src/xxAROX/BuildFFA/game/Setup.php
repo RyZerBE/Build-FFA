@@ -4,7 +4,6 @@
  * All rights reserved.
  * I don't want anyone to use my source code without permission.
  */
-
 declare(strict_types=1);
 namespace xxAROX\BuildFFA\game;
 use JetBrains\PhpStorm\ArrayShape;
@@ -33,16 +32,15 @@ use xxAROX\BuildFFA\player\xPlayer;
  * @project BuildFFA
  */
 class Setup{
-	const PREFIX = "§cSetup §l§8»§r §7§o";
+	const PREFIX     = "§cSetup §l§8»§r §7§o";
 	const SETUP_NONE = 0;
-
+	public array $configuration = [];
 	protected xPlayer $player;
 	protected string $id;
 	protected string $path;
 	protected World $world;
 	protected int $maxStage = 0;
 	protected int $currentStage = 0;
-	public array $configuration = [];
 
 	/**
 	 * BaseSetup constructor.
@@ -52,7 +50,7 @@ class Setup{
 	 * @param int $maxStage
 	 * @param array $events
 	 */
-	public function __construct(xPlayer $player, string $path, string $world, int $maxStage = 1, array $events  =[]){
+	public function __construct(xPlayer $player, string $path, string $world, int $maxStage = 1, array $events = []){
 		$this->player = $player;
 		if (!$player->getServer()->getWorldManager()->isWorldLoaded($world)) {
 			if (!$player->getServer()->getWorldManager()->loadWorld($world, true)) {
@@ -68,9 +66,8 @@ class Setup{
 		$this->maxStage = $maxStage;
 		$this->configuration = $this->getDefaultConfiguration();
 		$this->configuration["world"] = $this->world->getFolderName();
-
 		$plugin_manager = Server::getInstance()->getPluginManager();
-		$plugin_manager->registerEvent(PlayerQuitEvent::class, function(PlayerQuitEvent $event): void{
+		$plugin_manager->registerEvent(PlayerQuitEvent::class, function (PlayerQuitEvent $event): void{
 			$player = $event->getPlayer();
 			if ($player instanceof xPlayer && !is_null($player->setup)) {
 				if ($player->setup->id == $this->id) {
@@ -78,7 +75,6 @@ class Setup{
 				}
 			}
 		}, EventPriority::MONITOR, BuildFFA::getInstance());
-
 		foreach ($events as $eventClass => $eventListener) {
 			if (class_exists($eventClass) && method_exists($eventClass, "getPlayer")) {
 				$plugin_manager->registerEvent($eventClass, function (Event $event) use ($eventListener): void{
@@ -110,6 +106,23 @@ class Setup{
 		$this->player->sendMessage(self::PREFIX . $message);
 	}
 
+	public function leave(): void{
+		$this->player->setup = null;
+		$this->currentStage = 0;
+		$this->configuration = $this->getDefaultConfiguration();
+	}
+
+	/**
+	 * Function getDefaultConfiguration
+	 * @return array
+	 */
+	#[Pure] #[ArrayShape(["respawnHeight"   => "int",
+						  "protection"      => "int",
+						  "blocks_cooldown" => "int",
+	])] protected function getDefaultConfiguration(): array{
+		return (new ArenaSettings())->jsonSerialize();
+	}
+
 	/**
 	 * Function getPlayer
 	 * @return xPlayer
@@ -118,15 +131,9 @@ class Setup{
 		return $this->player;
 	}
 
-	public function leave(): void{
-		$this->player->setup = null;
-		$this->currentStage = 0;
-		$this->configuration = $this->getDefaultConfiguration();
-	}
-
 	public function nextStage(): void{
 		$this->currentStage++;
-		if ($this->currentStage == $this->maxStage +1) {
+		if ($this->currentStage == $this->maxStage + 1) {
 			$this->saveConfiguration();
 			$this->player->teleport($this->player->getServer()->getWorldManager()->getDefaultWorld()->getSafeSpawn());
 			if ($this->world->getFolderName() != Server::getInstance()->getWorldManager()->getDefaultWorld()->getFolderName()) {
@@ -147,14 +154,6 @@ class Setup{
 	}
 
 	/**
-	 * Function getDefaultConfiguration
-	 * @return array
-	 */
-	#[Pure] #[ArrayShape(["respawnHeight" => "int", "protection" => "int", "blocks_cooldown" => "int"])] protected function getDefaultConfiguration(): array{
-		return (new ArenaSettings())->jsonSerialize();
-	}
-
-	/**
 	 * Function saveConfiguration
 	 * @return void
 	 */
@@ -167,6 +166,14 @@ class Setup{
 	}
 
 	/**
+	 * Function getCurrentStage
+	 * @return int
+	 */
+	public function getCurrentStage(): int{
+		return $this->currentStage;
+	}
+
+	/**
 	 * Function addPos
 	 * @param Position $position
 	 * @param float|int $x
@@ -175,14 +182,6 @@ class Setup{
 	 * @return Position
 	 */
 	protected function addPos(Position $position, float|int $x, float|int $y = 0, float|int $z = 0): Position{
-		return new Position($position->x +$x, $position->y +$y, $position->z +$z, $position->getWorld());
-	}
-
-	/**
-	 * Function getCurrentStage
-	 * @return int
-	 */
-	public function getCurrentStage(): int{
-		return $this->currentStage;
+		return new Position($position->x + $x, $position->y + $y, $position->z + $z, $position->getWorld());
 	}
 }

@@ -4,7 +4,6 @@
  * All rights reserved.
  * I don't want anyone to use my source code without permission.
  */
-
 declare(strict_types=1);
 namespace xxAROX\BuildFFA\event;
 use pocketmine\event\Cancellable;
@@ -24,6 +23,7 @@ use xxAROX\BuildFFA\player\xPlayer;
  */
 class BuildFFAPlayerRespawnEvent extends Event implements Cancellable{
 	use CancellableTrait;
+
 
 	public function __construct(protected xPlayer $player, protected Arena $arena){
 	}

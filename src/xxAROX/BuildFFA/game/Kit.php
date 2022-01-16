@@ -69,10 +69,10 @@ class Kit{
 		$player->getArmorInventory()->clearAll();
 		$player->getCursorInventory()->clearAll();
 		$player->getOffHandInventory()->clearAll();
-		for ($slot=9; $slot<$player->getInventory()->getSize(); $slot++) {
+		for ($slot = 9; $slot < $player->getInventory()->getSize(); $slot++) {
 			$player->getInventory()->setItem($slot, applyReadonlyTag(VanillaBlocks::BARRIER()->asItem()->setCustomName("§r")));
 		}
-		for ($slot=0; $slot<$player->getCraftingGrid()->getSize(); $slot++) {
+		for ($slot = 0; $slot < $player->getCraftingGrid()->getSize(); $slot++) {
 			$player->getCraftingGrid()->setItem($slot, applyReadonlyTag(VanillaBlocks::BARRIER()->asItem()->setCustomName("§r")));
 		}
 		foreach ($this->contents as $type => $item) {

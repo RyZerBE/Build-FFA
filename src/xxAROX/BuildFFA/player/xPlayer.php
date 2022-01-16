@@ -47,12 +47,6 @@ use xxAROX\BuildFFA\items\SpectateItem;
  * @project BuildFFA
  */
 class xPlayer extends Player{
-	protected int $kill_streak = 0;
-	protected int $deaths = 0;
-	protected int $kills = 0;
-	protected ?Kit $selected_kit = null;
-	protected array $inv_sort = [];
-	// NOTE: this is for internal api stuff
 	/** @internal */
 	public ?Setup $setup = null;
 	/** @internal */
@@ -63,8 +57,14 @@ class xPlayer extends Player{
 	public string $voted_map = "";
 	/** @internal */
 	public array $itemCountdowns = [];
+	// NOTE: this is for internal api stuff
 	/** @internal */
 	public array $enderpearls = [];
+	protected int $kill_streak = 0;
+	protected int $deaths = 0;
+	protected int $kills = 0;
+	protected ?Kit $selected_kit = null;
+	protected array $inv_sort = [];
 
 	/**
 	 * Function load
@@ -103,89 +103,6 @@ class xPlayer extends Player{
 		$this->saveInvSort();
 	}
 
-	/**
-	 * Function sendOtakaItems
-	 * @return void
-	 */
-	public function sendOtakaItems(){
-		if ($this->gamemode->id() == GameMode::SPECTATOR()->id()) {
-			return;
-		}
-		$barrier = applyReadonlyTag(VanillaBlocks::BARRIER()->asItem()->setCustomName("§r"));
-
-		$this->inventory->clearAll();
-		$this->armorInventory->clearAll();
-		$this->offHandInventory->clearAll();
-		$this->cursorInventory->clearAll();
-
-		$this->armorInventory->setHelmet($barrier);
-		$this->armorInventory->setChestplate($barrier);
-		$this->armorInventory->setLeggings($barrier);
-		$this->armorInventory->setBoots($barrier);
-
-		for ($slot=9; $slot<$this->inventory->getSize(); $slot++) {
-			$this->inventory->setItem($slot, $barrier);
-		}
-		for ($slot=0; $slot<$this->craftingGrid->getSize(); $slot++) {
-			$this->craftingGrid->setItem($slot, $barrier);
-		}
-
-		$this->inventory->setItem(0, new InvSortItem());
-		$this->inventory->setItem(1, new MapItem());
-		$this->inventory->setItem(4, new KitItem());
-		if ($this->hasPermission("game.setup")) {
-			$this->inventory->setItem(7, new SetupItem());
-		}
-		$this->inventory->setItem(8, new SpectateItem());
-	}
-
-	public function spawnPlatform(): bool{
-		if (!$this->isOnGround()) {
-			$hand = $this->inventory->getItemInHand();
-			if (!is_null($this->selected_kit->getPlaceholderByIdentifier($hand->getNamedTag()->getString("__placeholderId", "")))) {
-				$this->itemCooldown($hand);
-			}
-			$size = 1;
-			$affectedBlocks = [];
-			$y = $this->getPosition()->y -7;
-			for ($xx=-$size; $xx<=$size; $xx++) {
-				for ($zz=-$size; $zz<=$size; $zz++) {
-					$vector3 = new Vector3($this->getPosition()->x +$xx, $y, $this->getPosition()->z +$zz);
-					$blockBefore = $this->getWorld()->getBlock($vector3);
-					if ($blockBefore->getId() == BlockLegacyIds::AIR) {
-						$affectedBlocks[] = $this->getWorld()->getBlock($vector3);
-					}
-				}
-			}
-			$ev = new BuildFFASpawnPlatformEvent($this, $hand, $affectedBlocks,VanillaBlocks::GLASS()->getIdInfo());
-			$ev->call();
-
-			if (!$ev->isCancelled()) {
-				foreach ($ev->getAffectedBlocks() as $affectedBlock) {
-					$this->getWorld()->setBlock($affectedBlock->getPosition(), BlockFactory::getInstance()->get($ev->getBlockIdentifier()->getBlockId(), $ev->getBlockIdentifier()->getVariant()));
-					Game::getInstance()->placeBlock($this->getWorld()->getBlock($affectedBlock->getPosition()), 5);
-				}
-				$this->teleport(new Vector3($this->getPosition()->x, $y +2, $this->getPosition()->z));
-				$this->fallDistance = 0.0;
-			}
-		}
-		return !$this->isOnGround();
-	}
-
-	/**
-	 * Function toggleSneak
-	 * @param bool $sneak
-	 * @return bool
-	 */
-	public function toggleSneak(bool $sneak): bool{
-		if ($this->is_in_inv_sort && !$sneak) {
-			$this->saveInvSort();
-			$this->is_in_inv_sort = false;
-			$this->sendOtakaItems();
-		}
-		return parent::toggleSneak($sneak);
-	}
-
 	public function saveInvSort(): void{
 		$newSort = [];
 		$sameSlot = [];
@@ -202,8 +119,8 @@ class xPlayer extends Player{
 					if ($hotbar_type == $type/* && ($this->inv_sort[$type] ?? -1) != $hotbar_slot*/) {
 						if (!isset(array_flip($this->inv_sort)[$hotbar_slot])) {
 							$newSort[$type] = $hotbar_slot;
-						/*} else {
-							$sameSlot[] = $type;*/
+							/*} else {
+								$sameSlot[] = $type;*/
 						}
 					}
 				}
@@ -233,6 +150,98 @@ class xPlayer extends Player{
 		}
 	}
 
+	public function spawnPlatform(): bool{
+		if (!$this->isOnGround()) {
+			$hand = $this->inventory->getItemInHand();
+			if (!is_null($this->selected_kit->getPlaceholderByIdentifier($hand->getNamedTag()->getString("__placeholderId", "")))) {
+				$this->itemCooldown($hand);
+			}
+			$size = 1;
+			$affectedBlocks = [];
+			$y = $this->getPosition()->y - 7;
+			for ($xx = -$size; $xx <= $size; $xx++) {
+				for ($zz = -$size; $zz <= $size; $zz++) {
+					$vector3 = new Vector3($this->getPosition()->x + $xx, $y, $this->getPosition()->z + $zz);
+					$blockBefore = $this->getWorld()->getBlock($vector3);
+					if ($blockBefore->getId() == BlockLegacyIds::AIR) {
+						$affectedBlocks[] = $this->getWorld()->getBlock($vector3);
+					}
+				}
+			}
+			$ev = new BuildFFASpawnPlatformEvent($this, $hand, $affectedBlocks, VanillaBlocks::GLASS()->getIdInfo());
+			$ev->call();
+			if (!$ev->isCancelled()) {
+				foreach ($ev->getAffectedBlocks() as $affectedBlock) {
+					$this->getWorld()->setBlock($affectedBlock->getPosition(), BlockFactory::getInstance()->get($ev->getBlockIdentifier()->getBlockId(), $ev->getBlockIdentifier()->getVariant()));
+					Game::getInstance()->placeBlock($this->getWorld()->getBlock($affectedBlock->getPosition()), 5);
+				}
+				$this->teleport(new Vector3($this->getPosition()->x, $y + 2, $this->getPosition()->z));
+				$this->fallDistance = 0.0;
+			}
+		}
+		return !$this->isOnGround();
+	}
+
+	public function itemCooldown(Item $item): void{
+		$placeHolderItem = $this->selected_kit->getPlaceholderByIdentifier($item->getNamedTag()->getString("__placeholderId", ""));
+		if (!is_null($placeHolderItem) && $placeHolderItem->hasCountdown() && !isset($player->itemCountdowns[encodeItem($item)])) {
+			$this->itemCountdowns[encodeItem($item)] = [
+				$placeHolderItem->getCountdown(),
+				$item,
+				$this->inventory->getHeldItemIndex(),
+				$placeHolderItem,
+			];
+			$placeHolderItem->setCount($placeHolderItem->getCountdown());
+			$this->inventory->setItemInHand($placeHolderItem);
+		}
+	}
+
+	/**
+	 * Function toggleSneak
+	 * @param bool $sneak
+	 * @return bool
+	 */
+	public function toggleSneak(bool $sneak): bool{
+		if ($this->is_in_inv_sort && !$sneak) {
+			$this->saveInvSort();
+			$this->is_in_inv_sort = false;
+			$this->sendOtakaItems();
+		}
+		return parent::toggleSneak($sneak);
+	}
+
+	/**
+	 * Function sendOtakaItems
+	 * @return void
+	 */
+	public function sendOtakaItems(){
+		if ($this->gamemode->id() == GameMode::SPECTATOR()->id()) {
+			return;
+		}
+		$barrier = applyReadonlyTag(VanillaBlocks::BARRIER()->asItem()->setCustomName("§r"));
+		$this->inventory->clearAll();
+		$this->armorInventory->clearAll();
+		$this->offHandInventory->clearAll();
+		$this->cursorInventory->clearAll();
+		$this->armorInventory->setHelmet($barrier);
+		$this->armorInventory->setChestplate($barrier);
+		$this->armorInventory->setLeggings($barrier);
+		$this->armorInventory->setBoots($barrier);
+		for ($slot = 9; $slot < $this->inventory->getSize(); $slot++) {
+			$this->inventory->setItem($slot, $barrier);
+		}
+		for ($slot = 0; $slot < $this->craftingGrid->getSize(); $slot++) {
+			$this->craftingGrid->setItem($slot, $barrier);
+		}
+		$this->inventory->setItem(0, new InvSortItem());
+		$this->inventory->setItem(1, new MapItem());
+		$this->inventory->setItem(4, new KitItem());
+		if ($this->hasPermission("game.setup")) {
+			$this->inventory->setItem(7, new SetupItem());
+		}
+		$this->inventory->setItem(8, new SpectateItem());
+	}
+
 	/**
 	 * Function sendMapSelect
 	 * @return void
@@ -247,10 +256,7 @@ class xPlayer extends Player{
 			$this->sendMessage("§cOnly one map found, you have no choice..");// TODO: language stuff
 			return;
 		}
-		$this->sendForm(new MenuForm(
-			"%ui.title.voting.map",
-			"",
-			array_map(fn (Arena $arena) => new FunctionalButton($arena->getWorld()->getFolderName() . "\n§c" . Game::getInstance()->mapVotes[$arena->getWorld()->getFolderName()] . " vote/s", function (xPlayer $player) use ($arena): void{
+		$this->sendForm(new MenuForm("%ui.title.voting.map", "", array_map(fn(Arena $arena) => new FunctionalButton($arena->getWorld()->getFolderName() . "\n§c" . Game::getInstance()->mapVotes[$arena->getWorld()->getFolderName()] . " vote/s", function (xPlayer $player) use ($arena): void{
 				if ($arena->getWorld()->getFolderName() == $player->voted_map) {
 					Game::getInstance()->mapVotes[$player->voted_map]--;
 					$player->voted_map = "";
@@ -261,8 +267,7 @@ class xPlayer extends Player{
 					$player->voted_map = $arena->getWorld()->getFolderName();
 					Game::getInstance()->mapVotes[$player->voted_map]++;
 				}
-			}), Game::getInstance()->getArenas())
-		));
+			}), Game::getInstance()->getArenas())));
 	}
 
 	public function sendKitSelect(): void{
@@ -274,52 +279,69 @@ class xPlayer extends Player{
 			$this->sendMessage("§cOnly one kit found, you have no choice..");// TODO: language stuff
 			return;
 		}
-		$this->sendForm(new MenuForm(
-			"%ui.title.voting.kit",
-			"",
-			array_map(fn (Kit $kit) => new FunctionalButton($kit->getDisplayName(), function (xPlayer $player) use ($kit): void{
+		$this->sendForm(new MenuForm("%ui.title.voting.kit", "", array_map(fn(Kit $kit) => new FunctionalButton($kit->getDisplayName(), function (xPlayer $player) use ($kit): void{
 				$player->setSelectedKit($kit);
-			}), Game::getInstance()->getKits())
-		));
+			}), Game::getInstance()->getKits())));
 	}
 
 	public function spectate(): void{
 		$ev = new BuildFFAPlayerSpectatorEvent($this, Game::getInstance()->getArena());
 		$ev->call();
-
 		if (!$ev->isCancelled()) {
 			$this->inventory->setHeldItemIndex(0);
 			$barrier = applyReadonlyTag(VanillaBlocks::BARRIER()->asItem()->setCustomName("§r"));
 			$this->setGamemode(GameMode::SPECTATOR());
-
 			$this->inventory->clearAll();
 			$this->cursorInventory->clearAll();
 			$this->armorInventory->clearAll();
 			$this->offHandInventory->clearAll();
 			$this->craftingGrid->clearAll();
-
 			$this->armorInventory->setHelmet($barrier);
 			$this->armorInventory->setChestplate($barrier);
 			$this->armorInventory->setLeggings($barrier);
 			$this->armorInventory->setBoots($barrier);
-
-			for ($slot=9; $slot<$this->inventory->getSize(); $slot++) {
+			for ($slot = 9; $slot < $this->inventory->getSize(); $slot++) {
 				$this->inventory->setItem($slot, $barrier);
 			}
-			for ($slot=0; $slot<$this->craftingGrid->getSize(); $slot++) {
+			for ($slot = 0; $slot < $this->craftingGrid->getSize(); $slot++) {
 				$this->craftingGrid->setItem($slot, $barrier);
 			}
 			$this->inventory->setItem(8, VanillaBlocks::IRON_DOOR()->asItem()->setCustomName("§r"));
 		}
 	}
 
-	public function itemCooldown(Item $item): void{
-		$placeHolderItem = $this->selected_kit->getPlaceholderByIdentifier($item->getNamedTag()->getString("__placeholderId", ""));
-		if (!is_null($placeHolderItem) && $placeHolderItem->hasCountdown() && !isset($player->itemCountdowns[encodeItem($item)])) {
-			$this->itemCountdowns[encodeItem($item)] = [$placeHolderItem->getCountdown(), $item, $this->inventory->getHeldItemIndex(), $placeHolderItem];
-			$placeHolderItem->setCount($placeHolderItem->getCountdown());
-			$this->inventory->setItemInHand($placeHolderItem);
-		}
+	/**
+	 * Function getInvSort
+	 * @return array
+	 */
+	public function getInvSort(): array{
+		return $this->inv_sort;
+	}
+
+	/**
+	 * Function setInvSort
+	 * @param array|int[] $inv_sort
+	 * @return void
+	 */
+	public function setInvSort(array $inv_sort): void{
+		$this->inv_sort = $inv_sort;
+	}
+
+	/**
+	 * Function getSelectedKit
+	 * @return ?Kit
+	 */
+	public function getSelectedKit(): ?Kit{
+		return $this->selected_kit;
+	}
+
+	/**
+	 * Function setSelectedKit
+	 * @param null|Kit $selected_kit
+	 * @return void
+	 */
+	public function setSelectedKit(?Kit $selected_kit): void{
+		$this->selected_kit = $selected_kit;
 	}
 
 	/**
@@ -350,37 +372,6 @@ class xPlayer extends Player{
 	}
 
 	/**
-	 * Function entityBaseTick
-	 * @param int $tickDiff
-	 * @return bool
-	 */
-	protected function entityBaseTick(int $tickDiff = 1): bool{
-		if ($this->getPosition()->y <= Game::getInstance()->getArena()->getSettings()->respawn_height) {
-			$this->__respawn();
-		}
-		if ($this->server->getTick() %20 == 0) {
-			foreach ($this->itemCountdowns as $_ => $obj) {
-				$this->itemCountdowns[$_][0]--;
-				$secondsLeft = $this->itemCountdowns[$_][0];
-				$slot = $this->itemCountdowns[$_][2];
-				/** @var PlaceHolderItem $placeholder_item */
-				$placeholder_item = $this->itemCountdowns[$_][3];
-
-				if ($secondsLeft <= 0) {
-					unset($this->itemCountdowns[$_]);
-					$this->inventory->setItem($slot, $placeholder_item->getPlaceholdersItem());
-				} else {
-					$item = clone $placeholder_item;
-					$item->setCount(intval(round($secondsLeft)));
-					$item->setCustomName("§r§8{$secondsLeft} seconds left");
-					$this->inventory->setItem($slot, $item);
-				}
-			}
-		}
-		return parent::entityBaseTick($tickDiff);
-	}
-
-	/**
 	 * Function __respawn
 	 * @return void
 	 */
@@ -404,6 +395,36 @@ class xPlayer extends Player{
 			$this->teleport(Game::getInstance()->getArena()->getWorld()->getSafeSpawn());
 			$this->sendOtakaItems();
 		}
+	}
+
+	/**
+	 * Function entityBaseTick
+	 * @param int $tickDiff
+	 * @return bool
+	 */
+	protected function entityBaseTick(int $tickDiff = 1): bool{
+		if ($this->getPosition()->y <= Game::getInstance()->getArena()->getSettings()->respawn_height) {
+			$this->__respawn();
+		}
+		if ($this->server->getTick() % 20 == 0) {
+			foreach ($this->itemCountdowns as $_ => $obj) {
+				$this->itemCountdowns[$_][0]--;
+				$secondsLeft = $this->itemCountdowns[$_][0];
+				$slot = $this->itemCountdowns[$_][2];
+				/** @var PlaceHolderItem $placeholder_item */
+				$placeholder_item = $this->itemCountdowns[$_][3];
+				if ($secondsLeft <= 0) {
+					unset($this->itemCountdowns[$_]);
+					$this->inventory->setItem($slot, $placeholder_item->getPlaceholdersItem());
+				} else {
+					$item = clone $placeholder_item;
+					$item->setCount(intval(round($secondsLeft)));
+					$item->setCustomName("§r§8{$secondsLeft} seconds left");
+					$this->inventory->setItem($slot, $item);
+				}
+			}
+		}
+		return parent::entityBaseTick($tickDiff);
 	}
 
 	/**
@@ -438,39 +459,5 @@ class xPlayer extends Player{
 			$source->cancel();
 		}
 		parent::attack($source);
-	}
-
-	/**
-	 * Function getInvSort
-	 * @return array
-	 */
-	public function getInvSort(): array{
-		return $this->inv_sort;
-	}
-
-	/**
-	 * Function setInvSort
-	 * @param array|int[] $inv_sort
-	 * @return void
-	 */
-	public function setInvSort(array $inv_sort): void{
-		$this->inv_sort = $inv_sort;
-	}
-
-	/**
-	 * Function setSelectedKit
-	 * @param null|Kit $selected_kit
-	 * @return void
-	 */
-	public function setSelectedKit(?Kit $selected_kit): void{
-		$this->selected_kit = $selected_kit;
-	}
-
-	/**
-	 * Function getSelectedKit
-	 * @return ?Kit
-	 */
-	public function getSelectedKit(): ?Kit{
-		return $this->selected_kit;
 	}
 }

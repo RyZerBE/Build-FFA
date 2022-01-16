@@ -4,7 +4,6 @@
  * All rights reserved.
  * I don't want anyone to use my source code without permission.
  */
-
 declare(strict_types=1);
 namespace xxAROX\BuildFFA\items;
 use Closure;
@@ -33,6 +32,7 @@ use xxAROX\BuildFFA\player\xPlayer;
  */
 class PlaceHolderItem extends Item{
 	use NonPlaceableItemTrait;
+
 
 	private string $placeholderIdentifier;
 
