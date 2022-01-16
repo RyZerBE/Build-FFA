@@ -24,12 +24,20 @@ use xxAROX\BuildFFA\game\Game;
  */
 class BlockListener implements Listener{
 	public function BlockBreakEvent(BlockBreakEvent $event): void{
+		if (Game::getInstance()->getArena()->isInProtectionArea($event->getBlock()->getPosition()->asVector3())) {
+			$event->cancel();
+			return;
+		}
 		if (Game::getInstance()->filterPlayer($event->getPlayer())) {
 			Game::getInstance()->breakBlock($event->getBlock());
 			$event->setDrops([]);
 		}
 	}
 	public function BlockPlaceEvent(BlockPlaceEvent $event): void{
+		if (Game::getInstance()->getArena()->isInProtectionArea($event->getBlock()->getPosition()->asVector3())) {
+			$event->cancel();
+			return;
+		}
 		if (Game::getInstance()->filterPlayer($event->getPlayer())) {
 			if (!boolval($event->getItem()->getNamedTag()->getByte("pop", intval(false)))) {
 				$event->getItem()->setCount((random_int(1, 3) == 1) ? $event->getItem()->getMaxStackSize() : $event->getItem()->getCount());

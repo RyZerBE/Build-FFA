@@ -420,6 +420,13 @@ class xPlayer extends Player{
 		return $newVerticalVelocity;
 	}
 
+	public function attack(EntityDamageEvent $source): void{
+		if (Game::getInstance()->getArena()->isInProtectionArea($this->getPosition()->asVector3())) {
+			$source->cancel();
+		}
+		parent::attack($source);
+	}
+
 	/**
 	 * Function getInvSort
 	 * @return array
