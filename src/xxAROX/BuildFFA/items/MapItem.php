@@ -32,6 +32,10 @@ class MapItem extends Item{
 		applyReadonlyTag($this);
 	}
 
+	public function getCooldownTicks(): int{
+		return 20;
+	}
+
 	/**
 	 * Function onClickAir
 	 * @param xPlayer $player
@@ -41,9 +45,9 @@ class MapItem extends Item{
 	public function onClickAir(Player $player, Vector3 $directionVector): ItemUseResult{
 		if (!$player->hasItemCooldown($this)) {
 			$player->sendMapSelect();
+			$player->resetItemCooldown($this);
 			return ItemUseResult::FAIL();
 		}
-		$player->resetItemCooldown($this);
 		return parent::onClickAir($player, $directionVector);
 	}
 
@@ -59,9 +63,9 @@ class MapItem extends Item{
 	public function onInteractBlock(Player $player, Block $blockReplace, Block $blockClicked, int $face, Vector3 $clickVector): ItemUseResult{
 		if (!$player->hasItemCooldown($this)) {
 			$player->sendMapSelect();
+			$player->resetItemCooldown($this);
 			return ItemUseResult::FAIL();
 		}
-		$player->resetItemCooldown($this);
 		return parent::onInteractBlock($player, $blockReplace, $blockClicked, $face, $clickVector);
 	}
 }

@@ -49,6 +49,10 @@ class SetupItem extends Item{
 		return parent::onClickAir($player, $directionVector);
 	}
 
+	public function getCooldownTicks(): int{
+		return 20;
+	}
+
 	/**
 	 * Function onInteractBlock
 	 * @param xPlayer $player

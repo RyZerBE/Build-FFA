@@ -32,6 +32,10 @@ class SpectateItem extends Item{
 		applyReadonlyTag($this);
 	}
 
+	public function getCooldownTicks(): int{
+		return 20;
+	}
+
 	/**
 	 * Function onClickAir
 	 * @param xPlayer $player
