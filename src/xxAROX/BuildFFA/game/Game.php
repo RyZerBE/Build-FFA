@@ -50,17 +50,17 @@ use xxAROX\BuildFFA\player\xPlayer;
  * @project BuildFFA
  */
 class Game{
-	const MAP_CHANGE_INTERVAL = (60 * 15);
+	const MAP_CHANGE_INTERVAL = (60 * 1);
 	use SingletonTrait;
 
 
 	protected ?BossBar $bossBar = null;
 	/** @var Kit[] */
 	protected array $kits = [];
+	protected int $lastArenaChange = -1;
 	protected int $nextArenaChange = -1;
 	protected Arena|null $arena = null;
 	protected array $arenas = [];
-	protected int $lastArenaChange = -1;
 	/** @var BlockBreakEntry[] */
 	protected array $destroyedBlocks = [];
 	/** @var BlockEntry[] */
@@ -75,8 +75,8 @@ class Game{
 		self::setInstance($this);
 		if (count($arenas) >= 1) {
 			if (count($arenas) > 1) {
-				$this->nextArenaChange = self::MAP_CHANGE_INTERVAL * 20;
 				$this->lastArenaChange = time();
+				$this->nextArenaChange = Server::getInstance()->getTick() +(self::MAP_CHANGE_INTERVAL * 20);
 				$this->bossBar = new BossBar();
 			}
 			$this->arenas = $arenas;
@@ -169,10 +169,9 @@ class Game{
 
 	private function tick(): void{
 		if (!is_null($this->bossBar)) {
-			$this->bossBar->setPercentage(((self::MAP_CHANGE_INTERVAL +20) /100 *$this->nextArenaChange));
+			$this->bossBar->setPercentage(((self::MAP_CHANGE_INTERVAL *20) /100 *($this->nextArenaChange -Server::getInstance()->getTick())) /100);
 			foreach (Server::getInstance()->getOnlinePlayers() as $onlinePlayer) {
-				$minutes = intval(round((($this->nextArenaChange -time()) /60)));
-				$onlinePlayer->sendActionBarMessage("Map reset in " . $minutes . " minutes.");
+				$minutes = intval(round((($this->nextArenaChange -Server::getInstance()->getTick()) /20 /60)));
 				if ($minutes > 0) {
 					$onlinePlayer->sendActionBarMessage("Map reset in " . $minutes . " minutes.");
 				} else {
@@ -181,19 +180,27 @@ class Game{
 				$this->bossBar->addPlayer($onlinePlayer);
 			}
 		}
-		if ($this->lastArenaChange != -1 && time() >= $this->nextArenaChange) {
-			$maps = array_flip($this->mapVotes);
+		if ($this->lastArenaChange != -1 && Server::getInstance()->getTick() >= $this->nextArenaChange) {
+			$totalVotes = 0;
+			foreach ($this->mapVotes as $mapVote => $amount) {
+				$totalVotes += $amount;
+			}
+			$_maps = $this->mapVotes;
+			$maps = array_flip($_maps);
+			if ($totalVotes == 0) {
+				unset($_maps[$this->arena->getWorld()->getFolderName()]);
+				$maps = array_flip($_maps);
+			}
 			shuffle($maps);
 			$worldName = $maps[max($this->mapVotes)];
-			unset($maps);
+			unset($_maps, $maps);
 			foreach ($this->arenas as $arena) {
 				if ($arena->getWorld()->getFolderName() == $worldName) {
-					$this->arena->setActive(false);
 					$arena->setActive(true);
 					unset($this->arena);
 					$this->arena = $arena;
 					$this->lastArenaChange = time();
-					$this->nextArenaChange = time() +Game::MAP_CHANGE_INTERVAL;
+					$this->nextArenaChange = Server::getInstance()->getTick() +(Game::MAP_CHANGE_INTERVAL *20);
 					unset($current);
 					break;
 				}

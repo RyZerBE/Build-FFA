@@ -71,16 +71,26 @@ class Arena{
 			/** @var xPlayer $onlinePlayer */
 			foreach (Server::getInstance()->getOnlinePlayers() as $onlinePlayer) {
 				if ($this->settings->blocks_cooldown > $block_speed) {
-					$onlinePlayer->sendMessage("§9Blocks despawn takes longer"); //TODO: language stuff
+					$onlinePlayer->sendMessage("§9Block despawn takes longer"); //TODO: language stuff
 				} else if ($this->settings->blocks_cooldown < $block_speed) {
-					$onlinePlayer->sendMessage("§9Blocks despawn faster"); //TODO: language stuff
+					$onlinePlayer->sendMessage("§9Block will despawn faster"); //TODO: language stuff
 				}
 				$onlinePlayer->teleport($this->world->getSafeSpawn());
 				$onlinePlayer->voted_map = "";
 				$onlinePlayer->sendOtakaItems();
 			}
+			foreach (Game::getInstance()->getArenas() as $arena) {
+				if ($arena->isActive()) {
+					$arena->setActive(false);
+				}
+			}
 		} else {
-			//TODO: unload world
+			/*$worldManager = $this->world->getServer()->getWorldManager();
+			$worldName = $this->world->getFolderName();
+			if ($worldManager->getDefaultWorld()->getFolderName() !== $worldName) {
+				$worldManager->unloadWorld($this->world);
+				$worldManager->loadWorld($worldName);
+			}*/
 		}
 	}
 
