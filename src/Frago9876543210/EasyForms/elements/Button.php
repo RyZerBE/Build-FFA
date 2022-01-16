@@ -41,20 +41,22 @@ class Button extends Element{
 	}
 
 	/**
-	 * @return bool
-	 */
-	public function hasImage(): bool{
-		return $this->image !== null;
-	}
-
-	/**
 	 * @return array
 	 */
-	#[Pure] #[ArrayShape(["text" => "string", "image" => "\Frago9876543210\EasyForms\elements\Image|null"])] public function serializeElementData(): array{
+	#[Pure] #[ArrayShape(["text"  => "string",
+						  "image" => "\Frago9876543210\EasyForms\elements\Image|null",
+	])] public function serializeElementData(): array{
 		$data = ["text" => $this->text];
 		if ($this->hasImage()) {
 			$data["image"] = $this->image;
 		}
 		return $data;
+	}
+
+	/**
+	 * @return bool
+	 */
+	public function hasImage(): bool{
+		return $this->image !== null;
 	}
 }

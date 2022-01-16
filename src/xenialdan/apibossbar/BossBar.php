@@ -17,13 +17,13 @@ use pocketmine\Server;
 
 
 class BossBar{
+	public ?int $actorId = null;
+	protected EntityMetadataCollection $propertyManager;
 	/** @var Player[] */
 	private array $players = [];
 	private string $title = "";
 	private string $subTitle = "";
-	public ?int $actorId = null;
 	private AttributeMap $attributeMap;
-	protected EntityMetadataCollection $propertyManager;
 
 	/**
 	 * BossBar constructor.
@@ -43,10 +43,23 @@ class BossBar{
 	}
 
 	/**
-	 * @return Player[]
+	 * @param Player|null $player Only used for DiverseBossBar
+	 * @return AttributeMap
 	 */
-	public function getPlayers(): array{
-		return $this->players;
+	public function getAttributeMap(Player $player = null): AttributeMap{
+		return $this->attributeMap;
+	}
+
+	/**
+	 * The full title as a combination of the title and its subtitle. Automatically fixes encoding issues caused by newline characters
+	 * @return string
+	 */
+	public function getFullTitle(): string{
+		$text = $this->title;
+		if (!empty($this->subTitle)) {
+			$text .= "\n\n" . $this->subTitle;
+		}
+		return mb_convert_encoding($text, 'UTF-8');
 	}
 
 	/**
@@ -74,6 +87,44 @@ class BossBar{
 	}
 
 	/**
+	 * @param Player[] $players
+	 */
+	protected function sendBossPacket(array $players): void{
+		$pk = new BossEventPacket();
+		$pk->eventType = BossEventPacket::TYPE_SHOW;
+		foreach ($players as $player) {
+			if (!$player->isConnected())
+				continue;
+			$pk->bossActorUniqueId = $this->actorId ?? $player->getId();
+			$player->getNetworkSession()->sendDataPacket($this->addDefaults($pk));
+		}
+	}
+
+	private function addDefaults(BossEventPacket $pk): BossEventPacket{
+		$pk->title = $this->getFullTitle();
+		$pk->healthPercent = $this->getPercentage();
+		$pk->unknownShort = 1;
+		$pk->color = 0;//Does not function anyways
+		$pk->overlay = 0;//Neither. Typical for Mojang: Copy-pasted from Java edition
+		return $pk;
+	}
+
+	public function getPercentage(): float{
+		return $this->getAttributeMap()->get(Attribute::HEALTH)->getValue() / 100;
+	}
+
+	/**
+	 * @param Player[] $players
+	 * @return BossBar
+	 */
+	public function removePlayers(array $players): BossBar{
+		foreach ($players as $player) {
+			$this->removePlayer($player);
+		}
+		return $this;
+	}
+
+	/**
 	 * Removes a single player from this bar.
 	 * Use @param Player $player
 	 * @return BossBar
@@ -91,13 +142,16 @@ class BossBar{
 
 	/**
 	 * @param Player[] $players
-	 * @return BossBar
 	 */
-	public function removePlayers(array $players): BossBar{
+	protected function sendRemoveBossPacket(array $players): void{
+		$pk = new BossEventPacket();
+		$pk->eventType = BossEventPacket::TYPE_HIDE;
 		foreach ($players as $player) {
-			$this->removePlayer($player);
+			if (!$player->isConnected())
+				continue;
+			$pk->bossActorUniqueId = $this->actorId ?? $player->getId();
+			$player->getNetworkSession()->sendDataPacket($pk);
 		}
-		return $this;
 	}
 
 	/**
@@ -108,6 +162,13 @@ class BossBar{
 		foreach ($this->getPlayers() as $player)
 			$this->removePlayer($player);
 		return $this;
+	}
+
+	/**
+	 * @return Player[]
+	 */
+	public function getPlayers(): array{
+		return $this->players;
 	}
 
 	/**
@@ -129,6 +190,21 @@ class BossBar{
 		return $this;
 	}
 
+	/**
+	 * @param Player[] $players
+	 */
+	protected function sendBossTextPacket(array $players): void{
+		$pk = new BossEventPacket();
+		$pk->eventType = BossEventPacket::TYPE_TITLE;
+		$pk->title = $this->getFullTitle();
+		foreach ($players as $player) {
+			if (!$player->isConnected())
+				continue;
+			$pk->bossActorUniqueId = $this->actorId ?? $player->getId();
+			$player->getNetworkSession()->sendDataPacket($pk);
+		}
+	}
+
 	public function getSubTitle(): string{
 		return $this->subTitle;
 	}
@@ -146,18 +222,6 @@ class BossBar{
 	}
 
 	/**
-	 * The full title as a combination of the title and its subtitle. Automatically fixes encoding issues caused by newline characters
-	 * @return string
-	 */
-	public function getFullTitle(): string{
-		$text = $this->title;
-		if (!empty($this->subTitle)) {
-			$text .= "\n\n" . $this->subTitle;
-		}
-		return mb_convert_encoding($text, 'UTF-8');
-	}
-
-	/**
 	 * @param float $percentage 0-1
 	 * @return BossBar
 	 */
@@ -169,8 +233,26 @@ class BossBar{
 		return $this;
 	}
 
-	public function getPercentage(): float{
-		return $this->getAttributeMap()->get(Attribute::HEALTH)->getValue() / 100;
+	/**
+	 * @param Player[] $players
+	 */
+	protected function sendBossHealthPacket(array $players): void{
+		$pk = new BossEventPacket();
+		$pk->eventType = BossEventPacket::TYPE_HEALTH_PERCENT;
+		$pk->healthPercent = $this->getPercentage();
+		foreach ($players as $player) {
+			if (!$player->isConnected())
+				continue;
+			$pk->bossActorUniqueId = $this->actorId ?? $player->getId();
+			$player->getNetworkSession()->sendDataPacket($pk);
+		}
+	}
+
+	/**
+	 * Hides the bar from all registered players
+	 */
+	public function hideFromAll(): void{
+		$this->hideFrom($this->getPlayers());
 	}
 
 	/**
@@ -191,10 +273,10 @@ class BossBar{
 	}
 
 	/**
-	 * Hides the bar from all registered players
+	 * Displays the bar to all registered players
 	 */
-	public function hideFromAll(): void{
-		$this->hideFrom($this->getPlayers());
+	public function showToAll(): void{
+		$this->showTo($this->getPlayers());
 	}
 
 	/**
@@ -214,10 +296,13 @@ class BossBar{
 	}
 
 	/**
-	 * Displays the bar to all registered players
+	 * @param bool $removeEntity Be careful with this. If set to true, the entity will be deleted.
+	 * @return BossBar
 	 */
-	public function showToAll(): void{
-		$this->showTo($this->getPlayers());
+	public function resetEntity(bool $removeEntity = false): BossBar{
+		if ($removeEntity && $this->getEntity() instanceof Entity && !$this->getEntity() instanceof Player)
+			$this->getEntity()->close();
+		return $this->setEntity();
 	}
 
 	public function getEntity(): ?Entity{
@@ -256,57 +341,8 @@ class BossBar{
 		return $this;
 	}
 
-	/**
-	 * @param bool $removeEntity Be careful with this. If set to true, the entity will be deleted.
-	 * @return BossBar
-	 */
-	public function resetEntity(bool $removeEntity = false): BossBar{
-		if ($removeEntity && $this->getEntity() instanceof Entity && !$this->getEntity() instanceof Player)
-			$this->getEntity()->close();
-		return $this->setEntity();
-	}
-
-	/**
-	 * @param Player[] $players
-	 */
-	protected function sendBossPacket(array $players): void{
-		$pk = new BossEventPacket();
-		$pk->eventType = BossEventPacket::TYPE_SHOW;
-		foreach ($players as $player) {
-			if (!$player->isConnected())
-				continue;
-			$pk->bossActorUniqueId = $this->actorId ?? $player->getId();
-			$player->getNetworkSession()->sendDataPacket($this->addDefaults($pk));
-		}
-	}
-
-	/**
-	 * @param Player[] $players
-	 */
-	protected function sendRemoveBossPacket(array $players): void{
-		$pk = new BossEventPacket();
-		$pk->eventType = BossEventPacket::TYPE_HIDE;
-		foreach ($players as $player) {
-			if (!$player->isConnected())
-				continue;
-			$pk->bossActorUniqueId = $this->actorId ?? $player->getId();
-			$player->getNetworkSession()->sendDataPacket($pk);
-		}
-	}
-
-	/**
-	 * @param Player[] $players
-	 */
-	protected function sendBossTextPacket(array $players): void{
-		$pk = new BossEventPacket();
-		$pk->eventType = BossEventPacket::TYPE_TITLE;
-		$pk->title = $this->getFullTitle();
-		foreach ($players as $player) {
-			if (!$player->isConnected())
-				continue;
-			$pk->bossActorUniqueId = $this->actorId ?? $player->getId();
-			$player->getNetworkSession()->sendDataPacket($pk);
-		}
+	public function __toString(): string{
+		return __CLASS__ . " ID: $this->actorId, Players: " . count($this->players) . ", Title: \"$this->title\", Subtitle: \"$this->subTitle\", Percentage: \"" . $this->getPercentage() . "\"";
 	}
 
 	/**
@@ -319,42 +355,6 @@ class BossBar{
 		$pk->actorRuntimeId = $this->actorId;
 		$pk->entries = $this->getAttributeMap()->needSend();
 		Server::getInstance()->broadcastPackets($players, [$pk]);
-	}
-
-	/**
-	 * @param Player[] $players
-	 */
-	protected function sendBossHealthPacket(array $players): void{
-		$pk = new BossEventPacket();
-		$pk->eventType = BossEventPacket::TYPE_HEALTH_PERCENT;
-		$pk->healthPercent = $this->getPercentage();
-		foreach ($players as $player) {
-			if (!$player->isConnected())
-				continue;
-			$pk->bossActorUniqueId = $this->actorId ?? $player->getId();
-			$player->getNetworkSession()->sendDataPacket($pk);
-		}
-	}
-
-	private function addDefaults(BossEventPacket $pk): BossEventPacket{
-		$pk->title = $this->getFullTitle();
-		$pk->healthPercent = $this->getPercentage();
-		$pk->unknownShort = 1;
-		$pk->color = 0;//Does not function anyways
-		$pk->overlay = 0;//Neither. Typical for Mojang: Copy-pasted from Java edition
-		return $pk;
-	}
-
-	public function __toString(): string{
-		return __CLASS__ . " ID: $this->actorId, Players: " . count($this->players) . ", Title: \"$this->title\", Subtitle: \"$this->subTitle\", Percentage: \"" . $this->getPercentage() . "\"";
-	}
-
-	/**
-	 * @param Player|null $player Only used for DiverseBossBar
-	 * @return AttributeMap
-	 */
-	public function getAttributeMap(Player $player = null): AttributeMap{
-		return $this->attributeMap;
 	}
 
 	protected function getPropertyManager(): EntityMetadataCollection{

@@ -53,6 +53,8 @@ use xxAROX\BuildFFA\player\xPlayer;
 class Game{
 	const MAP_CHANGE_INTERVAL = (60 * 1);
 	use SingletonTrait;
+
+
 	public array $mapVotes = [];
 	protected ?BossBar $bossBar = null;
 	/** @var Kit[] */

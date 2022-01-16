@@ -1,13 +1,12 @@
 <?php
 declare(strict_types=1);
 namespace Frago9876543210\EasyForms\elements;
-
 use JsonSerializable;
 
-class Image implements JsonSerializable{
-	public const TYPE_URL = "url";
-	public const TYPE_PATH = "path";
 
+class Image implements JsonSerializable{
+	public const TYPE_URL  = "url";
+	public const TYPE_PATH = "path";
 	/** @var string */
 	private $type;
 	/** @var string */
@@ -25,21 +24,21 @@ class Image implements JsonSerializable{
 	/**
 	 * @return string
 	 */
-	public function getType() : string{
+	public function getType(): string{
 		return $this->type;
 	}
 
 	/**
 	 * @return string
 	 */
-	public function getData() : string{
+	public function getData(): string{
 		return $this->data;
 	}
 
-	public function jsonSerialize() : array{
+	public function jsonSerialize(): array{
 		return [
 			"type" => $this->type,
-			"data" => $this->data
+			"data" => $this->data,
 		];
 	}
 }

@@ -2,13 +2,14 @@
 declare(strict_types=1);
 namespace Frago9876543210\EasyForms\forms;
 use Closure;
+
 use function array_merge;
 
-abstract class Form implements \pocketmine\form\Form{
-	protected const TYPE_MODAL = "modal";
-	protected const TYPE_MENU = "form";
-	protected const TYPE_CUSTOM_FORM = "custom_form";
 
+abstract class Form implements \pocketmine\form\Form{
+	protected const TYPE_MODAL       = "modal";
+	protected const TYPE_MENU        = "form";
+	protected const TYPE_CUSTOM_FORM = "custom_form";
 	/** @var string */
 	private $title;
 	/** @var Closure|null */
@@ -24,7 +25,7 @@ abstract class Form implements \pocketmine\form\Form{
 	}
 
 	public function __destruct(){
-		if($this->onDestroy !== null){
+		if ($this->onDestroy !== null) {
 			($this->onDestroy)();
 		}
 	}
@@ -32,19 +33,20 @@ abstract class Form implements \pocketmine\form\Form{
 	/**
 	 * @return array
 	 */
-	final public function jsonSerialize() : array{
-		if($this->onCreate !== null){
+	final public function jsonSerialize(): array{
+		if ($this->onCreate !== null) {
 			($this->onCreate)();
 		}
 		return array_merge([
-			"title" => $this->getTitle(), "type" => $this->getType()
+			"title" => $this->getTitle(),
+			"type"  => $this->getType(),
 		], $this->serializeFormData());
 	}
 
 	/**
 	 * @return string
 	 */
-	public function getTitle() : string{
+	public function getTitle(): string{
 		return $this->title;
 	}
 
@@ -53,17 +55,27 @@ abstract class Form implements \pocketmine\form\Form{
 	 *
 	 * @return $this
 	 */
-	public function setTitle(string $title) : self{
+	public function setTitle(string $title): self{
 		$this->title = $title;
 		return $this;
 	}
+
+	/**
+	 * @return string
+	 */
+	abstract public function getType(): string;
+
+	/**
+	 * @return array
+	 */
+	abstract protected function serializeFormData(): array;
 
 	/**
 	 * @param Closure $onCreate
 	 *
 	 * @return $this
 	 */
-	public function setOnCreate(Closure $onCreate) : self{
+	public function setOnCreate(Closure $onCreate): self{
 		$this->onCreate = $onCreate;
 		return $this;
 	}
@@ -73,18 +85,8 @@ abstract class Form implements \pocketmine\form\Form{
 	 *
 	 * @return $this
 	 */
-	public function setOnDestroy(Closure $onDestroy) : self{
+	public function setOnDestroy(Closure $onDestroy): self{
 		$this->onDestroy = $onDestroy;
 		return $this;
 	}
-
-	/**
-	 * @return string
-	 */
-	abstract public function getType() : string;
-
-	/**
-	 * @return array
-	 */
-	abstract protected function serializeFormData() : array;
 }

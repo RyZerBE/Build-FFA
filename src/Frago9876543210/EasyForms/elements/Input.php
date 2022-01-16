@@ -1,8 +1,6 @@
 <?php
 declare(strict_types=1);
-
 namespace Frago9876543210\EasyForms\elements;
-
 use pocketmine\form\FormValidationException;
 
 use function is_string;
@@ -26,46 +24,46 @@ class Input extends Element{
 	/**
 	 * @return string
 	 */
-	public function getValue() : string{
+	public function getValue(): string{
 		return parent::getValue();
 	}
 
 	/**
 	 * @return string
 	 */
-	public function getPlaceholder() : string{
+	public function getPlaceholder(): string{
 		return $this->placeholder;
 	}
 
 	/**
 	 * @return string
 	 */
-	public function getDefault() : string{
+	public function getDefault(): string{
 		return $this->default;
 	}
 
 	/**
 	 * @return string
 	 */
-	public function getType() : string{
+	public function getType(): string{
 		return "input";
 	}
 
 	/**
 	 * @return array
 	 */
-	public function serializeElementData() : array{
+	public function serializeElementData(): array{
 		return [
 			"placeholder" => $this->placeholder,
-			"default" => $this->default
+			"default"     => $this->default,
 		];
 	}
 
 	/**
 	 * @param $value
 	 */
-	public function validate($value) : void{
-		if(!is_string($value)){
+	public function validate($value): void{
+		if (!is_string($value)) {
 			throw new FormValidationException("Expected string, got " . gettype($value));
 		}
 	}

@@ -257,17 +257,17 @@ class xPlayer extends Player{
 			return;
 		}
 		$this->sendForm(new MenuForm("%ui.title.voting.map", "", array_map(fn(Arena $arena) => new FunctionalButton($arena->getWorld()->getFolderName() . "\n§c" . Game::getInstance()->mapVotes[$arena->getWorld()->getFolderName()] . " vote/s", function (xPlayer $player) use ($arena): void{
-				if ($arena->getWorld()->getFolderName() == $player->voted_map) {
+			if ($arena->getWorld()->getFolderName() == $player->voted_map) {
+				Game::getInstance()->mapVotes[$player->voted_map]--;
+				$player->voted_map = "";
+			} else {
+				if (!empty($player->voted_map)) {
 					Game::getInstance()->mapVotes[$player->voted_map]--;
-					$player->voted_map = "";
-				} else {
-					if (!empty($player->voted_map)) {
-						Game::getInstance()->mapVotes[$player->voted_map]--;
-					}
-					$player->voted_map = $arena->getWorld()->getFolderName();
-					Game::getInstance()->mapVotes[$player->voted_map]++;
 				}
-			}), Game::getInstance()->getArenas())));
+				$player->voted_map = $arena->getWorld()->getFolderName();
+				Game::getInstance()->mapVotes[$player->voted_map]++;
+			}
+		}), Game::getInstance()->getArenas())));
 	}
 
 	public function sendKitSelect(): void{
@@ -280,8 +280,8 @@ class xPlayer extends Player{
 			return;
 		}
 		$this->sendForm(new MenuForm("%ui.title.voting.kit", "", array_map(fn(Kit $kit) => new FunctionalButton($kit->getDisplayName(), function (xPlayer $player) use ($kit): void{
-				$player->setSelectedKit($kit);
-			}), Game::getInstance()->getKits())));
+			$player->setSelectedKit($kit);
+		}), Game::getInstance()->getKits())));
 	}
 
 	public function spectate(): void{

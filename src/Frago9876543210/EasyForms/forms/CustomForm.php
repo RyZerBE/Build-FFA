@@ -56,13 +56,6 @@ class CustomForm extends Form{
 		return self::TYPE_CUSTOM_FORM;
 	}
 
-	/**
-	 * @return array
-	 */
-	protected function serializeFormData(): array{
-		return ["content" => $this->elements];
-	}
-
 	final public function handleResponse(Player $player, $data): void{
 		if ($data === null) {
 			if ($this->onClose !== null) {
@@ -81,5 +74,12 @@ class CustomForm extends Form{
 		} else {
 			throw new FormValidationException("Expected array or null, got " . gettype($data));
 		}
+	}
+
+	/**
+	 * @return array
+	 */
+	protected function serializeFormData(): array{
+		return ["content" => $this->elements];
 	}
 }

@@ -20,6 +20,13 @@ class CustomFormResponse{
 	}
 
 	/**
+	 * @return Dropdown
+	 */
+	public function getDropdown(): Dropdown{
+		return $this->tryGet(Dropdown::class);
+	}
+
+	/**
 	 * @param string $expected
 	 *
 	 * @return Element|mixed
@@ -33,13 +40,6 @@ class CustomFormResponse{
 			throw new FormValidationException("Expected a element with of type $expected, got " . get_class($element));
 		}
 		return $element;
-	}
-
-	/**
-	 * @return Dropdown
-	 */
-	public function getDropdown(): Dropdown{
-		return $this->tryGet(Dropdown::class);
 	}
 
 	/**

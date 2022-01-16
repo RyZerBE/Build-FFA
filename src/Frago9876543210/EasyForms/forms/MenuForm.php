@@ -2,6 +2,7 @@
 declare(strict_types=1);
 namespace Frago9876543210\EasyForms\forms;
 use Closure;
+use Error;
 use Frago9876543210\EasyForms\elements\Button;
 use Frago9876543210\EasyForms\elements\FunctionalButton;
 use JetBrains\PhpStorm\ArrayShape;
@@ -34,16 +35,6 @@ class MenuForm extends Form{
 		$this->append(...$buttons);
 		$this->setOnSubmit($onSubmit);
 		$this->setOnClose($onClose);
-	}
-
-	/**
-	 * @param string $text
-	 *
-	 * @return self
-	 */
-	public function setText(string $text): self{
-		$this->text = $text;
-		return $this;
 	}
 
 	/**
@@ -87,23 +78,20 @@ class MenuForm extends Form{
 	}
 
 	/**
+	 * @param string $text
+	 *
+	 * @return self
+	 */
+	public function setText(string $text): self{
+		$this->text = $text;
+		return $this;
+	}
+
+	/**
 	 * @return string
 	 */
 	final public function getType(): string{
 		return self::TYPE_MENU;
-	}
-
-	/**
-	 * @return array
-	 */
-	#[ArrayShape([
-		"buttons" => "\\Frago9876543210\\EasyForms\\elements\\Button[]",
-		"content" => "string",
-	])] protected function serializeFormData(): array{
-		return [
-			"buttons" => $this->buttons,
-			"content" => $this->text,
-		];
 	}
 
 	final public function handleResponse(Player $player, $data): void{
@@ -120,7 +108,7 @@ class MenuForm extends Form{
 			if ($button instanceof FunctionalButton) {
 				$button->onClick($player);
 				if (!is_null($this->onSubmit)) {
-					Bridge::getInstance()->getLogger()->logException(new \Error("Maybe Outdated call: onSubmit && on call"));
+					Bridge::getInstance()->getLogger()->logException(new Error("Maybe Outdated call: onSubmit && on call"));
 				}
 			} else {
 				if ($this->onSubmit !== null) {
@@ -130,5 +118,18 @@ class MenuForm extends Form{
 		} else {
 			throw new FormValidationException("Expected int or null, got " . gettype($data));
 		}
+	}
+
+	/**
+	 * @return array
+	 */
+	#[ArrayShape([
+		"buttons" => "\\Frago9876543210\\EasyForms\\elements\\Button[]",
+		"content" => "string",
+	])] protected function serializeFormData(): array{
+		return [
+			"buttons" => $this->buttons,
+			"content" => $this->text,
+		];
 	}
 }

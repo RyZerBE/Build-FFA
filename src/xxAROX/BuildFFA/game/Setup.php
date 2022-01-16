@@ -116,9 +116,10 @@ class Setup{
 	 * Function getDefaultConfiguration
 	 * @return array
 	 */
-	#[Pure] #[ArrayShape(["respawnHeight"   => "int",
-						  "protection"      => "int",
-						  "blocks_cooldown" => "int",
+	#[Pure] #[ArrayShape([
+		"respawnHeight"   => "int",
+		"protection"      => "int",
+		"blocks_cooldown" => "int",
 	])] protected function getDefaultConfiguration(): array{
 		return (new ArenaSettings())->jsonSerialize();
 	}
