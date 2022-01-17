@@ -28,6 +28,9 @@ use xxAROX\BuildFFA\player\xPlayer;
  * @project BuildFFA
  */
 class SettingsItem extends Item{
+	/**
+	 * SettingsItem constructor.
+	 */
 	public function __construct(){
 		parent::__construct(new ItemIdentifier(ItemIds::COMMAND_BLOCK, 0), "BuildFFA Settings");
 		$this->setCustomName("§dSettings");//TODO: language stuff

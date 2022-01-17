@@ -25,12 +25,19 @@ use xxAROX\BuildFFA\player\xPlayer;
  * @project BuildFFA
  */
 class SpectateItem extends Item{
+	/**
+	 * SpectateItem constructor.
+	 */
 	public function __construct(){
 		parent::__construct(new ItemIdentifier(ItemIds::ENDER_EYE, 0), "Spectate");
 		$this->setCustomName("§aSpectate"); // TODO: language stuff
 		applyReadonlyTag($this);
 	}
 
+	/**
+	 * Function getCooldownTicks
+	 * @return int
+	 */
 	public function getCooldownTicks(): int{
 		return 20;
 	}

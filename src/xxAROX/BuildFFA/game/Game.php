@@ -96,6 +96,10 @@ class Game{
 		BuildFFA::getInstance()->getScheduler()->scheduleRepeatingTask(new ClosureTask(fn() => $this->tick()), 1);
 	}
 
+	/**
+	 * Function initKits
+	 * @return void
+	 */
 	private function initKits(): void{
 		$head = VanillaItems::LEATHER_CAP()->setUnbreakable()->addEnchantment(new EnchantmentInstance(VanillaEnchantments::PROTECTION(), 1));
 		$chest = VanillaItems::CHAINMAIL_CHESTPLATE()->setUnbreakable()->addEnchantment(new EnchantmentInstance(VanillaEnchantments::PROTECTION(), 2));
@@ -161,6 +165,10 @@ class Game{
 		$this->kits["%buildffa.kit.platform"] = new Kit("%buildffa.kit.platform", $contents, $air, $head, $chest, $leg, $feet);
 	}
 
+	/**
+	 * Function tick
+	 * @return void
+	 */
 	private function tick(): void{
 		if (!is_null($this->bossBar)) {
 			$this->bossBar->setPercentage(((self::MAP_CHANGE_INTERVAL * 20) / 100 * ($this->nextArenaChange - Server::getInstance()->getTick())) / 100);
@@ -222,10 +230,19 @@ class Game{
 		}
 	}
 
+	/**
+	 * Function skip
+	 * @return void
+	 */
 	public function skip(): void{
 		$this->nextArenaChange = 0;
 	}
 
+	/**
+	 * Function getKit
+	 * @param null|string $name
+	 * @return Kit
+	 */
 	public function getKit(?string $name): Kit{
 		return $this->kits[$name] ?? $this->kits[array_rand($this->kits)];
 	}
@@ -265,6 +282,11 @@ class Game{
 		Server::getInstance()->broadcastPackets(Server::getInstance()->getOnlinePlayers(), [LevelEventPacket::create(LevelEvent::BLOCK_START_BREAK, intval(round(65535 / (20 * ($this->arena->getSettings()->blocks_cooldown + $extraTime + $additionalSeconds)))), $block->getPosition())]);
 	}
 
+	/**
+	 * Function filterPlayer
+	 * @param Player $player
+	 * @return bool
+	 */
 	public function filterPlayer(Player $player): bool{
 		if ($player->getGamemode()->id() != GameMode::SURVIVAL()->id()) {
 			return false;
@@ -275,6 +297,11 @@ class Game{
 		return true;
 	}
 
+	/**
+	 * Function setup
+	 * @param xPlayer $player
+	 * @return void
+	 */
 	public function setup(xPlayer $player): void{
 		$worlds = [];
 		foreach (array_diff(scandir(Server::getInstance()->getDataPath() . "worlds/"), ["..", "."]) as $world) {
@@ -322,6 +349,11 @@ class Game{
 		return $this->arenas;
 	}
 
+	/**
+	 * Function addArena
+	 * @param Arena $arena
+	 * @return void
+	 */
 	public function addArena(Arena $arena): void{
 		$this->arenas[] = $arena;
 	}

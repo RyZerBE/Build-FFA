@@ -21,6 +21,11 @@ class BlockEntry{
 	protected Position $position;
 	protected float $timestamp;
 
+	/**
+	 * BlockEntry constructor.
+	 * @param Position $position
+	 * @param float $timestamp
+	 */
 	public function __construct(Position $position, float $timestamp){
 		$this->position = $position;
 		$this->timestamp = $timestamp;

@@ -25,6 +25,11 @@ class BuildFFAPlayerRespawnEvent extends Event implements Cancellable{
 	use CancellableTrait;
 
 
+	/**
+	 * BuildFFAPlayerRespawnEvent constructor.
+	 * @param xPlayer $player
+	 * @param Arena $arena
+	 */
 	public function __construct(protected xPlayer $player, protected Arena $arena){
 	}
 

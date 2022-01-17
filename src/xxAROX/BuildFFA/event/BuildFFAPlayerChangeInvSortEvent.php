@@ -24,6 +24,12 @@ class BuildFFAPlayerChangeInvSortEvent extends Event implements Cancellable{
 	use CancellableTrait;
 
 
+	/**
+	 * BuildFFAPlayerChangeInvSortEvent constructor.
+	 * @param xPlayer $player
+	 * @param array $oldSort
+	 * @param array $newSort
+	 */
 	public function __construct(protected xPlayer $player, protected array $oldSort, protected array $newSort){
 	}
 

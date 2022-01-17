@@ -6,6 +6,7 @@
  */
 declare(strict_types=1);
 namespace xxAROX\BuildFFA\generic\entry;
+use JetBrains\PhpStorm\Pure;
 use pocketmine\block\Block;
 use pocketmine\world\Position;
 
@@ -19,7 +20,13 @@ use pocketmine\world\Position;
  * @project BuildFFA
  */
 class BlockBreakEntry extends BlockEntry{
-	public function __construct(protected Block $legacy, Position $position, float $timestamp){
+	/**
+	 * BlockBreakEntry constructor.
+	 * @param Block $legacy
+	 * @param Position $position
+	 * @param float $timestamp
+	 */
+	#[Pure] public function __construct(protected Block $legacy, Position $position, float $timestamp){
 		parent::__construct($position, $timestamp);
 	}
 

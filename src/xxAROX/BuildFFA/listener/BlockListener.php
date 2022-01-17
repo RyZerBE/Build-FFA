@@ -21,6 +21,11 @@ use xxAROX\BuildFFA\game\Game;
  * @project BuildFFA
  */
 class BlockListener implements Listener{
+	/**
+	 * Function BlockBreakEvent
+	 * @param BlockBreakEvent $event
+	 * @return void
+	 */
 	public function BlockBreakEvent(BlockBreakEvent $event): void{
 		if (Game::getInstance()->getArena()->isInProtectionArea($event->getBlock()->getPosition()->asVector3())) {
 			$event->cancel();

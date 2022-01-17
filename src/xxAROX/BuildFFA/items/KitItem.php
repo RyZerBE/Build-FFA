@@ -25,12 +25,19 @@ use xxAROX\BuildFFA\player\xPlayer;
  * @project BuildFFA
  */
 class KitItem extends Item{
+	/**
+	 * KitItem constructor.
+	 */
 	public function __construct(){
 		parent::__construct(new ItemIdentifier(ItemIds::NETHER_STAR, 0), "Choose kit");
 		$this->setCustomName("§9Kit");// TODO: language stuff
 		applyReadonlyTag($this);
 	}
 
+	/**
+	 * Function getCooldownTicks
+	 * @return int
+	 */
 	public function getCooldownTicks(): int{
 		return 20;
 	}

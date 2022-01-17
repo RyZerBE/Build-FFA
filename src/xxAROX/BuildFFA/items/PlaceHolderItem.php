@@ -36,6 +36,13 @@ class PlaceHolderItem extends Item{
 
 	private string $placeholderIdentifier;
 
+	/**
+	 * PlaceHolderItem constructor.
+	 * @param ItemIdentifier $identifier
+	 * @param Item $placeholdersItem
+	 * @param int $countdown
+	 * @param null|Closure $allowItemCooldown
+	 */
 	public function __construct(ItemIdentifier $identifier, protected Item $placeholdersItem, protected int $countdown = 0, protected ?Closure $allowItemCooldown = null){
 		if (!is_null($this->allowItemCooldown)) {
 			Utils::validateCallableSignature(new CallbackType(new ReturnType(BuiltInTypes::BOOL), new ParameterType("player", xPlayer::class)), $this->allowItemCooldown);

@@ -25,12 +25,19 @@ use xxAROX\BuildFFA\player\xPlayer;
  * @project BuildFFA
  */
 class InvSortItem extends Item{
+	/**
+	 * InvSortItem constructor.
+	 */
 	public function __construct(){
 		parent::__construct(new ItemIdentifier(ItemIds::CHEST, 0), "Inventory sort");
 		$this->setCustomName("§cInv sort");//TODO: language stuff
 		applyReadonlyTag($this);
 	}
 
+	/**
+	 * Function getCooldownTicks
+	 * @return int
+	 */
 	public function getCooldownTicks(): int{
 		return 20;
 	}

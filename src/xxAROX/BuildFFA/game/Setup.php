@@ -104,10 +104,19 @@ class Setup{
 		$player->teleport($this->world->getSafeSpawn());
 	}
 
+	/**
+	 * Function sendMessage
+	 * @param string $message
+	 * @return void
+	 */
 	public function sendMessage(string $message): void{
 		$this->player->sendMessage(self::PREFIX . $message);
 	}
 
+	/**
+	 * Function leave
+	 * @return void
+	 */
 	public function leave(): void{
 		$this->player->setup = null;
 		$this->currentStage = 0;
@@ -134,6 +143,10 @@ class Setup{
 		return $this->player;
 	}
 
+	/**
+	 * Function nextStage
+	 * @return void
+	 */
 	public function nextStage(): void{
 		$this->currentStage++;
 		if ($this->currentStage == $this->maxStage + 1) {

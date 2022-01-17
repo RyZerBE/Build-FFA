@@ -13,7 +13,6 @@ namespace xxAROX\BuildFFA\event;
  * @date 05. Januar, 2022 - 18:43
  * @ide PhpStorm
  * @project BuildFFA
- * @description idk, if i use this lol, but here it is!
  */
 class EnterArenaProtectionAreaEvent extends LeaveArenaProtectionAreaEvent{
 }

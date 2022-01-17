@@ -24,6 +24,11 @@ use xxAROX\BuildFFA\player\xPlayer;
 class Arena{
 	private bool $active = false;
 
+	/**
+	 * Arena constructor.
+	 * @param World $world
+	 * @param ArenaSettings $settings
+	 */
 	public function __construct(private World $world, private ArenaSettings $settings){
 	}
 
@@ -93,6 +98,11 @@ class Arena{
 		return $this->settings;
 	}
 
+	/**
+	 * Function isInProtectionArea
+	 * @param Vector3 $vector3
+	 * @return bool
+	 */
 	public function isInProtectionArea(Vector3 $vector3): bool{
 		return $this->world->getSpawnLocation()->asVector3()->distance($vector3) <= $this->settings->protection;
 	}

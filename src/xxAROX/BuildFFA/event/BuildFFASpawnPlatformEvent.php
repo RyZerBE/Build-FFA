@@ -27,6 +27,13 @@ class BuildFFASpawnPlatformEvent extends Event implements Cancellable{
 	use CancellableTrait;
 
 
+	/**
+	 * BuildFFASpawnPlatformEvent constructor.
+	 * @param xPlayer $player
+	 * @param Item $item
+	 * @param array $affectedBlocks
+	 * @param BlockIdentifier $blockIdentifier
+	 */
 	public function __construct(protected xPlayer $player, protected Item $item, protected array $affectedBlocks, protected BlockIdentifier $blockIdentifier){
 	}
 

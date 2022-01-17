@@ -110,6 +110,10 @@ class xPlayer extends Player{
 		$this->saveInvSort();
 	}
 
+	/**
+	 * Function saveInvSort
+	 * @return void
+	 */
 	public function saveInvSort(): void{
 		$newSort = [];
 		foreach ($this->selected_kit->getContents() as $type => $item) {
@@ -140,6 +144,10 @@ class xPlayer extends Player{
 		}
 	}
 
+	/**
+	 * Function spawnPlatform
+	 * @return bool
+	 */
 	public function spawnPlatform(): bool{
 		if (!$this->isOnGround()) {
 			$hand = $this->inventory->getItemInHand();
@@ -172,6 +180,11 @@ class xPlayer extends Player{
 		return !$this->isOnGround();
 	}
 
+	/**
+	 * Function itemCooldown
+	 * @param Item $item
+	 * @return void
+	 */
 	public function itemCooldown(Item $item): void{
 		$placeHolderItem = $this->selected_kit->getPlaceholderByIdentifier($item->getNamedTag()->getString("__placeholderId", ""));
 		if (!is_null($placeHolderItem) && $placeHolderItem->hasCountdown() && !isset($player->itemCountdowns[encodeItem($item)])) {
@@ -294,6 +307,10 @@ class xPlayer extends Player{
 		}), Game::getInstance()->getKits())));
 	}
 
+	/**
+	 * Function spectate
+	 * @return void
+	 */
 	public function spectate(): void{
 		$ev = new BuildFFAPlayerSpectatorEvent($this, Game::getInstance()->getArena());
 		$ev->call();
@@ -464,6 +481,11 @@ class xPlayer extends Player{
 		return $newVerticalVelocity;
 	}
 
+	/**
+	 * Function attack
+	 * @param EntityDamageEvent $source
+	 * @return void
+	 */
 	public function attack(EntityDamageEvent $source): void{
 		if (Game::getInstance()->getArena()->isInProtectionArea($this->getPosition()->asVector3())) {
 			$source->cancel();

@@ -22,11 +22,20 @@ use pocketmine\world\Position;
  * @project BuildFFA
  */
 class BlockEntity extends FallingBlock{
+	/**
+	 * BlockEntity constructor.
+	 * @param Position $position
+	 * @param Block $block
+	 */
 	public function __construct(Position $position, Block $block){
 		$vec = $position->floor()->add(0.5, 0.5, 0.5);
 		parent::__construct(new Location($vec->x, $vec->y, $vec->z, $position->world, 0, 0), $block);
 	}
 
+	/**
+	 * Function getBlock
+	 * @return Block
+	 */
 	public function getBlock(): Block{
 		return $this->block;
 	}
@@ -40,6 +49,11 @@ class BlockEntity extends FallingBlock{
 		$this->block = $block;
 	}
 
+	/**
+	 * Function entityBaseTick
+	 * @param int $tickDiff
+	 * @return bool
+	 */
 	protected function entityBaseTick(int $tickDiff = 1): bool{
 		if ($this->closed) {
 			return false;

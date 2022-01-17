@@ -160,6 +160,11 @@ class PlayerListener implements Listener{
 		}
 	}
 
+	/**
+	 * Function InventoryTransactionEvent
+	 * @param InventoryTransactionEvent $event
+	 * @return void
+	 */
 	public function InventoryTransactionEvent(InventoryTransactionEvent $event): void{
 		if (!Game::getInstance()->filterPlayer($event->getTransaction()->getSource())) {
 			return;
@@ -195,6 +200,11 @@ class PlayerListener implements Listener{
 		}
 	}
 
+	/**
+	 * Function PlayerInteractEvent
+	 * @param PlayerInteractEvent $event
+	 * @return void
+	 */
 	public function PlayerInteractEvent(PlayerInteractEvent $event): void{
 		/** @var xPlayer $player */
 		$player = $event->getPlayer();

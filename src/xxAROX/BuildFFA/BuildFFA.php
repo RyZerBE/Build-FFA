@@ -64,10 +64,18 @@ class BuildFFA extends PluginBase{
 		self::setInstance($this);
 	}
 
+	/**
+	 * Function onLoad
+	 * @return void
+	 */
 	protected function onLoad(): void{
 		include_once dirname(__DIR__) . "/../functions.php";
 	}
 
+	/**
+	 * Function onEnable
+	 * @return void
+	 */
 	protected function onEnable(): void{
 		$this->registerPermissions();
 		$this->registerCommands();
@@ -109,6 +117,10 @@ class BuildFFA extends PluginBase{
 		PermissionManager::getInstance()->getPermission(DefaultPermissionNames::GROUP_OPERATOR)->addChild("game.buildffa.settings", true);
 	}
 
+	/**
+	 * Function registerCommands
+	 * @return void
+	 */
 	private function registerCommands(): void{
 		$this->getServer()->getCommandMap()->registerAll(strtoupper($this->getName()), [
 			new SetupCommand(),
@@ -116,10 +128,18 @@ class BuildFFA extends PluginBase{
 		]);
 	}
 
+	/**
+	 * Function registerItems
+	 * @return void
+	 */
 	private function registerItems(): void{
 		ItemFactory::getInstance()->register(new EnderPearl(), true);
 	}
 
+	/**
+	 * Function registerListeners
+	 * @return void
+	 */
 	private function registerListeners(): void{
 		// NOTE: custom events for this plugin
 		// $this->getServer()->getPluginManager()->registerEvents(new Listener(), $this);
@@ -127,6 +147,10 @@ class BuildFFA extends PluginBase{
 		$this->getServer()->getPluginManager()->registerEvents(new PlayerListener(), $this);
 	}
 
+	/**
+	 * Function registerEntities
+	 * @return void
+	 */
 	private function registerEntities(): void{
 		EntityFactory::getInstance()->register(BlockEntity::class, function (World $world, CompoundTag $nbt): Entity{
 			return new BlockEntity(EntityDataHelper::parseLocation($nbt, $world), FallingBlock::parseBlockNBT(BlockFactory::getInstance(), $nbt));
