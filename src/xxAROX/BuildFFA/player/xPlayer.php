@@ -105,42 +105,25 @@ class xPlayer extends Player{
 
 	public function saveInvSort(): void{
 		$newSort = [];
-		$sameSlot = [];
 		foreach ($this->selected_kit->getContents() as $type => $item) {
 			$toSort[$type] = false;
 			for ($hotbar_slot = 0; $hotbar_slot < $this->inventory->getHotbarSize(); $hotbar_slot++) {
 				$hotbar_item = $this->inventory->getItem($hotbar_slot);
 				$hotbar_type = $hotbar_item->getNamedTag()->getString(BuildFFA::TAG_SORT_TYPE, "");
-				$hotbar_placeholderId = $hotbar_item->getNamedTag()->getString("__placeholderId", "");
-				if (!empty($hotbar_type) && !empty($hotbar_placeholderId)) {
-					if ($hotbar_placeholderId == $item->getNamedTag()->getString("__placeholderId", "") && $hotbar_item instanceof PlaceHolderItem) {
+				$hotbar_placeholderId = $hotbar_item->getNamedTag()->getString(BuildFFA::TAG_PLACEHOLDER_IDENTIFIER, "");
+				if (empty($hotbar_type)) {
+					continue;
+				}
+				if (!empty($hotbar_placeholderId)) {
+					if ($hotbar_placeholderId == $item->getNamedTag()->getString(BuildFFA::TAG_PLACEHOLDER_IDENTIFIER, "") && $hotbar_item instanceof PlaceHolderItem) {
 						$this->inventory->setItem($hotbar_slot, $hotbar_item->getPlaceholdersItem());
 					}
-					if ($hotbar_type == $type/* && ($this->inv_sort[$type] ?? -1) != $hotbar_slot*/) {
-						if (!isset(array_flip($this->inv_sort)[$hotbar_slot])) {
-							$newSort[$type] = $hotbar_slot;
-							/*} else {
-								$sameSlot[] = $type;*/
-						}
-					}
 				}
-				/*if ($hotbar_item->equals($kitContents[$type], true, false) && ($this->inv_sort[$type] ?? -1) != $hotbar_slot) {
+				if ($hotbar_type == $type && ($this->inv_sort[$type] ?? -1) != $hotbar_slot) {
 					$newSort[$type] = $hotbar_slot;
-				}*/
+				}
 			}
 		}
-		/*foreach ($sameSlot as $type) {
-			if (isset($this->selected_kit->getContents()[$type])) {
-				$this->inventory->addItem($this->selected_kit->getContents()[$type]);
-				unset($sameSlot[$type]);
-			}
-		}
-		var_dump($sameSlot);
-		return;
-		if (count($sameSlot) > 0) {
-			$this->saveInvSort();
-			return;
-		}*/
 		$ev1 = new BuildFFAPlayerChangeInvSortEvent($this, $this->inv_sort, $newSort);
 		$ev1->call();
 		if (!$ev1->isCancelled()) {

@@ -45,6 +45,7 @@ class BuildFFA extends PluginBase{
 	const TAG_SORT_TYPE = "xxarox:inv:sort_type";
 	const TAG_READONLY  = "xxarox:inv:readonly";
 	const TAG_COUNTDOWN = "xxarox:inv:countdown";
+	const TAG_PLACEHOLDER_IDENTIFIER = "__placeholderId";
 	use SingletonTrait;
 
 
