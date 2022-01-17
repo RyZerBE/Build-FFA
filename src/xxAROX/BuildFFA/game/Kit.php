@@ -75,18 +75,24 @@ class Kit{
 		for ($slot = 0; $slot < $player->getCraftingGrid()->getSize(); $slot++) {
 			$player->getCraftingGrid()->setItem($slot, applyReadonlyTag(VanillaBlocks::BARRIER()->asItem()->setCustomName("§r")));
 		}
+		$checked = [];
 		foreach ($this->contents as $type => $item) {
-			if ($item instanceof PlaceHolderItem) {
-				if (isset($invSort[$type])) {
-					$player->getInventory()->setItem($invSort[$type], $item->getPlaceholdersItem());
-				} else {
-					$player->getInventory()->addItem($item);
-				}
-			}
-			if (isset($invSort[$type])) {
-				$player->getInventory()->setItem($invSort[$type], /*clone/*should 'all player same item-name' fix*/ $item);
+			$slot = ($invSort[$type] ?? $type);
+			if (isset($checked[$slot])) {
+				unset($invSort[$type]);
+			} else if ($type == $slot) {
+				$checked[] = $type;
+				$invSort[$type] = array_flip($checked)[$type];
 			} else {
-				$player->getInventory()->addItem(/*clone/*should 'all player same item-name' fix*/ $item);
+				$checked[$slot] = $type;
+			}
+		}
+		unset($checked, $slot);
+		foreach ($this->contents as $type => $item) {
+			if (isset($invSort[$type])) {
+				$player->getInventory()->setItem($invSort[$type], $item instanceof PlaceHolderItem ? $item->getPlaceholdersItem() : /*clone/*should 'all player same item-name' fix*/ $item);
+			} else {
+				$player->getInventory()->addItem($item instanceof PlaceHolderItem ? $item->getPlaceholdersItem() : /*clone/*should 'all player same item-name' fix*/ $item);
 			}
 		}
 		$player->getOffHandInventory()->setItem(0, $this->offhand);
