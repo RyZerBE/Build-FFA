@@ -89,6 +89,17 @@ class BuildFFA extends PluginBase{
 		new Game($arenas);
 	}
 
+	/**
+	 * Function onDisable
+	 * @return void
+	 */
+	protected function onDisable(): void{
+	}
+
+	/**
+	 * Function registerPermissions
+	 * @return void
+	 */
 	private function registerPermissions(): void{
 		PermissionManager::getInstance()->addPermission(new Permission("game.setup", "Allow /setup"));
 		PermissionManager::getInstance()->getPermission(DefaultPermissionNames::GROUP_OPERATOR)->addChild("game.setup", true);
@@ -120,8 +131,5 @@ class BuildFFA extends PluginBase{
 		EntityFactory::getInstance()->register(BlockEntity::class, function (World $world, CompoundTag $nbt): Entity{
 			return new BlockEntity(EntityDataHelper::parseLocation($nbt, $world), FallingBlock::parseBlockNBT(BlockFactory::getInstance(), $nbt));
 		}, ["buildffa:block"]);
-	}
-
-	protected function onDisable(): void{
 	}
 }

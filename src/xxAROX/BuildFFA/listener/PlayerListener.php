@@ -180,8 +180,6 @@ class PlayerListener implements Listener{
 				$event->cancel();
 				return;
 			}
-			/** @var xPlayer $player */
-			$player = $event->getTransaction()->getSource();
 			/** @var Item $item */
 			foreach ([$action->getSourceItem(), $action->getTargetItem()] as $item) {
 				if (boolval($item->getNamedTag()->getByte(BuildFFA::TAG_READONLY, intval(false)))) {
@@ -202,7 +200,7 @@ class PlayerListener implements Listener{
 		$player = $event->getPlayer();
 		$item = $event->getItem();
 		$placeholder = $player->getSelectedKit()->getPlaceholderByIdentifier($item->getNamedTag()->getString("__placeholderId", ""));
-		if (!is_null($placeholder) && $item->getCount() == 1) {
+		if (!is_null($placeholder) && $item->getCount() == 1 && !$item->equals($placeholder, true, false)) {
 			if ($placeholder->allowItemCooldown($player)) {
 				$player->itemCooldown($item);
 			}

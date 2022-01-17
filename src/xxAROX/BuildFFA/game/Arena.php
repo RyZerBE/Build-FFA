@@ -56,6 +56,8 @@ class Arena{
 				} else if ($this->settings->blocks_cooldown < $block_speed) {
 					$onlinePlayer->sendMessage("§9Block will despawn faster"); //TODO: language stuff
 				}
+				unset($onlinePlayer->itemCountdowns);
+				$onlinePlayer->itemCountdowns = [];
 				$onlinePlayer->teleport($this->world->getSafeSpawn());
 				$onlinePlayer->voted_map = "";
 				$onlinePlayer->sendOtakaItems();

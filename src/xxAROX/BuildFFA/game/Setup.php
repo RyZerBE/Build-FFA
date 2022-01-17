@@ -19,6 +19,7 @@ use pocketmine\utils\Config;
 use pocketmine\world\Position;
 use pocketmine\world\World;
 use Ramsey\Uuid\Uuid;
+use ReflectionException;
 use xxAROX\BuildFFA\BuildFFA;
 use xxAROX\BuildFFA\player\xPlayer;
 
@@ -49,12 +50,13 @@ class Setup{
 	 * @param string $world
 	 * @param int $maxStage
 	 * @param array $events
+	 * @throws ReflectionException
 	 */
 	public function __construct(xPlayer $player, string $path, string $world, int $maxStage = 1, array $events = []){
 		$this->player = $player;
 		if (!$player->getServer()->getWorldManager()->isWorldLoaded($world)) {
 			if (!$player->getServer()->getWorldManager()->loadWorld($world, true)) {
-				$this->sendMessage("§cWorld not found!"); // TODO: language stuff
+				$this->sendMessage("§cWorld not found!");
 				$this->leave();
 				return;
 			}

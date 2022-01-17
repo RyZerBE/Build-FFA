@@ -16,6 +16,7 @@ use Frago9876543210\EasyForms\forms\MenuForm;
 use pocketmine\block\BlockFactory;
 use pocketmine\block\BlockLegacyIds;
 use pocketmine\block\VanillaBlocks;
+use pocketmine\command\Command;
 use pocketmine\entity\projectile\EnderPearl;
 use pocketmine\event\entity\EntityDamageEvent;
 use pocketmine\event\player\PlayerDeathEvent;
@@ -23,6 +24,7 @@ use pocketmine\item\Item;
 use pocketmine\math\Vector3;
 use pocketmine\player\GameMode;
 use pocketmine\player\Player;
+use pocketmine\Server;
 use pocketmine\world\sound\EntityLandSound;
 use pocketmine\world\sound\EntityLongFallSound;
 use pocketmine\world\sound\EntityShortFallSound;
@@ -39,7 +41,7 @@ use xxAROX\BuildFFA\items\InvSortItem;
 use xxAROX\BuildFFA\items\KitItem;
 use xxAROX\BuildFFA\items\MapItem;
 use xxAROX\BuildFFA\items\PlaceHolderItem;
-use xxAROX\BuildFFA\items\SetupItem;
+use xxAROX\BuildFFA\items\SettingsItem;
 use xxAROX\BuildFFA\items\SpectateItem;
 
 
@@ -57,6 +59,7 @@ class xPlayer extends Player{
 	protected int $kills = 0;
 	protected ?Kit $selected_kit = null;
 	protected array $inv_sort = [];
+	// NOTE: this is for internal api stuff
 	/** @internal */
 	public ?Setup $setup = null;
 	/** @internal */
@@ -67,7 +70,6 @@ class xPlayer extends Player{
 	public string $voted_map = "";
 	/** @internal */
 	public array $itemCountdowns = [];
-	// NOTE: this is for internal api stuff
 	/** @internal */
 	public array $enderpearls = [];
 
@@ -320,7 +322,7 @@ class xPlayer extends Player{
 
 	/**
 	 * Function getInvSort
-	 * @return array
+	 * @return int[]
 	 */
 	public function getInvSort(): array{
 		return $this->inv_sort;
