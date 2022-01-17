@@ -7,6 +7,11 @@
 declare(strict_types=1);
 namespace xxAROX\BuildFFA\player;
 use Frago9876543210\EasyForms\elements\FunctionalButton;
+use Frago9876543210\EasyForms\elements\Label;
+use Frago9876543210\EasyForms\elements\Slider;
+use Frago9876543210\EasyForms\elements\Toggle;
+use Frago9876543210\EasyForms\forms\CustomForm;
+use Frago9876543210\EasyForms\forms\CustomFormResponse;
 use Frago9876543210\EasyForms\forms\MenuForm;
 use pocketmine\block\BlockFactory;
 use pocketmine\block\BlockLegacyIds;
@@ -47,12 +52,17 @@ use xxAROX\BuildFFA\items\SpectateItem;
  * @project BuildFFA
  */
 class xPlayer extends Player{
+	protected int $kill_streak = 0;
+	protected int $deaths = 0;
+	protected int $kills = 0;
+	protected ?Kit $selected_kit = null;
+	protected array $inv_sort = [];
 	/** @internal */
 	public ?Setup $setup = null;
 	/** @internal */
 	public bool $is_in_inv_sort = false;
 	/** @internal */
-	public bool $allow_no_fall_damage = true;
+	public bool $allow_no_fall_damage = true; //NOTE: lmao, i wrote that shit high af
 	/** @internal */
 	public string $voted_map = "";
 	/** @internal */
@@ -60,11 +70,6 @@ class xPlayer extends Player{
 	// NOTE: this is for internal api stuff
 	/** @internal */
 	public array $enderpearls = [];
-	protected int $kill_streak = 0;
-	protected int $deaths = 0;
-	protected int $kills = 0;
-	protected ?Kit $selected_kit = null;
-	protected array $inv_sort = [];
 
 	/**
 	 * Function load
@@ -219,8 +224,8 @@ class xPlayer extends Player{
 		$this->inventory->setItem(0, new InvSortItem());
 		$this->inventory->setItem(1, new MapItem());
 		$this->inventory->setItem(4, new KitItem());
-		if ($this->hasPermission("game.setup")) {
-			$this->inventory->setItem(7, new SetupItem());
+		if ($this->hasPermission("game.setup") || $this->hasPermission("game.buildffa.settings")) {
+			$this->inventory->setItem(7, new SettingsItem());
 		}
 		$this->inventory->setItem(8, new SpectateItem());
 	}
@@ -253,6 +258,26 @@ class xPlayer extends Player{
 		}), Game::getInstance()->getArenas())));
 	}
 
+	/**
+	 * Function sendBuildFFASettingsForm
+	 * @return void
+	 */
+	public function sendBuildFFASettingsForm(): void{
+		$elements = [
+			new Toggle("Enable Fall damage", Game::getInstance()->getArena()->getSettings()->enable_fall_damage),
+			new Slider("Block despawn time", 0.5, 30, 0.5, Game::getInstance()->getArena()->getSettings()->blocks_cooldown),
+		];
+		$this->sendForm(new CustomForm("BuildFFA Settings", array_merge((Server::getInstance()->isOp($this->getName()) ? [] : [/* if you remove this you are not a good developer :> */new Label("§o§9BuildFFA by " . implode(", ", BuildFFA::getInstance()->getDescription()->getAuthors()))]), $elements), function (xPlayer $player, CustomFormResponse $response): void{
+			Game::getInstance()->getArena()->getSettings()->enable_fall_damage = $response->getToggle()->getValue();
+			Game::getInstance()->getArena()->getSettings()->blocks_cooldown = $response->getSlider()->getValue();
+			Command::broadcastCommandMessage($this, "Updated BuildFFA settings", false);
+		}));
+	}
+
+	/**
+	 * Function sendKitSelect
+	 * @return void
+	 */
 	public function sendKitSelect(): void{
 		if (count(Game::getInstance()->getKits()) == 0) {
 			$this->sendMessage("§cLazy owner(ping him), no kits found..");// TODO: language stuff
@@ -424,7 +449,7 @@ class xPlayer extends Player{
 		$newVerticalVelocity = $fallBlock->onEntityLand($this);
 		$damage = $this->calculateFallDamage($this->fallDistance);
 		if ($damage > 0) {
-			if ($this->allow_no_fall_damage) {
+			if ($this->allow_no_fall_damage || Game::getInstance()->getArena()->getSettings()->enable_fall_damage) {
 				$this->allow_no_fall_damage = false;
 				return $newVerticalVelocity;
 			}

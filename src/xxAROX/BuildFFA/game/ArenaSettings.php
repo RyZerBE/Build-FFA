@@ -22,6 +22,7 @@ class ArenaSettings implements JsonSerializable{
 	public int|float $respawn_height = 0;
 	public int|float $protection = 8;
 	public int|float $blocks_cooldown = 10;
+	public bool $enable_fall_damage = true;
 
 	/**
 	 * ArenaSettings constructor.
@@ -29,8 +30,10 @@ class ArenaSettings implements JsonSerializable{
 	 */
 	public function __construct(array $data = []){
 		$this->respawn_height = $data["respawn_height"] ?? $this->respawn_height;
-		$this->protection = ($data["protection"] ?? $this->protection) + 1; //NO-CONFUSE: plus one, because xPlayer::from_spawn maths.
+		$this->protection = ($data["protection"] ?? $this->protection) +1.5; //NO-CONFUSE: plus 1.5, because xPlayer::from_spawn maths.
+
 		$this->blocks_cooldown = $data["blocks_cooldown"] ?? $this->blocks_cooldown;
+		$this->enable_fall_damage = $data["enable_fall_damage"] ?? $this->enable_fall_damage;
 	}
 
 	/**
@@ -38,14 +41,16 @@ class ArenaSettings implements JsonSerializable{
 	 * @return array
 	 */
 	#[ArrayShape([
-		"respawnHeight"   => "int",
-		"protection"      => "int",
-		"blocks_cooldown" => "int",
+		"respawn_height"   => "int|float",
+		"protection"      => "int|float",
+		"blocks_cooldown" => "int|float",
+		"enable_fall_damage" => "bool",
 	])] public function jsonSerialize(): array{
 		return [
-			"respawnHeight"   => $this->respawn_height,
+			"respawn_height"   => $this->respawn_height,
 			"protection"      => $this->protection,
 			"blocks_cooldown" => $this->blocks_cooldown,
+			"enable_fall_damage" => $this->enable_fall_damage,
 		];
 	}
 }

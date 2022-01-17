@@ -6,6 +6,8 @@
  */
 declare(strict_types=1);
 namespace xxAROX\BuildFFA\items;
+use Frago9876543210\EasyForms\elements\FunctionalButton;
+use Frago9876543210\EasyForms\forms\MenuForm;
 use pocketmine\block\Block;
 use pocketmine\item\Item;
 use pocketmine\item\ItemIdentifier;
@@ -18,18 +20,26 @@ use xxAROX\BuildFFA\player\xPlayer;
 
 
 /**
- * Class SetupItem
+ * Class SettingsItem
  * @package xxAROX\BuildFFA\items
  * @author Jan Sohn / xxAROX
  * @date 05. Januar, 2022 - 21:33
  * @ide PhpStorm
  * @project BuildFFA
  */
-class SetupItem extends Item{
+class SettingsItem extends Item{
 	public function __construct(){
-		parent::__construct(new ItemIdentifier(ItemIds::COMMAND_BLOCK, 0), "Setup");
-		$this->setCustomName("§6Setup");//TODO: language stuff
+		parent::__construct(new ItemIdentifier(ItemIds::COMMAND_BLOCK, 0), "BuildFFA Settings");
+		$this->setCustomName("§dSettings");//TODO: language stuff
 		applyReadonlyTag($this);
+	}
+
+	/**
+	 * Function getCooldownTicks
+	 * @return int
+	 */
+	public function getCooldownTicks(): int{
+		return 20;
 	}
 
 	/**
@@ -40,15 +50,11 @@ class SetupItem extends Item{
 	 */
 	public function onClickAir(Player $player, Vector3 $directionVector): ItemUseResult{
 		if (!$player->hasItemCooldown($this)) {
-			Game::getInstance()->setup($player);
+			$this->sendForm($player);
 			$player->resetItemCooldown($this);
 			return ItemUseResult::FAIL();
 		}
 		return parent::onClickAir($player, $directionVector);
-	}
-
-	public function getCooldownTicks(): int{
-		return 20;
 	}
 
 	/**
@@ -62,10 +68,28 @@ class SetupItem extends Item{
 	 */
 	public function onInteractBlock(Player $player, Block $blockReplace, Block $blockClicked, int $face, Vector3 $clickVector): ItemUseResult{
 		if (!$player->hasItemCooldown($this)) {
-			Game::getInstance()->setup($player);
+			$this->sendForm($player);
 			$player->resetItemCooldown($this);
 			return ItemUseResult::FAIL();
 		}
 		return parent::onInteractBlock($player, $blockReplace, $blockClicked, $face, $clickVector);
+	}
+
+	/**
+	 * Function sendForm
+	 * @param xPlayer $player
+	 * @return void
+	 */
+	private function sendForm(xPlayer $player): void{
+		$settings = $player->hasPermission("game.buildffa.settings");
+		$setup = $player->hasPermission("game.setup");
+		if (!$settings && !$setup) {
+		} else if ($settings && !$setup) {
+			$player->sendBuildFFASettingsForm();
+		} else if (!$settings && $setup) {
+			Game::getInstance()->setup($player);
+		} else {
+			$player->sendForm(new MenuForm("BuildFFA", "", [new FunctionalButton("Settings", fn(xPlayer $player) => $player->sendBuildFFASettingsForm()),new FunctionalButton("Setup", fn(xPlayer $player) => Game::getInstance()->setup($player))]));
+		}
 	}
 }

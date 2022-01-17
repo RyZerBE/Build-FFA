@@ -91,6 +91,10 @@ class BuildFFA extends PluginBase{
 	private function registerPermissions(): void{
 		PermissionManager::getInstance()->addPermission(new Permission("game.setup", "Allow /setup"));
 		PermissionManager::getInstance()->getPermission(DefaultPermissionNames::GROUP_OPERATOR)->addChild("game.setup", true);
+		PermissionManager::getInstance()->addPermission(new Permission("game.buildffa.map.skip", "Allow /skip"));
+		PermissionManager::getInstance()->getPermission(DefaultPermissionNames::GROUP_OPERATOR)->addChild("game.buildffa.map.skip", true);
+		PermissionManager::getInstance()->addPermission(new Permission("game.buildffa.settings", "Allow /settings"));
+		PermissionManager::getInstance()->getPermission(DefaultPermissionNames::GROUP_OPERATOR)->addChild("game.buildffa.settings", true);
 	}
 
 	private function registerCommands(): void{

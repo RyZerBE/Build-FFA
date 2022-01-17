@@ -288,7 +288,7 @@ class Game{
 							} else if ($player->setup->getCurrentStage() == 2) {
 								$player->setup->configuration["protection"] = $event->getBlock()->getPosition()->distance($player->getWorld()->getSpawnLocation());
 								$player->setup->sendMessage("spawn protection set to " . $event->getBlock()->getPosition()->distance($player->getWorld()->getSpawnLocation()));
-								$player->sendForm(new CustomForm("Select block cooldown", [new Slider("Seconds", 0.5, 10, 0.5, 5)], function (xPlayer $player, CustomFormResponse $response): void{
+								$player->sendForm(new CustomForm("Select block cooldown", [new Slider("Seconds", 0.5, 30, 0.5, 5)], function (xPlayer $player, CustomFormResponse $response): void{
 									$count = $response->getSlider()->getValue();
 									$player->setup->configuration["blocks_cooldown"] = $count;
 									$player->setup->sendMessage("blocks_cooldown set to " . $count);

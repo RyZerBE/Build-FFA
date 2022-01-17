@@ -21,9 +21,11 @@ use xxAROX\BuildFFA\player\xPlayer;
  * @project BuildFFA
  */
 class SetupCommand extends Command{
+	/**
+	 * SetupCommand constructor.
+	 */
 	public function __construct(){
 		parent::__construct("setup", "Setup command", null, []);
-		$this->setPermission("game.setup");
 	}
 
 	/**
@@ -31,16 +33,23 @@ class SetupCommand extends Command{
 	 * @param CommandSender $sender
 	 * @param string $commandLabel
 	 * @param array $args
-	 * @return mixed|void
+	 * @return void
 	 */
 	public function execute(CommandSender $sender, string $commandLabel, array $args){
-		if (!$this->testPermission($sender)) {
-			return;
-		}
 		if (!$sender instanceof xPlayer) {
 			$sender->sendMessage("§o§n§cNot f-f-f-for y-y-you!");
 			return;
 		}
-		Game::getInstance()->setup($sender);
+		if (isset($args[0]) && strtolower($args[0]) == "settings") {
+			if (!$this->testPermission($sender, "game.buildffa.settings")) {
+				return;
+			}
+			$sender->sendBuildFFASettingsForm();
+		} else {
+			if (!$this->testPermission($sender, "game.setup")) {
+				return;
+			}
+			Game::getInstance()->setup($sender);
+		}
 	}
 }
