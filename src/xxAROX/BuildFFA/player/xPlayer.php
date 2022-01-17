@@ -449,7 +449,7 @@ class xPlayer extends Player{
 		$newVerticalVelocity = $fallBlock->onEntityLand($this);
 		$damage = $this->calculateFallDamage($this->fallDistance);
 		if ($damage > 0) {
-			if ($this->allow_no_fall_damage || Game::getInstance()->getArena()->getSettings()->enable_fall_damage) {
+			if ($this->allow_no_fall_damage || !Game::getInstance()->getArena()->getSettings()->enable_fall_damage) {
 				$this->allow_no_fall_damage = false;
 				return $newVerticalVelocity;
 			}
