@@ -11,6 +11,7 @@ use pocketmine\entity\Entity;
 use pocketmine\entity\Location;
 use pocketmine\entity\object\FallingBlock;
 use pocketmine\world\Position;
+use pocketmine\world\sound\PopSound;
 
 
 /**
@@ -62,6 +63,7 @@ class BlockEntity extends FallingBlock{
 		if (!$this->isFlaggedForDespawn()) {
 			if ($this->onGround) {
 				$this->flagForDespawn();
+				$this->getWorld()->addSound($this->getPosition(), new PopSound());
 			}
 		}
 		return $hasUpdate;
