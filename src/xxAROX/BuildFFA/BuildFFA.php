@@ -43,9 +43,9 @@ use xxAROX\BuildFFA\listener\PlayerListener;
  * @project BuildFFA
  */
 class BuildFFA extends PluginBase{
-	const TAG_SORT_TYPE = "xxarox:inv:sort_type";
-	const TAG_READONLY  = "xxarox:inv:readonly";
-	const TAG_COUNTDOWN = "xxarox:inv:countdown";
+	const TAG_SORT_TYPE              = "xxarox:inv:sort_type";
+	const TAG_READONLY               = "xxarox:inv:readonly";
+	const TAG_COUNTDOWN              = "xxarox:inv:countdown";
 	const TAG_PLACEHOLDER_IDENTIFIER = "__placeholderId";
 	use SingletonTrait;
 
@@ -95,13 +95,6 @@ class BuildFFA extends PluginBase{
 			}
 		}
 		new Game($arenas);
-	}
-
-	/**
-	 * Function onDisable
-	 * @return void
-	 */
-	protected function onDisable(): void{
 	}
 
 	/**
@@ -155,5 +148,12 @@ class BuildFFA extends PluginBase{
 		EntityFactory::getInstance()->register(BlockEntity::class, function (World $world, CompoundTag $nbt): Entity{
 			return new BlockEntity(EntityDataHelper::parseLocation($nbt, $world), FallingBlock::parseBlockNBT(BlockFactory::getInstance(), $nbt));
 		}, ["buildffa:block"]);
+	}
+
+	/**
+	 * Function onDisable
+	 * @return void
+	 */
+	protected function onDisable(): void{
 	}
 }

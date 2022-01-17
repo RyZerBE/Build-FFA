@@ -61,6 +61,27 @@ class SettingsItem extends Item{
 	}
 
 	/**
+	 * Function sendForm
+	 * @param xPlayer $player
+	 * @return void
+	 */
+	private function sendForm(xPlayer $player): void{
+		$settings = $player->hasPermission("game.buildffa.settings");
+		$setup = $player->hasPermission("game.setup");
+		if (!$settings && !$setup) {
+		} else if ($settings && !$setup) {
+			$player->sendBuildFFASettingsForm();
+		} else if (!$settings && $setup) {
+			Game::getInstance()->setup($player);
+		} else {
+			$player->sendForm(new MenuForm("BuildFFA", "", [
+				new FunctionalButton("Settings", fn(xPlayer $player) => $player->sendBuildFFASettingsForm()),
+				new FunctionalButton("Setup", fn(xPlayer $player) => Game::getInstance()->setup($player)),
+			]));
+		}
+	}
+
+	/**
 	 * Function onInteractBlock
 	 * @param xPlayer $player
 	 * @param Block $blockReplace
@@ -76,23 +97,5 @@ class SettingsItem extends Item{
 			return ItemUseResult::FAIL();
 		}
 		return parent::onInteractBlock($player, $blockReplace, $blockClicked, $face, $clickVector);
-	}
-
-	/**
-	 * Function sendForm
-	 * @param xPlayer $player
-	 * @return void
-	 */
-	private function sendForm(xPlayer $player): void{
-		$settings = $player->hasPermission("game.buildffa.settings");
-		$setup = $player->hasPermission("game.setup");
-		if (!$settings && !$setup) {
-		} else if ($settings && !$setup) {
-			$player->sendBuildFFASettingsForm();
-		} else if (!$settings && $setup) {
-			Game::getInstance()->setup($player);
-		} else {
-			$player->sendForm(new MenuForm("BuildFFA", "", [new FunctionalButton("Settings", fn(xPlayer $player) => $player->sendBuildFFASettingsForm()),new FunctionalButton("Setup", fn(xPlayer $player) => Game::getInstance()->setup($player))]));
-		}
 	}
 }

@@ -54,24 +54,24 @@ use xxAROX\BuildFFA\items\SpectateItem;
  * @project BuildFFA
  */
 class xPlayer extends Player{
-	protected int $kill_streak = 0;
-	protected int $deaths = 0;
-	protected int $kills = 0;
-	protected ?Kit $selected_kit = null;
-	protected array $inv_sort = [];
-	// NOTE: this is for internal api stuff
 	/** @internal */
 	public ?Setup $setup = null;
 	/** @internal */
 	public bool $is_in_inv_sort = false;
-	/** @internal */
-	public bool $allow_no_fall_damage = true; //NOTE: lmao, i wrote that shit high af
+/** @internal */
+	public bool $allow_no_fall_damage = true;
 	/** @internal */
 	public string $voted_map = "";
 	/** @internal */
 	public array $itemCountdowns = [];
+	// NOTE: this is for internal api stuff
 	/** @internal */
 	public array $enderpearls = [];
+	protected int $kill_streak = 0;
+		protected int $deaths = 0; //NOTE: lmao, i wrote that shit high af
+	protected int $kills = 0;
+	protected ?Kit $selected_kit = null;
+	protected array $inv_sort = [];
 
 	/**
 	 * Function load
@@ -282,7 +282,11 @@ class xPlayer extends Player{
 			new Toggle("Enable Fall damage", Game::getInstance()->getArena()->getSettings()->enable_fall_damage),
 			new Slider("Block despawn time", 0.5, 30, 0.5, Game::getInstance()->getArena()->getSettings()->blocks_cooldown),
 		];
-		$this->sendForm(new CustomForm("BuildFFA Settings", array_merge((Server::getInstance()->isOp($this->getName()) ? [] : [/* if you remove this you are not a good developer :> */new Label("§o§9BuildFFA by " . implode(", ", BuildFFA::getInstance()->getDescription()->getAuthors()))]), $elements), function (xPlayer $player, CustomFormResponse $response): void{
+		$this->sendForm(new CustomForm("BuildFFA Settings", array_merge((Server::getInstance()->isOp($this->getName())
+			? []
+			: [/* if you remove this you are not a good developer :> */
+				new Label("§o§9BuildFFA by " . implode(", ", BuildFFA::getInstance()->getDescription()->getAuthors())),
+			]), $elements), function (xPlayer $player, CustomFormResponse $response): void{
 			Game::getInstance()->getArena()->getSettings()->enable_fall_damage = $response->getToggle()->getValue();
 			Game::getInstance()->getArena()->getSettings()->blocks_cooldown = $response->getSlider()->getValue();
 			Command::broadcastCommandMessage($this, "Updated BuildFFA settings", false);

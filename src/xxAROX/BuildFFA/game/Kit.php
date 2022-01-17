@@ -90,9 +90,11 @@ class Kit{
 		unset($checked, $slot);
 		foreach ($this->contents as $type => $item) {
 			if (isset($invSort[$type])) {
-				$player->getInventory()->setItem($invSort[$type], $item instanceof PlaceHolderItem ? $item->getPlaceholdersItem() : /*clone/*should 'all player same item-name' fix*/ $item);
+				$player->getInventory()->setItem($invSort[$type], $item instanceof PlaceHolderItem
+					? $item->getPlaceholdersItem() : /*clone/*should 'all player same item-name' fix*/ $item);
 			} else {
-				$player->getInventory()->addItem($item instanceof PlaceHolderItem ? $item->getPlaceholdersItem() : /*clone/*should 'all player same item-name' fix*/ $item);
+				$player->getInventory()->addItem($item instanceof PlaceHolderItem ? $item->getPlaceholdersItem()
+					: /*clone/*should 'all player same item-name' fix*/ $item);
 			}
 		}
 		$player->getOffHandInventory()->setItem(0, $this->offhand);
