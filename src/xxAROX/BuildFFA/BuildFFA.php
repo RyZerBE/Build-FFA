@@ -24,6 +24,7 @@ use pocketmine\Server;
 use pocketmine\utils\SingletonTrait;
 use pocketmine\world\World;
 use xxAROX\BuildFFA\command\SetupCommand;
+use xxAROX\BuildFFA\command\SkipCommand;
 use xxAROX\BuildFFA\entity\BlockEntity;
 use xxAROX\BuildFFA\game\Arena;
 use xxAROX\BuildFFA\game\ArenaSettings;
@@ -100,6 +101,7 @@ class BuildFFA extends PluginBase{
 	private function registerCommands(): void{
 		$this->getServer()->getCommandMap()->registerAll(strtoupper($this->getName()), [
 			new SetupCommand(),
+			new SkipCommand(),
 		]);
 	}
 

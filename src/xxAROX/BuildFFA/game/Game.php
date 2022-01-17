@@ -51,7 +51,7 @@ use xxAROX\BuildFFA\player\xPlayer;
  * @project BuildFFA
  */
 class Game{
-	const MAP_CHANGE_INTERVAL = (60 * 1);
+	const MAP_CHANGE_INTERVAL = (60 * 15);
 	use SingletonTrait;
 
 
@@ -169,7 +169,7 @@ class Game{
 				if ($minutes > 0) {
 					$onlinePlayer->sendActionBarMessage("Map reset in " . $minutes . " minutes.");
 				} else {
-					$onlinePlayer->sendActionBarMessage("Map reset in > 0 minutes.");
+					$onlinePlayer->sendActionBarMessage("Map reset in <0 minutes.");
 				}
 				$this->bossBar->addPlayer($onlinePlayer);
 			}
@@ -220,6 +220,10 @@ class Game{
 				unset($this->destroyedBlocks[$encodedPos]);
 			}
 		}
+	}
+
+	public function skip(): void{
+		$this->nextArenaChange = 0;
 	}
 
 	public function getKit(?string $name): Kit{
