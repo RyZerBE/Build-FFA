@@ -29,9 +29,9 @@ class BlockEntity extends FallingBlock{
 	 * @param Block $block
 	 */
 	public function __construct(Position $position, Block $block){
+		$this->block = $block;
 		$vec = $position->floor()->add(0.5, 0.5, 0.5);
 		parent::__construct($position->level, self::createBaseNBT(new Location($vec->x, $vec->y, $vec->z, 0, 0, $position->level)));
-		$this->setBlock($block);
 	}
 
 	/**
