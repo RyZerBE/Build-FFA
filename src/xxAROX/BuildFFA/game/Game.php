@@ -88,7 +88,7 @@ class Game{
 			$this->mapVotes[$a->getWorld()->getFolderName()] = 0;
 		}
 		$this->initKits();
-		BuildFFA::getInstance()->getScheduler()->scheduleRepeatingTask(new ClosureTask(fn() => $this->tick()), 1);
+		BuildFFA::getInstance()->getScheduler()->scheduleRepeatingTask(new ClosureTask(function (int $_): void{ $this->tick(); }), 1);
 	}
 
 	/**
