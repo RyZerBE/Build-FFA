@@ -1,0 +1,42 @@
+name: "Build & Release"
+on:
+  push:
+    branches: ["main","pmmp3"]
+
+env:
+  IS_GITHUB_ACTIONS: true
+
+jobs:
+  build:
+    if: "contains('release', github.event.head_commit.message)"
+    name: "Build & Release"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Building
+        run: "php -dphar.readonly=0 build.php"
+
+      - name: "Get data"
+        id: metadata
+        run: |
+          echo ::set-output name=API::$(php -r 'echo file_get_contents(getcwd() . DIRECTORY_SEPARATOR . "out/.API.txt");')
+          echo ::set-output name=VERSION::$(php -r 'echo file_get_contents(getcwd() . DIRECTORY_SEPARATOR . "out/.VERSION.txt");')
+          echo ::set-output name=FILE_NAME::$(php -r 'echo file_get_contents(getcwd() . DIRECTORY_SEPARATOR . "out/.FILE_NAME.txt");')
+          echo ::set-output name=FOLDER::$(php -r 'echo file_get_contents(getcwd() . DIRECTORY_SEPARATOR . "out/.FOLDER.txt");')
+
+      - name: "Build source"
+        run: |
+          cd out/
+          zip -r ${{ steps.metadata.outputs.FILE_NAME }}.zip ${{ steps.metadata.outputs.FOLDER }}/*
+          cd ../
+
+      - uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "v${{ steps.metadata.outputs.VERSION }}_pmmp-api-${{ steps.metadata.outputs.API }}"
+          prerelease: true
+          title: "Release v${{ steps.metadata.outputs.VERSION }} | pmmp-${{ steps.metadata.outputs.API }}"
+          files: |
+            out/*.zip
+            out/*.phar
