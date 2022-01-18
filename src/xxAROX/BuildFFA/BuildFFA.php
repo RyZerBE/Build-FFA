@@ -6,13 +6,9 @@
  */
 declare(strict_types=1);
 namespace xxAROX\BuildFFA;
-use pocketmine\block\BlockFactory;
 use pocketmine\entity\Entity;
-use pocketmine\entity\object\FallingBlock;
 use pocketmine\item\ItemFactory;
 use pocketmine\level\Level;
-use pocketmine\nbt\tag\CompoundTag;
-use pocketmine\permission\DefaultPermissions;
 use pocketmine\permission\Permission;
 use pocketmine\permission\PermissionManager;
 use pocketmine\plugin\PluginBase;
@@ -94,13 +90,6 @@ class BuildFFA extends PluginBase{
 	}
 
 	/**
-	 * Function onDisable
-	 * @return void
-	 */
-	public function onDisable(): void{
-	}
-
-	/**
 	 * Function registerPermissions
 	 * @return void
 	 */
@@ -146,5 +135,12 @@ class BuildFFA extends PluginBase{
 	 */
 	private function registerEntities(): void{
 		Entity::registerEntity(BlockEntity::class, true, ["buildffa:falling_block"]);
+	}
+
+	/**
+	 * Function onDisable
+	 * @return void
+	 */
+	public function onDisable(): void{
 	}
 }

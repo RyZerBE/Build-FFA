@@ -5,12 +5,13 @@
  * I don't want anyone to use my source code without permission.
  */
 use DaveRandom\CallbackValidator\CallbackType;
+use DaveRandom\CallbackValidator\InvalidCallbackException;
 use JetBrains\PhpStorm\Pure;
 use pocketmine\item\Item;
-use pocketmine\Server;
-use pocketmine\level\Position;
 use pocketmine\level\Level;
 use pocketmine\level\LevelException;
+use pocketmine\level\Position;
+use pocketmine\Server;
 use xxAROX\BuildFFA\BuildFFA;
 
 
@@ -71,14 +72,14 @@ function applyReadonlyTag(Item $item, bool $readonly = true): Item{
  * @phpstan-param anyCallable $signature
  * @phpstan-param anyCallable $subject
  *
- * @throws \DaveRandom\CallbackValidator\InvalidCallbackException
+ * @throws InvalidCallbackException
  * @throws TypeError
  */
-function validateCallableSignature(CallbackType|callable $signature, callable $subject) : void{
+function validateCallableSignature(CallbackType|callable $signature, callable $subject): void{
 	if (is_callable($signature) || $signature instanceof Closure) {
 		$signature = CallbackType::createFromCallable($signature);
 	}
-	if(!$signature->isSatisfiedBy($subject)){
+	if (!$signature->isSatisfiedBy($subject)) {
 		throw new TypeError("Declaration of callable `" . CallbackType::createFromCallable($subject) . "` must be compatible with `" . $signature->__toString() . "`");
 	}
 }

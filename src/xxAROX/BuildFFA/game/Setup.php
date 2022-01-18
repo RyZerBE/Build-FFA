@@ -39,8 +39,8 @@ class Setup{
 	const PREFIX     = "§cSetup §l§8»§r §7§o";
 	const SETUP_NONE = 0;
 	public array $configuration = [];
-	protected xPlayer $player;
 	public string $id;
+	protected xPlayer $player;
 	protected string $path;
 	protected Level $world;
 	protected int $maxStage = 0;

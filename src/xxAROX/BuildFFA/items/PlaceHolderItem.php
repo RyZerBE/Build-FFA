@@ -12,9 +12,7 @@ use DaveRandom\CallbackValidator\CallbackType;
 use DaveRandom\CallbackValidator\ParameterType;
 use DaveRandom\CallbackValidator\ReturnType;
 use pocketmine\item\Item;
-use pocketmine\math\Vector3;
-use pocketmine\Player;
-use pocketmine\utils\Utils;
+use pocketmine\utils\UUID;
 use xxAROX\BuildFFA\BuildFFA;
 use xxAROX\BuildFFA\player\xPlayer;
 
@@ -45,16 +43,14 @@ class PlaceHolderItem extends Item{
 		if (!is_null($this->allowItemCooldown)) {
 			validateCallableSignature(new CallbackType(new ReturnType(BuiltInTypes::BOOL), new ParameterType("player", xPlayer::class)), $this->allowItemCooldown);
 		}
-		$this->placeholderIdentifier = \pocketmine\utils\UUID::fromRandom()->toString();
+		$this->placeholderIdentifier = UUID::fromRandom()->toString();
 		$this->placeholdersItem->getNamedTag()->setInt(BuildFFA::TAG_COUNTDOWN, $this->countdown);
 		parent::__construct($id, $meta, "Placeholder:{$id}:{$meta}");
 		$this->setCustomName("§cNo {$placeholdersItem->getVanillaName()}");
 		applyReadonlyTag($this);
-
 		$nbt = $this->getNamedTag();
 		$nbt->setString(BuildFFA::TAG_PLACEHOLDER_IDENTIFIER, $this->placeholderIdentifier);
 		$this->setNamedTag($nbt);
-
 		$_nbt = $this->placeholdersItem->getNamedTag();
 		$_nbt->setString(BuildFFA::TAG_PLACEHOLDER_IDENTIFIER, $this->placeholderIdentifier);
 		$this->placeholdersItem->setNamedTag($_nbt);

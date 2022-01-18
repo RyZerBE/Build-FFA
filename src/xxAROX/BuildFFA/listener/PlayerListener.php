@@ -6,7 +6,6 @@
  */
 declare(strict_types=1);
 namespace xxAROX\BuildFFA\listener;
-use pocketmine\block\BlockIds;
 use pocketmine\event\entity\EntityTeleportEvent;
 use pocketmine\event\inventory\InventoryTransactionEvent;
 use pocketmine\event\Listener;

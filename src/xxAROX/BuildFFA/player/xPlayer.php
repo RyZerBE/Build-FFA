@@ -55,7 +55,7 @@ class xPlayer extends Player{
 	public ?Setup $setup = null;
 	/** @internal */
 	public bool $is_in_inv_sort = false;
-/** @internal */
+	/** @internal */
 	public bool $allow_no_fall_damage = true;
 	/** @internal */
 	public string $voted_map = "";
@@ -65,7 +65,7 @@ class xPlayer extends Player{
 	/** @internal */
 	public array $enderpearls = [];
 	protected int $kill_streak = 0;
-		protected int $deaths = 0; //NOTE: lmao, i wrote that shit high af
+	protected int $deaths = 0; //NOTE: lmao, i wrote that shit high af
 	protected int $kills = 0;
 	protected ?Kit $selected_kit = null;
 	protected array $inv_sort = [];
@@ -371,6 +371,61 @@ class xPlayer extends Player{
 	}
 
 	/**
+	 * Function entityBaseTick
+	 * @param int $tickDiff
+	 * @return bool
+	 */
+	public function entityBaseTick(int $tickDiff = 1): bool{
+		if ($this->getPosition()->y <= Game::getInstance()->getArena()->getSettings()->respawn_height) {
+			$this->__respawn();
+		}
+		if ($this->server->getTick() % 20 == 0) {
+			foreach ($this->itemCountdowns as $_ => $obj) {
+				$this->itemCountdowns[$_][0]--;
+				$secondsLeft = $this->itemCountdowns[$_][0];
+				$slot = $this->itemCountdowns[$_][2];
+				/** @var PlaceHolderItem $placeholder_item */
+				$placeholder_item = $this->itemCountdowns[$_][3];
+				if ($secondsLeft <= 0) {
+					unset($this->itemCountdowns[$_]);
+					$this->inventory->setItem($slot, $placeholder_item->getPlaceholdersItem());
+				} else {
+					$item = clone $placeholder_item;
+					$item->setCount(intval(round($secondsLeft)));
+					$item->setCustomName("§r§8{$secondsLeft} seconds left");
+					$this->inventory->setItem($slot, $item);
+				}
+			}
+		}
+		return parent::entityBaseTick($tickDiff);
+	}
+
+	public function fall(float $fallDistance): void{
+		$damage = ceil($fallDistance - 3 - ($this->hasEffect(Effect::JUMP)
+				? $this->getEffect(Effect::JUMP)->getEffectLevel() : 0));
+		if ($damage > 0) {
+			if ($this->allow_no_fall_damage || !Game::getInstance()->getArena()->getSettings()->enable_fall_damage) {
+				$this->allow_no_fall_damage = false;
+				return;
+			}
+			$ev = new EntityDamageEvent($this, EntityDamageEvent::CAUSE_FALL, $damage);
+			$this->attack($ev);
+		}
+	}
+
+	/**
+	 * Function attack
+	 * @param EntityDamageEvent $source
+	 * @return void
+	 */
+	public function attack(EntityDamageEvent $source): void{
+		if (Game::getInstance()->getArena()->isInProtectionArea($this->getPosition()->asVector3())) {
+			$source->setCancelled();
+		}
+		parent::attack($source);
+	}
+
+	/**
 	 * Function onDeath
 	 * @return void
 	 */
@@ -414,59 +469,5 @@ class xPlayer extends Player{
 			$this->teleport(Game::getInstance()->getArena()->getWorld()->getSafeSpawn());
 			$this->sendOtakaItems();
 		}
-	}
-
-	/**
-	 * Function entityBaseTick
-	 * @param int $tickDiff
-	 * @return bool
-	 */
-	public function entityBaseTick(int $tickDiff = 1): bool{
-		if ($this->getPosition()->y <= Game::getInstance()->getArena()->getSettings()->respawn_height) {
-			$this->__respawn();
-		}
-		if ($this->server->getTick() % 20 == 0) {
-			foreach ($this->itemCountdowns as $_ => $obj) {
-				$this->itemCountdowns[$_][0]--;
-				$secondsLeft = $this->itemCountdowns[$_][0];
-				$slot = $this->itemCountdowns[$_][2];
-				/** @var PlaceHolderItem $placeholder_item */
-				$placeholder_item = $this->itemCountdowns[$_][3];
-				if ($secondsLeft <= 0) {
-					unset($this->itemCountdowns[$_]);
-					$this->inventory->setItem($slot, $placeholder_item->getPlaceholdersItem());
-				} else {
-					$item = clone $placeholder_item;
-					$item->setCount(intval(round($secondsLeft)));
-					$item->setCustomName("§r§8{$secondsLeft} seconds left");
-					$this->inventory->setItem($slot, $item);
-				}
-			}
-		}
-		return parent::entityBaseTick($tickDiff);
-	}
-
-	public function fall(float $fallDistance) : void{
-		$damage = ceil($fallDistance - 3 - ($this->hasEffect(Effect::JUMP) ? $this->getEffect(Effect::JUMP)->getEffectLevel() : 0));
-		if($damage > 0){
-			if ($this->allow_no_fall_damage || !Game::getInstance()->getArena()->getSettings()->enable_fall_damage) {
-				$this->allow_no_fall_damage = false;
-				return;
-			}
-			$ev = new EntityDamageEvent($this, EntityDamageEvent::CAUSE_FALL, $damage);
-			$this->attack($ev);
-		}
-	}
-
-	/**
-	 * Function attack
-	 * @param EntityDamageEvent $source
-	 * @return void
-	 */
-	public function attack(EntityDamageEvent $source): void{
-		if (Game::getInstance()->getArena()->isInProtectionArea($this->getPosition()->asVector3())) {
-			$source->setCancelled();
-		}
-		parent::attack($source);
 	}
 }
