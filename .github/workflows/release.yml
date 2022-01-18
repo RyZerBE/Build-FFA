@@ -34,7 +34,7 @@ jobs:
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: "v${{ steps.metadata.outputs.VERSION }} pmmp-api-${{ steps.metadata.outputs.API }}"
+          automatic_release_tag: "v${{ steps.metadata.outputs.VERSION }}_pmmp-api-${{ steps.metadata.outputs.API }}"
           prerelease: true
           title: "Release v${{ steps.metadata.outputs.VERSION }} | pmmp-${{ steps.metadata.outputs.API }}"
           files: |
