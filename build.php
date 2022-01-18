@@ -66,6 +66,9 @@ if (!$IS_GITHUB_ACTIONS) {
 	rmdir($to);
 }
 function copyDirectory(string $from, string $to): void{
+	if (!is_dir($from)) {
+		return;
+	}
 	mkdir($to, 0777, true);
 	$files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($from, FilesystemIterator::SKIP_DOTS), RecursiveIteratorIterator::SELF_FIRST);
 	/** @var SplFileInfo $fileInfo */
