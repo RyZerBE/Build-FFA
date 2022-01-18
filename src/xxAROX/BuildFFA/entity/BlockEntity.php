@@ -8,10 +8,10 @@ declare(strict_types=1);
 namespace xxAROX\BuildFFA\entity;
 use pocketmine\block\Block;
 use pocketmine\entity\Entity;
-use pocketmine\entity\Location;
 use pocketmine\entity\object\FallingBlock;
-use pocketmine\world\Position;
-use pocketmine\world\sound\PopSound;
+use pocketmine\level\Location;
+use pocketmine\level\Position;
+use pocketmine\level\sound\PopSound;
 
 
 /**
@@ -30,15 +30,8 @@ class BlockEntity extends FallingBlock{
 	 */
 	public function __construct(Position $position, Block $block){
 		$vec = $position->floor()->add(0.5, 0.5, 0.5);
-		parent::__construct(new Location($vec->x, $vec->y, $vec->z, $position->world, 0, 0), $block);
-	}
-
-	/**
-	 * Function getBlock
-	 * @return Block
-	 */
-	public function getBlock(): Block{
-		return $this->block;
+		parent::__construct($position->level, self::createBaseNBT(new Location($vec->x, $vec->y, $vec->z, 0, 0, $position->level)));
+		$this->setBlock($block);
 	}
 
 	/**
@@ -55,7 +48,7 @@ class BlockEntity extends FallingBlock{
 	 * @param int $tickDiff
 	 * @return bool
 	 */
-	protected function entityBaseTick(int $tickDiff = 1): bool{
+	public function entityBaseTick(int $tickDiff = 1): bool{
 		if ($this->closed) {
 			return false;
 		}
@@ -63,7 +56,7 @@ class BlockEntity extends FallingBlock{
 		if (!$this->isFlaggedForDespawn()) {
 			if ($this->onGround) {
 				$this->flagForDespawn();
-				$this->getWorld()->addSound($this->getPosition(), new PopSound());
+				$this->getLevel()->addSound(new PopSound($this->getPosition()));
 			}
 		}
 		return $hasUpdate;

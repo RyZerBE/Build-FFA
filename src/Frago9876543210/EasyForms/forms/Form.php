@@ -3,8 +3,6 @@ declare(strict_types=1);
 namespace Frago9876543210\EasyForms\forms;
 use Closure;
 
-use function array_merge;
-
 
 abstract class Form implements \pocketmine\form\Form{
 	protected const TYPE_MODAL       = "modal";

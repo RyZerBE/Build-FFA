@@ -7,9 +7,7 @@
 declare(strict_types=1);
 namespace xxAROX\BuildFFA\event;
 use pocketmine\block\Block;
-use pocketmine\block\BlockIdentifier;
 use pocketmine\event\Cancellable;
-use pocketmine\event\CancellableTrait;
 use pocketmine\event\Event;
 use pocketmine\item\Item;
 use xxAROX\BuildFFA\player\xPlayer;
@@ -24,17 +22,14 @@ use xxAROX\BuildFFA\player\xPlayer;
  * @project BuildFFA
  */
 class BuildFFASpawnPlatformEvent extends Event implements Cancellable{
-	use CancellableTrait;
-
-
 	/**
 	 * BuildFFASpawnPlatformEvent constructor.
 	 * @param xPlayer $player
 	 * @param Item $item
 	 * @param array $affectedBlocks
-	 * @param BlockIdentifier $blockIdentifier
+	 * @param Block $block
 	 */
-	public function __construct(protected xPlayer $player, protected Item $item, protected array $affectedBlocks, protected BlockIdentifier $blockIdentifier){
+	public function __construct(protected xPlayer $player, protected Item $item, protected array $affectedBlocks, protected Block $block){
 	}
 
 	/**
@@ -71,19 +66,19 @@ class BuildFFASpawnPlatformEvent extends Event implements Cancellable{
 	}
 
 	/**
-	 * Function getBlockIdentifier
-	 * @return BlockIdentifier
+	 * Function getBlock
+	 * @return Block
 	 */
-	public function getBlockIdentifier(): BlockIdentifier{
-		return $this->blockIdentifier;
+	public function getBlock(): Block{
+		return $this->block;
 	}
 
 	/**
 	 * Function setBlockIdentifier
-	 * @param BlockIdentifier $blockIdentifier
+	 * @param Block $block
 	 * @return void
 	 */
-	public function setBlockIdentifier(BlockIdentifier $blockIdentifier): void{
-		$this->blockIdentifier = $blockIdentifier;
+	public function setBlock(Block $block): void{
+		$this->block = $block;
 	}
 }

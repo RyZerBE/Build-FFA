@@ -6,7 +6,7 @@
  */
 declare(strict_types=1);
 namespace xxAROX\BuildFFA\listener;
-use pocketmine\block\VanillaBlocks;
+use pocketmine\block\BlockIds;
 use pocketmine\event\entity\EntityTeleportEvent;
 use pocketmine\event\inventory\InventoryTransactionEvent;
 use pocketmine\event\Listener;
@@ -19,11 +19,11 @@ use pocketmine\event\player\PlayerMoveEvent;
 use pocketmine\event\player\PlayerQuitEvent;
 use pocketmine\inventory\ArmorInventory;
 use pocketmine\inventory\PlayerInventory;
-use pocketmine\inventory\PlayerOffHandInventory;
 use pocketmine\inventory\transaction\action\DropItemAction;
 use pocketmine\inventory\transaction\action\SlotChangeAction;
 use pocketmine\item\Item;
-use pocketmine\player\GameMode;
+use pocketmine\item\ItemIds;
+use pocketmine\Player;
 use xxAROX\BuildFFA\BuildFFA;
 use xxAROX\BuildFFA\event\EnterArenaProtectionAreaEvent;
 use xxAROX\BuildFFA\event\LeaveArenaProtectionAreaEvent;
@@ -68,10 +68,7 @@ class PlayerListener implements Listener{
 	 * @return void
 	 */
 	public function PlayerExhaustEvent(PlayerExhaustEvent $event): void{
-		if ($event->getPlayer()->getHungerManager()->isEnabled()) {
-			$event->getPlayer()->getHungerManager()->setEnabled(false);
-			$event->getPlayer()->getHungerManager()->setFood($event->getPlayer()->getHungerManager()->getMaxFood());
-		}
+		$event->getPlayer()->setFood($event->getPlayer()->getMaxFood());
 	}
 
 	/**
@@ -155,7 +152,7 @@ class PlayerListener implements Listener{
 	public function PlayerItemHeldEvent(PlayerItemHeldEvent $event): void{
 		/** @var xPlayer $player */
 		$player = $event->getPlayer();
-		if ($event->getPlayer()->getGamemode()->id() == GameMode::SPECTATOR()->id() && $event->getItem()->getId() == VanillaBlocks::IRON_DOOR()->asItem()->getId()) {
+		if ($event->getPlayer()->getGamemode() == Player::SPECTATOR && $event->getItem()->getId() == ItemIds::IRON_DOOR) {
 			$player->__respawn();
 		}
 	}
@@ -166,29 +163,26 @@ class PlayerListener implements Listener{
 	 * @return void
 	 */
 	public function InventoryTransactionEvent(InventoryTransactionEvent $event): void{
+		/** @noinspection PhpParamsInspection */
 		if (!Game::getInstance()->filterPlayer($event->getTransaction()->getSource())) {
 			return;
 		}
 		foreach ($event->getTransaction()->getActions() as $action) {
 			if ($action instanceof DropItemAction) {
-				$event->cancel();
+				$event->setCancelled();
 				return;
 			}
 			if (!$action instanceof SlotChangeAction) {
 				return;
 			}
-			if ($action->getInventory() instanceof PlayerOffHandInventory) {
-				$event->cancel();
-				return;
-			}
 			if ($action->getInventory() instanceof ArmorInventory) {
-				$event->cancel();
+				$event->setCancelled();
 				return;
 			}
 			/** @var Item $item */
 			foreach ([$action->getSourceItem(), $action->getTargetItem()] as $item) {
 				if (boolval($item->getNamedTag()->getByte(BuildFFA::TAG_READONLY, intval(false)))) {
-					$event->cancel();
+					$event->setCancelled();
 				}
 			}
 			if ($action->getInventory() instanceof PlayerInventory && !$event->isCancelled()) {
@@ -209,7 +203,7 @@ class PlayerListener implements Listener{
 		/** @var xPlayer $player */
 		$player = $event->getPlayer();
 		$item = $event->getItem();
-		$placeholder = $player->getSelectedKit()->getPlaceholderByIdentifier($item->getNamedTag()->getString("__placeholderId", ""));
+		$placeholder = $player->getSelectedKit()->getPlaceholderByIdentifier($item->getNamedTag()->getString(BuildFFA::TAG_PLACEHOLDER_IDENTIFIER, ""));
 		if (!is_null($placeholder) && $item->getCount() == 1 && !$item->equals($placeholder, true, false)) {
 			if ($placeholder->allowItemCooldown($player)) {
 				$player->itemCooldown($item);

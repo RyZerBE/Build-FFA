@@ -14,20 +14,17 @@ use Frago9876543210\EasyForms\forms\CustomForm;
 use Frago9876543210\EasyForms\forms\CustomFormResponse;
 use Frago9876543210\EasyForms\forms\MenuForm;
 use pocketmine\block\BlockFactory;
-use pocketmine\block\BlockLegacyIds;
-use pocketmine\block\VanillaBlocks;
+use pocketmine\block\BlockIds;
 use pocketmine\command\Command;
+use pocketmine\entity\Effect;
 use pocketmine\entity\projectile\EnderPearl;
 use pocketmine\event\entity\EntityDamageEvent;
 use pocketmine\event\player\PlayerDeathEvent;
 use pocketmine\item\Item;
+use pocketmine\item\ItemFactory;
 use pocketmine\math\Vector3;
-use pocketmine\player\GameMode;
-use pocketmine\player\Player;
+use pocketmine\Player;
 use pocketmine\Server;
-use pocketmine\world\sound\EntityLandSound;
-use pocketmine\world\sound\EntityLongFallSound;
-use pocketmine\world\sound\EntityShortFallSound;
 use xxAROX\BuildFFA\BuildFFA;
 use xxAROX\BuildFFA\event\BuildFFAPlayerChangeInvSortEvent;
 use xxAROX\BuildFFA\event\BuildFFAPlayerRespawnEvent;
@@ -103,7 +100,7 @@ class xPlayer extends Player{
 	 * @return void
 	 */
 	public function giveKit(Kit $kit): void{
-		if ($this->gamemode->id() != GameMode::SURVIVAL()->id()) {
+		if ($this->gamemode != self::SURVIVAL) {
 			return;
 		}
 		$kit->equip($this);
@@ -160,18 +157,18 @@ class xPlayer extends Player{
 			for ($xx = -$size; $xx <= $size; $xx++) {
 				for ($zz = -$size; $zz <= $size; $zz++) {
 					$vector3 = new Vector3($this->getPosition()->x + $xx, $y, $this->getPosition()->z + $zz);
-					$blockBefore = $this->getWorld()->getBlock($vector3);
-					if ($blockBefore->getId() == BlockLegacyIds::AIR) {
-						$affectedBlocks[] = $this->getWorld()->getBlock($vector3);
+					$blockBefore = $this->getLevel()->getBlock($vector3);
+					if ($blockBefore->getId() == BlockIds::AIR) {
+						$affectedBlocks[] = $this->getLevel()->getBlock($vector3);
 					}
 				}
 			}
-			$ev = new BuildFFASpawnPlatformEvent($this, $hand, $affectedBlocks, VanillaBlocks::GLASS()->getIdInfo());
+			$ev = new BuildFFASpawnPlatformEvent($this, $hand, $affectedBlocks, BlockFactory::get(BlockIds::GLASS));
 			$ev->call();
 			if (!$ev->isCancelled()) {
 				foreach ($ev->getAffectedBlocks() as $affectedBlock) {
-					$this->getWorld()->setBlock($affectedBlock->getPosition(), BlockFactory::getInstance()->get($ev->getBlockIdentifier()->getBlockId(), $ev->getBlockIdentifier()->getVariant()));
-					Game::getInstance()->placeBlock($this->getWorld()->getBlock($affectedBlock->getPosition()), 5);
+					$this->getLevel()->setBlock($affectedBlock->asPosition(), $ev->getBlock());
+					Game::getInstance()->placeBlock($this->getLevel()->getBlock($affectedBlock->asPosition()), 5);
 				}
 				$this->teleport(new Vector3($this->getPosition()->x, $y + 2, $this->getPosition()->z));
 				$this->fallDistance = 0.0;
@@ -204,13 +201,13 @@ class xPlayer extends Player{
 	 * @param bool $sneak
 	 * @return bool
 	 */
-	public function toggleSneak(bool $sneak): bool{
+	public function toggleSneak(bool $sneak): void{
 		if ($this->is_in_inv_sort && !$sneak) {
 			$this->saveInvSort();
 			$this->is_in_inv_sort = false;
 			$this->sendOtakaItems();
 		}
-		return parent::toggleSneak($sneak);
+		parent::toggleSneak($sneak);
 	}
 
 	/**
@@ -218,13 +215,12 @@ class xPlayer extends Player{
 	 * @return void
 	 */
 	public function sendOtakaItems(){
-		if ($this->gamemode->id() == GameMode::SPECTATOR()->id()) {
+		if ($this->gamemode == self::SPECTATOR) {
 			return;
 		}
-		$barrier = applyReadonlyTag(VanillaBlocks::BARRIER()->asItem()->setCustomName("§r"));
+		$barrier = applyReadonlyTag(ItemFactory::get(BlockIds::INVISIBLE_BEDROCK)->setCustomName("§r"));
 		$this->inventory->clearAll();
 		$this->armorInventory->clearAll();
-		$this->offHandInventory->clearAll();
 		$this->cursorInventory->clearAll();
 		$this->armorInventory->setHelmet($barrier);
 		$this->armorInventory->setChestplate($barrier);
@@ -320,12 +316,11 @@ class xPlayer extends Player{
 		$ev->call();
 		if (!$ev->isCancelled()) {
 			$this->inventory->setHeldItemIndex(0);
-			$barrier = applyReadonlyTag(VanillaBlocks::BARRIER()->asItem()->setCustomName("§r"));
-			$this->setGamemode(GameMode::SPECTATOR());
+			$barrier = applyReadonlyTag(ItemFactory::get(BlockIds::INVISIBLE_BEDROCK)->setCustomName("§r"));
+			$this->setGamemode(self::SPECTATOR);
 			$this->inventory->clearAll();
 			$this->cursorInventory->clearAll();
 			$this->armorInventory->clearAll();
-			$this->offHandInventory->clearAll();
 			$this->craftingGrid->clearAll();
 			$this->armorInventory->setHelmet($barrier);
 			$this->armorInventory->setChestplate($barrier);
@@ -337,7 +332,7 @@ class xPlayer extends Player{
 			for ($slot = 0; $slot < $this->craftingGrid->getSize(); $slot++) {
 				$this->craftingGrid->setItem($slot, $barrier);
 			}
-			$this->inventory->setItem(8, VanillaBlocks::IRON_DOOR()->asItem()->setCustomName("§r"));
+			$this->inventory->setItem(8, ItemFactory::get(BlockIds::IRON_DOOR_BLOCK)->setCustomName("§r"));
 		}
 	}
 
@@ -380,21 +375,14 @@ class xPlayer extends Player{
 	 * @return void
 	 */
 	protected function onDeath(): void{
-		$this->removeCurrentWindow();
-		$ev = new PlayerDeathEvent($this, $this->getDrops(), $this->getXpDropAmount(), null);
+		$this->doCloseInventory();
+		$ev = new PlayerDeathEvent($this, $this->getDrops(), "", $this->getXpDropAmount());
 		$ev->call();
 		if (!$ev->getKeepInventory()) {
-			if ($this->inventory !== null) {
-				$this->inventory->clearAll();
-			}
-			if ($this->armorInventory !== null) {
-				$this->armorInventory->clearAll();
-			}
-			if ($this->offHandInventory !== null) {
-				$this->offHandInventory->clearAll();
-			}
+			$this->inventory?->clearAll();
+			$this->armorInventory?->clearAll();
 		}
-		$this->xpManager->setXpAndProgress(0, 0.0);
+		$this->setXpAndProgress(0, 0.0);
 		//TODO: death message
 		//$this->server->broadcastMessage($ev->getDeathMessage());
 		$this->startDeathAnimation();
@@ -410,7 +398,7 @@ class xPlayer extends Player{
 		$ev = new BuildFFAPlayerRespawnEvent($this, Game::getInstance()->getArena());
 		$ev->call();
 		$this->setHealth($this->getMaxHealth());
-		$this->setGamemode(GameMode::SURVIVAL());
+		$this->setGamemode(self::SURVIVAL);
 		$this->saveInvSort();
 		/** @var EnderPearl $enderpearl */
 		foreach ($this->enderpearls as $enderpearl) {
@@ -433,7 +421,7 @@ class xPlayer extends Player{
 	 * @param int $tickDiff
 	 * @return bool
 	 */
-	protected function entityBaseTick(int $tickDiff = 1): bool{
+	public function entityBaseTick(int $tickDiff = 1): bool{
 		if ($this->getPosition()->y <= Game::getInstance()->getArena()->getSettings()->respawn_height) {
 			$this->__respawn();
 		}
@@ -458,31 +446,16 @@ class xPlayer extends Player{
 		return parent::entityBaseTick($tickDiff);
 	}
 
-	/**
-	 * Function onHitGround
-	 * @return null|float
-	 */
-	protected function onHitGround(): ?float{
-		$fallBlockPos = $this->location->floor();
-		$fallBlock = $this->getWorld()->getBlock($fallBlockPos);
-		if (count($fallBlock->getCollisionBoxes()) === 0) {
-			$fallBlockPos = $fallBlockPos->down();
-			$fallBlock = $this->getWorld()->getBlock($fallBlockPos);
-		}
-		$newVerticalVelocity = $fallBlock->onEntityLand($this);
-		$damage = $this->calculateFallDamage($this->fallDistance);
-		if ($damage > 0) {
+	public function fall(float $fallDistance) : void{
+		$damage = ceil($fallDistance - 3 - ($this->hasEffect(Effect::JUMP) ? $this->getEffect(Effect::JUMP)->getEffectLevel() : 0));
+		if($damage > 0){
 			if ($this->allow_no_fall_damage || !Game::getInstance()->getArena()->getSettings()->enable_fall_damage) {
 				$this->allow_no_fall_damage = false;
-				return $newVerticalVelocity;
+				return;
 			}
 			$ev = new EntityDamageEvent($this, EntityDamageEvent::CAUSE_FALL, $damage);
 			$this->attack($ev);
-			$this->broadcastSound($damage > 4 ? new EntityLongFallSound($this) : new EntityShortFallSound($this));
-		} else if ($fallBlock->getId() !== BlockLegacyIds::AIR) {
-			$this->broadcastSound(new EntityLandSound($this, $fallBlock));
 		}
-		return $newVerticalVelocity;
 	}
 
 	/**
@@ -492,7 +465,7 @@ class xPlayer extends Player{
 	 */
 	public function attack(EntityDamageEvent $source): void{
 		if (Game::getInstance()->getArena()->isInProtectionArea($this->getPosition()->asVector3())) {
-			$source->cancel();
+			$source->setCancelled();
 		}
 		parent::attack($source);
 	}

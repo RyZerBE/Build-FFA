@@ -6,19 +6,22 @@
  */
 declare(strict_types=1);
 namespace xxAROX\BuildFFA\game;
+use Closure;
 use JetBrains\PhpStorm\ArrayShape;
 use JetBrains\PhpStorm\Pure;
 use pocketmine\event\Cancellable;
 use pocketmine\event\Event;
 use pocketmine\event\EventPriority;
+use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerQuitEvent;
+use pocketmine\level\Level;
+use pocketmine\level\Position;
 use pocketmine\network\mcpe\protocol\PlaySoundPacket;
-use pocketmine\player\GameMode;
+use pocketmine\Player;
+use pocketmine\plugin\MethodEventExecutor;
 use pocketmine\Server;
 use pocketmine\utils\Config;
-use pocketmine\world\Position;
-use pocketmine\world\World;
-use Ramsey\Uuid\Uuid;
+use pocketmine\utils\UUID;
 use ReflectionException;
 use xxAROX\BuildFFA\BuildFFA;
 use xxAROX\BuildFFA\player\xPlayer;
@@ -37,9 +40,9 @@ class Setup{
 	const SETUP_NONE = 0;
 	public array $configuration = [];
 	protected xPlayer $player;
-	protected string $id;
+	public string $id;
 	protected string $path;
-	protected World $world;
+	protected Level $world;
 	protected int $maxStage = 0;
 	protected int $currentStage = 0;
 
@@ -54,52 +57,81 @@ class Setup{
 	 */
 	public function __construct(xPlayer $player, string $path, string $world, int $maxStage = 1, array $events = []){
 		$this->player = $player;
-		if (!$player->getServer()->getWorldManager()->isWorldLoaded($world)) {
-			if (!$player->getServer()->getWorldManager()->loadWorld($world, true)) {
-				$this->sendMessage("§cWorld not found!");
+		if (!$player->getServer()->isLevelLoaded($world)) {
+			if (!$player->getServer()->loadLevel($world)) {
+				$this->sendMessage("§cLevel not found!");
 				$this->leave();
 				return;
 			}
 		}
-		$this->world = $this->player->getServer()->getWorldManager()->getWorldByName($world);
-		$this->id = Uuid::uuid4()->toString();
+		$this->world = $this->player->getServer()->getLevelByName($world);
+		$this->id = UUID::fromRandom()->toString();
 		$this->path = $path;
 		$this->currentStage = 1;
 		$this->maxStage = $maxStage;
 		$this->configuration = $this->getDefaultConfiguration();
 		$this->configuration["world"] = $this->world->getFolderName();
 		$plugin_manager = Server::getInstance()->getPluginManager();
-		$plugin_manager->registerEvent(PlayerQuitEvent::class, function (PlayerQuitEvent $event): void{
-			$player = $event->getPlayer();
-			if ($player instanceof xPlayer && !is_null($player->setup)) {
-				if ($player->setup->id == $this->id) {
-					$this->leave();
+		$plugin_manager->registerEvent(PlayerQuitEvent::class, new class($this) implements Listener{
+			/**
+			 * Anonymous constructor.
+			 * @param Setup $setup
+			 */
+			public function __construct(private Setup $setup){
+			}
+
+			/**
+			 * Function PlayerQuitEvent
+			 * @param PlayerQuitEvent $event
+			 * @return void
+			 */
+			public function PlayerQuitEvent(PlayerQuitEvent $event): void{
+				$player = $event->getPlayer();
+				if ($player instanceof xPlayer && !is_null($player->setup)) {
+					if ($player->setup->id == $this->setup->id) {
+						$this->setup->leave();
+					}
 				}
 			}
-		}, EventPriority::MONITOR, BuildFFA::getInstance());
+		}, EventPriority::MONITOR, new MethodEventExecutor("PlayerQuitEvent"), BuildFFA::getInstance());
 		foreach ($events as $eventClass => $eventListener) {
 			if (class_exists($eventClass) && method_exists($eventClass, "getPlayer")) {
-				$plugin_manager->registerEvent($eventClass, function (Event $event) use ($eventListener): void{
-					if (method_exists($event, "getPlayer")) {
-						$player = $event->getPlayer();
-						if ($player instanceof xPlayer && !is_null($player->setup) && $player->setup->id == $this->id) {
-							if ($event instanceof Cancellable && method_exists($event, "cancel")) {
-								$event->cancel();
-							}
-							if ($player->isSneaking()) {
-								$this->sendMessage("Ignored.");
-								return;
-							}
-							($eventListener)($event);
-							if ($event instanceof Cancellable) {
-								$event->cancel();
+				$plugin_manager->registerEvent($eventClass, new class($this, $eventListener) implements Listener{
+					/**
+					 * Anonymous constructor.
+					 * @param Setup $setup
+					 * @param Closure $eventListener
+					 */
+					public function __construct(private Setup $setup, private Closure $eventListener){
+					}
+
+					/**
+					 * Function Event
+					 * @param Event $event
+					 * @return void
+					 */
+					public function Event($event): void{
+						if (method_exists($event, "getPlayer")) {
+							$player = $event->getPlayer();
+							if ($player instanceof xPlayer && !is_null($player->setup) && $player->setup->id == $this->setup->id) {
+								if ($event instanceof Cancellable && method_exists($event, "cancel")) {
+									$event->cancel();
+								}
+								if ($player->isSneaking()) {
+									$this->setup->sendMessage("Ignored.");
+									return;
+								}
+								($this->eventListener)($event);
+								if ($event instanceof Cancellable) {
+									$event->cancel();
+								}
 							}
 						}
 					}
-				}, EventPriority::MONITOR, BuildFFA::getInstance());
+				}, EventPriority::MONITOR, new MethodEventExecutor("Event"), BuildFFA::getInstance());
 			}
 		}
-		$player->setGamemode(GameMode::CREATIVE());
+		$player->setGamemode(Player::CREATIVE);
 		$player->setFlying(true);
 		$player->teleport($this->world->getSafeSpawn());
 	}
@@ -151,21 +183,33 @@ class Setup{
 		$this->currentStage++;
 		if ($this->currentStage == $this->maxStage + 1) {
 			$this->saveConfiguration();
-			$this->player->teleport($this->player->getServer()->getWorldManager()->getDefaultWorld()->getSafeSpawn());
-			if ($this->world->getFolderName() != Server::getInstance()->getWorldManager()->getDefaultWorld()->getFolderName()) {
+			$this->player->teleport($this->player->getServer()->getDefaultLevel()->getSafeSpawn());
+			if ($this->world->getFolderName() != Server::getInstance()->getDefaultLevel()->getFolderName()) {
 				$worldName = $this->world->getFolderName();
-				Server::getInstance()->getWorldManager()->unloadWorld($this->world);
-				Server::getInstance()->getWorldManager()->loadWorld($worldName);
-				$this->world = Server::getInstance()->getWorldManager()->getWorldByName($worldName);
+				Server::getInstance()->unloadLevel($this->world);
+				Server::getInstance()->loadLevel($worldName);
+				$this->world = Server::getInstance()->getLevelByName($worldName);
 			} else {
 				$this->sendMessage("Please restart server!");
 			}
-			$this->player->getNetworkSession()->sendDataPacket(PlaySoundPacket::create("block.composter.fill_success", $this->player->getPosition()->x, $this->player->getPosition()->y, $this->player->getPosition()->z, 1, 1));
+			$packet = new PlaySoundPacket();
+			$packet->soundName = "block.composter.fill_success";
+			$packet->x = $this->player->getPosition()->x;
+			$packet->y = $this->player->getPosition()->y;
+			$packet->z = $this->player->getPosition()->z;
+			$packet->pitch = $packet->volume = 1;
+			$this->player->sendDataPacket($packet);
 			$this->sendMessage("Setup done!");
 			Game::getInstance()->addArena(new Arena($this->world, new ArenaSettings($this->configuration)));
 			$this->player->setup = null;
 		} else {
-			$this->player->getNetworkSession()->sendDataPacket(PlaySoundPacket::create("block.composter.fill", $this->player->getPosition()->x, $this->player->getPosition()->y, $this->player->getPosition()->z, 1, 1));
+			$packet = new PlaySoundPacket();
+			$packet->soundName = "block.composter.fill";
+			$packet->x = $this->player->getPosition()->x;
+			$packet->y = $this->player->getPosition()->y;
+			$packet->z = $this->player->getPosition()->z;
+			$packet->pitch = $packet->volume = 1;
+			$this->player->sendDataPacket($packet);
 		}
 	}
 
@@ -198,6 +242,6 @@ class Setup{
 	 * @return Position
 	 */
 	protected function addPos(Position $position, float|int $x, float|int $y = 0, float|int $z = 0): Position{
-		return new Position($position->x + $x, $position->y + $y, $position->z + $z, $position->getWorld());
+		return new Position($position->x + $x, $position->y + $y, $position->z + $z, $position->getLevel());
 	}
 }

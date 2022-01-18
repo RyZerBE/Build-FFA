@@ -6,14 +6,14 @@
  */
 declare(strict_types=1);
 namespace xxAROX\BuildFFA\items\overwrite;
-use pocketmine\entity\Location;
+use pocketmine\entity\Entity;
+use pocketmine\entity\EntityIds;
+use pocketmine\entity\projectile\Projectile;
 use pocketmine\event\entity\ProjectileLaunchEvent;
-use pocketmine\item\ItemIdentifier;
 use pocketmine\item\ItemIds;
-use pocketmine\item\ItemUseResult;
 use pocketmine\math\Vector3;
-use pocketmine\player\Player;
-use pocketmine\world\sound\ThrowSound;
+use pocketmine\network\mcpe\protocol\LevelSoundEventPacket;
+use pocketmine\Player;
 use xxAROX\BuildFFA\player\xPlayer;
 
 
@@ -27,33 +27,39 @@ use xxAROX\BuildFFA\player\xPlayer;
  */
 class EnderPearl extends \pocketmine\item\EnderPearl{
 	/**
-	 * EnderPearl constructor.
-	 */
-	public function __construct(){
-		parent::__construct(new ItemIdentifier(ItemIds::ENDER_PEARL, 0), "Enderpearl");
-	}
-
-	/**
 	 * Function onClickAir
 	 * @param xPlayer $player
 	 * @param Vector3 $directionVector
-	 * @return ItemUseResult
+	 * @return bool
 	 */
-	public function onClickAir(Player $player, Vector3 $directionVector): ItemUseResult{
-		$location = $player->getLocation();
-		$player->itemCooldown($player->getInventory()->getItemInHand());
-		$projectile = $this->createEntity(Location::fromObject($player->getEyePos(), $player->getWorld(), $location->yaw, $location->pitch), $player);
-		$projectile->setMotion($directionVector->multiply($this->getThrowForce()));
-		$projectileEv = new ProjectileLaunchEvent($projectile);
-		$projectileEv->call();
-		if ($projectileEv->isCancelled()) {
-			$projectile->flagForDespawn();
-			return ItemUseResult::FAIL();
+	public function onClickAir(Player $player, Vector3 $directionVector): bool{
+		$nbt = Entity::createBaseNBT($player->add(0, $player->getEyeHeight(), 0), $directionVector, $player->yaw, $player->pitch);
+		$this->addExtraTags($nbt);
+
+		$projectile = Entity::createEntity($this->getProjectileEntityType(), $player->getLevelNonNull(), $nbt, $player);
+		if($projectile !== null){
+			$projectile->setMotion($projectile->getMotion()->multiply($this->getThrowForce()));
 		}
-		$player->enderpearls[] = $projectile;
-		$projectile->spawnToAll();
-		$location->getWorld()->addSound($location, new ThrowSound());
+
 		$this->pop();
-		return ItemUseResult::SUCCESS();
+
+		if($projectile instanceof Projectile){
+			$projectileEv = new ProjectileLaunchEvent($projectile);
+			$projectileEv->call();
+			if($projectileEv->isCancelled()){
+				$projectile->flagForDespawn();
+			}else{
+				$player->enderpearls[] = $projectile;
+				$projectile->spawnToAll();
+
+				$player->getLevelNonNull()->broadcastLevelSoundEvent($player, LevelSoundEventPacket::SOUND_THROW, 0, EntityIds::PLAYER);
+			}
+		}elseif($projectile !== null){
+			$projectile->spawnToAll();
+		}else{
+			return false;
+		}
+
+		return true;
 	}
 }

@@ -13,26 +13,20 @@ use Frago9876543210\EasyForms\forms\CustomForm;
 use Frago9876543210\EasyForms\forms\CustomFormResponse;
 use Frago9876543210\EasyForms\forms\MenuForm;
 use pocketmine\block\Block;
-use pocketmine\block\BlockLegacyIds;
-use pocketmine\block\VanillaBlocks;
+use pocketmine\block\BlockFactory;
+use pocketmine\block\BlockIds;
 use pocketmine\event\block\BlockBreakEvent;
+use pocketmine\item\enchantment\Enchantment;
 use pocketmine\item\enchantment\EnchantmentInstance;
-use pocketmine\item\enchantment\VanillaEnchantments;
 use pocketmine\item\ItemFactory;
-use pocketmine\item\ItemIdentifier;
 use pocketmine\item\ItemIds;
-use pocketmine\item\VanillaItems;
+use pocketmine\level\Level;
+use pocketmine\level\particle\DestroyBlockParticle;
+use pocketmine\level\sound\FizzSound;
 use pocketmine\network\mcpe\protocol\LevelEventPacket;
-use pocketmine\network\mcpe\protocol\types\LevelEvent;
-use pocketmine\player\GameMode;
-use pocketmine\player\Player;
 use pocketmine\scheduler\ClosureTask;
 use pocketmine\Server;
 use pocketmine\utils\SingletonTrait;
-use pocketmine\world\particle\BlockBreakParticle;
-use pocketmine\world\sound\FizzSound;
-use pocketmine\world\World;
-use xenialdan\apibossbar\BossBar;
 use xxAROX\BuildFFA\BuildFFA;
 use xxAROX\BuildFFA\entity\BlockEntity;
 use xxAROX\BuildFFA\generic\entry\BlockBreakEntry;
@@ -78,14 +72,14 @@ class Game{
 			if (count($arenas) > 1) {
 				$this->lastArenaChange = time();
 				$this->nextArenaChange = Server::getInstance()->getTick() + (self::MAP_CHANGE_INTERVAL * 20);
-				$this->bossBar = new BossBar();
+				//$this->bossBar = new BossBar();
 			}
 			$this->arenas = $arenas;
 			$this->arena = $this->arenas[array_rand($this->arenas)];
 		} else {
-			getLogger()->info("§3Preparing default Arena..");
-			$this->arena = new Arena(Server::getInstance()->getWorldManager()->getDefaultWorld(), new ArenaSettings());
-			$this->arena->getWorld()->setTime(World::TIME_NOON);
+			BuildFFA::getInstance()->getLogger()->info("§3Preparing default Arena..");
+			$this->arena = new Arena(Server::getInstance()->getDefaultLevel(), new ArenaSettings());
+			$this->arena->getWorld()->setTime(Level::TIME_NOON);
 			$this->arena->getWorld()->stopTime();
 			$this->arena->getWorld()->setAutoSave(false);
 		}
@@ -101,25 +95,33 @@ class Game{
 	 * @return void
 	 */
 	private function initKits(): void{
-		$head = VanillaItems::LEATHER_CAP()->setUnbreakable()->addEnchantment(new EnchantmentInstance(VanillaEnchantments::PROTECTION(), 1));
-		$chest = VanillaItems::CHAINMAIL_CHESTPLATE()->setUnbreakable()->addEnchantment(new EnchantmentInstance(VanillaEnchantments::PROTECTION(), 2));
-		$leg = VanillaItems::LEATHER_PANTS()->setUnbreakable()->addEnchantment(new EnchantmentInstance(VanillaEnchantments::PROTECTION(), 1));
-		$feet = VanillaItems::LEATHER_BOOTS()->setUnbreakable()->addEnchantment(new EnchantmentInstance(VanillaEnchantments::PROTECTION(), 1));
-		$air = ItemFactory::air();
-		$basicBlocks = VanillaBlocks::SANDSTONE()->asItem()->setCount(64);
-		$basicStick = VanillaItems::STICK()->addEnchantment(new EnchantmentInstance(VanillaEnchantments::KNOCKBACK(), 1))->setCount(1);
-		$basicPickaxe = VanillaItems::IRON_PICKAXE()->setUnbreakable()->addEnchantment(new EnchantmentInstance(VanillaEnchantments::EFFICIENCY(), 2));
-		$basicSword = VanillaItems::GOLDEN_SWORD()->setUnbreakable()->addEnchantment(new EnchantmentInstance(VanillaEnchantments::SHARPNESS(), 1));
-		$basicBow = VanillaItems::BOW()->setUnbreakable()->addEnchantment(new EnchantmentInstance(VanillaEnchantments::INFINITY(), 1));
-		$basicWebs = (new PlaceHolderItem(new ItemIdentifier(ItemIds::BARRIER, 0), $w = VanillaBlocks::COBWEB()->asItem()->setCount(3), 3));
-		$w->setNamedTag($w->getNamedTag()->setByte("pop", intval(true)));
-		$basicEnderpearl = (new PlaceHolderItem(new ItemIdentifier(ItemIds::ENDER_EYE, 0), $w = VanillaItems::ENDER_PEARL()->setCount(1), 16));
-		$w->setNamedTag($w->getNamedTag()->setByte("pop", intval(true)));
-		$platform = (new PlaceHolderItem(new ItemIdentifier(ItemIds::STICK, 0), $w = new PlatformItem(), 16, Closure::fromCallable([
+		$head = ItemFactory::get(ItemIds::LEATHER_CAP)->setUnbreakable()->addEnchantment(new EnchantmentInstance(Enchantment::getEnchantment(Enchantment::PROTECTION), 1));
+		$chest = ItemFactory::get(ItemIds::LEATHER_CHESTPLATE)->setUnbreakable()->addEnchantment(new EnchantmentInstance(Enchantment::getEnchantment(Enchantment::PROTECTION), 2));
+		$leg = ItemFactory::get(ItemIds::LEATHER_PANTS)->setUnbreakable()->addEnchantment(new EnchantmentInstance(Enchantment::getEnchantment(Enchantment::PROTECTION), 1));
+		$feet = ItemFactory::get(ItemIds::LEATHER_BOOTS)->setUnbreakable()->addEnchantment(new EnchantmentInstance(Enchantment::getEnchantment(Enchantment::PROTECTION), 1));
+		$air = ItemFactory::get(0);
+		$basicBlocks = ItemFactory::get(BlockIds::SANDSTONE)->setCount(64);
+		$basicStick = ItemFactory::get(ItemIds::STICK)->setCount(1);
+		$basicStick->addEnchantment(new EnchantmentInstance(Enchantment::getEnchantment(Enchantment::KNOCKBACK), 1));
+		$basicPickaxe = ItemFactory::get(ItemIds::IRON_PICKAXE)->setUnbreakable()->addEnchantment(new EnchantmentInstance(Enchantment::getEnchantment(Enchantment::EFFICIENCY), 2));
+		$basicSword = ItemFactory::get(ItemIds::GOLDEN_SWORD)->setUnbreakable()->addEnchantment(new EnchantmentInstance(Enchantment::getEnchantment(Enchantment::SHARPNESS), 1));
+		$basicBow = ItemFactory::get(ItemIds::BOW)->setUnbreakable();
+		$basicBow->addEnchantment(new EnchantmentInstance(Enchantment::getEnchantment(Enchantment::INFINITY), 1));
+		$basicWebs = (new PlaceHolderItem(BlockIds::INVISIBLE_BEDROCK, 0, $w = ItemFactory::get(BlockIds::WEB)->setCount(3), 3));
+		$nbt = $w->getNamedTag();
+		$nbt->setByte("pop", intval(true));
+		$w->setNamedTag($nbt);
+		$basicEnderpearl = (new PlaceHolderItem(ItemIds::ENDER_EYE, 0, $w = ItemFactory::get(ItemIds::ENDER_PEARL)->setCount(1), 16));
+		$nbt = $w->getNamedTag();
+		$nbt->setByte("pop", intval(true));
+		$w->setNamedTag($nbt);
+		$platform = (new PlaceHolderItem(ItemIds::STICK, 0, $w = new PlatformItem(), 16, Closure::fromCallable([
 			$w,
 			"applyCountdown",
 		])));
-		$w->setNamedTag($w->getNamedTag()->setByte("pop", intval(true)));
+		$nbt = $w->getNamedTag();
+		$nbt->setByte("pop", intval(true));
+		$w->setNamedTag($nbt);
 		$contents = [
 			"sword"   => $basicSword,
 			"stick"   => $basicStick,
@@ -136,10 +138,12 @@ class Game{
 			"web"     => $basicWebs,
 			"blocks"  => $basicBlocks,
 		];
-		$this->kits["%buildffa.kit.archer"] = new Kit("%buildffa.kit.archer", $contents, VanillaItems::ARROW()->setCount(1), $head, $chest, $leg, $feet);
+		$this->kits["%buildffa.kit.archer"] = new Kit("%buildffa.kit.archer", $contents, ItemFactory::get(ItemIds::ARROW)->setCount(1), $head, $chest, $leg, $feet);
+		$basicStick2 = clone $basicStick;
+		$basicStick2->addEnchantment(new EnchantmentInstance(Enchantment::getEnchantment(Enchantment::KNOCKBACK), 2));
 		$contents = [
 			"sword"   => $basicSword,
-			"stick"   => $basicStick->addEnchantment(new EnchantmentInstance(VanillaEnchantments::KNOCKBACK(), 2)),
+			"stick"   => $basicStick2,
 			"pickaxe" => $basicPickaxe,
 			"web"     => $basicWebs,
 			"blocks"  => $basicBlocks,
@@ -210,20 +214,20 @@ class Game{
 		}
 		foreach ($this->placedBlocks as $encodedPos => $entry) {
 			if (microtime(true) >= $entry->getTimestamp()) {
-				$entry->getPosition()->getWorld()->addParticle($entry->getPosition(), new BlockBreakParticle($entry->getPosition()->getWorld()->getBlock($entry->getPosition())));
-				$fallingBlock = new BlockEntity($entry->getPosition(), $entry->getPosition()->getWorld()->getBlock($entry->getPosition()));
+				$entry->getPosition()->getLevel()->addParticle(new DestroyBlockParticle($entry->getPosition(), $entry->getPosition()->getLevel()->getBlock($entry->getPosition())));
+				$fallingBlock = new BlockEntity($entry->getPosition(), $entry->getPosition()->getLevel()->getBlock($entry->getPosition()));
 				$fallingBlock->spawnToAll();
-				$entry->getPosition()->getWorld()->setBlock($entry->getPosition(), VanillaBlocks::AIR());
+				$entry->getPosition()->getLevel()->setBlock($entry->getPosition(), BlockFactory::get(0));
 				unset($this->placedBlocks[$encodedPos]);
 			}
 		}
 		foreach ($this->destroyedBlocks as $encodedPos => $entry) {
 			if (microtime(true) >= $entry->getTimestamp()) {
-				$current = $entry->getPosition()->getWorld()->getBlock($entry->getPosition());
-				if ($current->getId() != BlockLegacyIds::AIR) {
-					$entry->getPosition()->getWorld()->addParticle($entry->getPosition(), new BlockBreakParticle($current));
-					$entry->getPosition()->getWorld()->addSound($entry->getPosition(), new FizzSound());
-					$entry->getPosition()->getWorld()->setBlock($entry->getPosition(), $entry->getLegacy());
+				$current = $entry->getPosition()->getLevel()->getBlock($entry->getPosition());
+				if ($current->getId() != BlockIds::AIR) {
+					$entry->getPosition()->getLevel()->addParticle(new DestroyBlockParticle($entry->getPosition(), $current));
+					$entry->getPosition()->getLevel()->addSound(new FizzSound($entry->getPosition()));
+					$entry->getPosition()->getLevel()->setBlock($entry->getPosition(), $entry->getLegacy());
 				}
 				unset($this->destroyedBlocks[$encodedPos]);
 			}
@@ -254,12 +258,12 @@ class Game{
 	 * @return void
 	 */
 	public function breakBlock(Block $block, int $additionalSeconds = 0): void{
-		if (isset($this->placedBlocks[encodePosition($block->getPosition())])) {
-			unset($this->placedBlocks[encodePosition($block->getPosition())]);
+		if (isset($this->placedBlocks[encodePosition($block->asPosition())])) {
+			unset($this->placedBlocks[encodePosition($block->asPosition())]);
 			return;
 		}
-		if (!isset($this->destroyedBlocks[encodePosition($block->getPosition())])) { //JIC
-			$this->destroyedBlocks[encodePosition($block->getPosition())] = new BlockBreakEntry($block, $block->getPosition(), microtime(true) + $this->arena->getSettings()->blocks_cooldown + $additionalSeconds);
+		if (!isset($this->destroyedBlocks[encodePosition($block->asPosition())])) { //JIC
+			$this->destroyedBlocks[encodePosition($block->asPosition())] = new BlockBreakEntry($block, $block->asPosition(), microtime(true) + $this->arena->getSettings()->blocks_cooldown + $additionalSeconds);
 		}
 	}
 
@@ -270,16 +274,20 @@ class Game{
 	 * @return void
 	 */
 	public function placeBlock(Block $block, int $additionalSeconds = 0): void{
-		if (isset($this->destroyedBlocks[encodePosition($block->getPosition())])) {
+		if (isset($this->destroyedBlocks[encodePosition($block->asPosition())])) {
 			return;
 		}
 		$extraTime = match (true) {
-			$block->getId() == VanillaBlocks::END_STONE()->getId() => 5,
-			$block->getId() == VanillaBlocks::EMERALD()->getId() => 10,
+			$block->getId() == BlockIds::END_STONE => 5,
+			$block->getId() == BlockIds::EMERALD_BLOCK => 10,
 			default => 0
 		};
-		$this->placedBlocks[encodePosition($block->getPosition())] = new BlockEntry($block->getPosition(), microtime(true) + $this->arena->getSettings()->blocks_cooldown + $extraTime + $additionalSeconds);
-		Server::getInstance()->broadcastPackets(Server::getInstance()->getOnlinePlayers(), [LevelEventPacket::create(LevelEvent::BLOCK_START_BREAK, intval(round(65535 / (20 * ($this->arena->getSettings()->blocks_cooldown + $extraTime + $additionalSeconds)))), $block->getPosition())]);
+		$this->placedBlocks[encodePosition($block->asPosition())] = new BlockEntry($block->asPosition(), microtime(true) + $this->arena->getSettings()->blocks_cooldown + $extraTime + $additionalSeconds);
+		$packet = new LevelEventPacket();
+		$packet->evid = LevelEventPacket::EVENT_BLOCK_START_BREAK;
+		$packet->data = intval(round(65535 / (20 * ($this->arena->getSettings()->blocks_cooldown + $extraTime + $additionalSeconds))));
+		$packet->position = $block->asPosition();
+		Server::getInstance()->broadcastPacket(Server::getInstance()->getOnlinePlayers(), $packet);
 	}
 
 	/**
@@ -313,12 +321,12 @@ class Game{
 							/** @var xPlayer $player */
 							$player = $event->getPlayer();
 							if ($player->setup->getCurrentStage() == 1) {
-								$player->setup->configuration["respawn_height"] = $event->getBlock()->getPosition()->y;
-								$player->setup->sendMessage("respawn_height set to " . $event->getBlock()->getPosition()->y);
+								$player->setup->configuration["respawn_height"] = $event->getBlock()->asPosition()->y;
+								$player->setup->sendMessage("respawn_height set to " . $event->getBlock()->asPosition()->y);
 								$player->setup->sendMessage("now break block at spawn protection border");
 							} else if ($player->setup->getCurrentStage() == 2) {
-								$player->setup->configuration["protection"] = $event->getBlock()->getPosition()->distance($player->getWorld()->getSpawnLocation());
-								$player->setup->sendMessage("spawn protection set to " . $event->getBlock()->getPosition()->distance($player->getWorld()->getSpawnLocation()));
+								$player->setup->configuration["protection"] = $event->getBlock()->asPosition()->distance($player->getLevel()->getSpawnLocation());
+								$player->setup->sendMessage("spawn protection set to " . $event->getBlock()->asPosition()->distance($player->getLevel()->getSpawnLocation()));
 								$player->sendForm(new CustomForm("Select block cooldown", [new Slider("Seconds", 0.5, 30, 0.5, 5)], function (xPlayer $player, CustomFormResponse $response): void{
 									$count = $response->getSlider()->getValue();
 									$player->setup->configuration["blocks_cooldown"] = $count;

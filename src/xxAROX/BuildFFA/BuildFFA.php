@@ -8,21 +8,18 @@ declare(strict_types=1);
 namespace xxAROX\BuildFFA;
 use pocketmine\block\BlockFactory;
 use pocketmine\entity\Entity;
-use pocketmine\entity\EntityDataHelper;
-use pocketmine\entity\EntityFactory;
 use pocketmine\entity\object\FallingBlock;
 use pocketmine\item\ItemFactory;
+use pocketmine\level\Level;
 use pocketmine\nbt\tag\CompoundTag;
-use pocketmine\permission\DefaultPermissionNames;
+use pocketmine\permission\DefaultPermissions;
 use pocketmine\permission\Permission;
 use pocketmine\permission\PermissionManager;
 use pocketmine\plugin\PluginBase;
 use pocketmine\plugin\PluginDescription;
 use pocketmine\plugin\PluginLoader;
-use pocketmine\plugin\ResourceProvider;
 use pocketmine\Server;
 use pocketmine\utils\SingletonTrait;
-use pocketmine\world\World;
 use xxAROX\BuildFFA\command\SetupCommand;
 use xxAROX\BuildFFA\command\SkipCommand;
 use xxAROX\BuildFFA\entity\BlockEntity;
@@ -57,10 +54,9 @@ class BuildFFA extends PluginBase{
 	 * @param PluginDescription $description
 	 * @param string $dataFolder
 	 * @param string $file
-	 * @param ResourceProvider $resourceProvider
 	 */
-	public function __construct(PluginLoader $loader, Server $server, PluginDescription $description, string $dataFolder, string $file, ResourceProvider $resourceProvider){
-		parent::__construct($loader, $server, $description, $dataFolder, $file, $resourceProvider);
+	public function __construct(PluginLoader $loader, Server $server, PluginDescription $description, string $dataFolder, string $file){
+		parent::__construct($loader, $server, $description, $dataFolder, $file);
 		self::setInstance($this);
 	}
 
@@ -68,7 +64,7 @@ class BuildFFA extends PluginBase{
 	 * Function onLoad
 	 * @return void
 	 */
-	protected function onLoad(): void{
+	public function onLoad(): void{
 		include_once dirname(__DIR__) . "/../functions.php";
 	}
 
@@ -76,7 +72,7 @@ class BuildFFA extends PluginBase{
 	 * Function onEnable
 	 * @return void
 	 */
-	protected function onEnable(): void{
+	public function onEnable(): void{
 		$this->registerPermissions();
 		$this->registerCommands();
 		$this->registerItems();
@@ -85,10 +81,10 @@ class BuildFFA extends PluginBase{
 		$arena_data = $this->getConfig()->getAll();
 		$arenas = [];
 		foreach ($arena_data as $worldName => $obj) {
-			if ($this->getServer()->getWorldManager()->loadWorld($worldName)) {
+			if ($this->getServer()->loadLevel($worldName)) {
 				$this->getLogger()->info("§3Preparing map $worldName..");
-				$world = $this->getServer()->getWorldManager()->getWorldByName($worldName);
-				$world->setTime(World::TIME_NOON);
+				$world = $this->getServer()->getLevelByName($worldName);
+				$world->setTime(Level::TIME_NOON);
 				$world->stopTime();
 				$world->setAutoSave(false);
 				$arenas[] = new Arena($world, new ArenaSettings($obj));
@@ -98,16 +94,20 @@ class BuildFFA extends PluginBase{
 	}
 
 	/**
+	 * Function onDisable
+	 * @return void
+	 */
+	public function onDisable(): void{
+	}
+
+	/**
 	 * Function registerPermissions
 	 * @return void
 	 */
 	private function registerPermissions(): void{
 		PermissionManager::getInstance()->addPermission(new Permission("game.setup", "Allow /setup"));
-		PermissionManager::getInstance()->getPermission(DefaultPermissionNames::GROUP_OPERATOR)->addChild("game.setup", true);
 		PermissionManager::getInstance()->addPermission(new Permission("game.buildffa.map.skip", "Allow /skip"));
-		PermissionManager::getInstance()->getPermission(DefaultPermissionNames::GROUP_OPERATOR)->addChild("game.buildffa.map.skip", true);
 		PermissionManager::getInstance()->addPermission(new Permission("game.buildffa.settings", "Allow /settings"));
-		PermissionManager::getInstance()->getPermission(DefaultPermissionNames::GROUP_OPERATOR)->addChild("game.buildffa.settings", true);
 	}
 
 	/**
@@ -126,7 +126,7 @@ class BuildFFA extends PluginBase{
 	 * @return void
 	 */
 	private function registerItems(): void{
-		ItemFactory::getInstance()->register(new EnderPearl(), true);
+		ItemFactory::registerItem(new EnderPearl(), true);
 	}
 
 	/**
@@ -145,15 +145,6 @@ class BuildFFA extends PluginBase{
 	 * @return void
 	 */
 	private function registerEntities(): void{
-		EntityFactory::getInstance()->register(BlockEntity::class, function (World $world, CompoundTag $nbt): Entity{
-			return new BlockEntity(EntityDataHelper::parseLocation($nbt, $world), FallingBlock::parseBlockNBT(BlockFactory::getInstance(), $nbt));
-		}, ["buildffa:block"]);
-	}
-
-	/**
-	 * Function onDisable
-	 * @return void
-	 */
-	protected function onDisable(): void{
+		Entity::registerEntity(BlockEntity::class, true, ["buildffa:falling_block"]);
 	}
 }

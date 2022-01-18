@@ -7,7 +7,6 @@
 declare(strict_types=1);
 namespace xxAROX\BuildFFA\event;
 use pocketmine\event\Cancellable;
-use pocketmine\event\CancellableTrait;
 use pocketmine\event\Event;
 use xxAROX\BuildFFA\player\xPlayer;
 
@@ -21,9 +20,6 @@ use xxAROX\BuildFFA\player\xPlayer;
  * @project BuildFFA
  */
 class BuildFFAPlayerChangeInvSortEvent extends Event implements Cancellable{
-	use CancellableTrait;
-
-
 	/**
 	 * BuildFFAPlayerChangeInvSortEvent constructor.
 	 * @param xPlayer $player

@@ -7,12 +7,10 @@
 declare(strict_types=1);
 namespace xxAROX\BuildFFA\items;
 use pocketmine\block\Block;
+use pocketmine\block\BlockIds;
 use pocketmine\item\Item;
-use pocketmine\item\ItemIdentifier;
-use pocketmine\item\ItemIds;
-use pocketmine\item\ItemUseResult;
 use pocketmine\math\Vector3;
-use pocketmine\player\Player;
+use pocketmine\Player;
 use xxAROX\BuildFFA\player\xPlayer;
 
 
@@ -29,7 +27,7 @@ class InvSortItem extends Item{
 	 * InvSortItem constructor.
 	 */
 	public function __construct(){
-		parent::__construct(new ItemIdentifier(ItemIds::CHEST, 0), "Inventory sort");
+		parent::__construct(BlockIds::CHEST, 0, "Inventory sort");
 		$this->setCustomName("§cInv sort");//TODO: language stuff
 		applyReadonlyTag($this);
 	}
@@ -46,34 +44,34 @@ class InvSortItem extends Item{
 	 * Function onClickAir
 	 * @param xPlayer $player
 	 * @param Vector3 $directionVector
-	 * @return ItemUseResult
+	 * @return bool
 	 */
-	public function onClickAir(Player $player, Vector3 $directionVector): ItemUseResult{
+	public function onClickAir(Player $player, Vector3 $directionVector): bool{
 		if (!$player->hasItemCooldown($this)) {
 			$player->is_in_inv_sort = true;
 			$player->giveKit($player->getSelectedKit());
-			return ItemUseResult::FAIL();
+			return false;
 		}
 		$player->resetItemCooldown($this);
 		return parent::onClickAir($player, $directionVector);
 	}
 
 	/**
-	 * Function onInteractBlock
+	 * Function onActivate
 	 * @param xPlayer $player
 	 * @param Block $blockReplace
 	 * @param Block $blockClicked
 	 * @param int $face
 	 * @param Vector3 $clickVector
-	 * @return ItemUseResult
+	 * @return bool
 	 */
-	public function onInteractBlock(Player $player, Block $blockReplace, Block $blockClicked, int $face, Vector3 $clickVector): ItemUseResult{
+	public function onActivate(Player $player, Block $blockReplace, Block $blockClicked, int $face, Vector3 $clickVector): bool{
 		if (!$player->hasItemCooldown($this)) {
 			$player->is_in_inv_sort = true;
 			$player->giveKit($player->getSelectedKit());
-			return ItemUseResult::FAIL();
+			return false;
 		}
 		$player->resetItemCooldown($this);
-		return parent::onInteractBlock($player, $blockReplace, $blockClicked, $face, $clickVector);
+		return parent::onActivate($player, $blockReplace, $blockClicked, $face, $clickVector);
 	}
 }

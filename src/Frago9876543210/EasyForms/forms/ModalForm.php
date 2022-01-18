@@ -4,7 +4,7 @@ namespace Frago9876543210\EasyForms\forms;
 use Closure;
 use JetBrains\PhpStorm\ArrayShape;
 use pocketmine\form\FormValidationException;
-use pocketmine\player\Player;
+use pocketmine\Player;
 
 use function gettype;
 use function is_bool;

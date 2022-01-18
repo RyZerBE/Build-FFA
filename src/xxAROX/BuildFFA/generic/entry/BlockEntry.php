@@ -6,7 +6,7 @@
  */
 declare(strict_types=1);
 namespace xxAROX\BuildFFA\generic\entry;
-use pocketmine\world\Position;
+use pocketmine\level\Position;
 
 
 /**

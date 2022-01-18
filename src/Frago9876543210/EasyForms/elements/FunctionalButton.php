@@ -6,6 +6,7 @@
  */
 namespace Frago9876543210\EasyForms\elements;
 use Closure;
+use JetBrains\PhpStorm\Pure;
 use xxAROX\BuildFFA\player\xPlayer;
 
 
@@ -25,7 +26,7 @@ class FunctionalButton extends Button{
 	 * @param null|Closure $onClick
 	 * @param null|Image $image
 	 */
-	public function __construct(string $text, ?Closure $onClick = null, ?Image $image = null){
+	#[Pure] public function __construct(string $text, ?Closure $onClick = null, ?Image $image = null){
 		parent::__construct($text, $image);
 		$this->onClick = $onClick;
 	}

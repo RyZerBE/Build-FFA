@@ -7,9 +7,8 @@
 declare(strict_types=1);
 namespace xxAROX\BuildFFA\items;
 use pocketmine\block\Block;
-use pocketmine\item\ItemUseResult;
 use pocketmine\math\Vector3;
-use pocketmine\player\Player;
+use pocketmine\Player;
 
 
 /**
@@ -22,15 +21,15 @@ use pocketmine\player\Player;
  */
 trait NonPlaceableItemTrait{
 	/**
-	 * Function onInteractBlock
+	 * Function onActivate
 	 * @param Player $player
 	 * @param Block $blockReplace
 	 * @param Block $blockClicked
 	 * @param int $face
 	 * @param Vector3 $clickVector
-	 * @return ItemUseResult
+	 * @return bool
 	 */
-	public function onInteractBlock(Player $player, Block $blockReplace, Block $blockClicked, int $face, Vector3 $clickVector): ItemUseResult{
-		return ItemUseResult::FAIL();
+	public function onActivate(Player $player, Block $blockReplace, Block $blockClicked, int $face, Vector3 $clickVector): bool{
+		return false;
 	}
 }

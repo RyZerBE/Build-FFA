@@ -9,11 +9,8 @@ namespace xxAROX\BuildFFA\items\overwrite;
 use JetBrains\PhpStorm\Pure;
 use pocketmine\block\Block;
 use pocketmine\item\BlazeRod;
-use pocketmine\item\ItemIdentifier;
-use pocketmine\item\ItemIds;
-use pocketmine\item\ItemUseResult;
 use pocketmine\math\Vector3;
-use pocketmine\player\Player;
+use pocketmine\Player;
 use xxAROX\BuildFFA\player\xPlayer;
 
 
@@ -27,13 +24,6 @@ use xxAROX\BuildFFA\player\xPlayer;
  */
 class PlatformItem extends BlazeRod{
 	/**
-	 * PlatformItem constructor.
-	 */
-	public function __construct(){
-		parent::__construct(new ItemIdentifier(ItemIds::BLAZE_ROD, 0), "Platform");
-	}
-
-	/**
 	 * Function applyCountdown
 	 * @param xPlayer $player
 	 * @return bool
@@ -46,24 +36,24 @@ class PlatformItem extends BlazeRod{
 	 * Function onClickAir
 	 * @param xPlayer $player
 	 * @param Vector3 $directionVector
-	 * @return ItemUseResult
+	 * @return void
 	 */
-	public function onClickAir(Player $player, Vector3 $directionVector): ItemUseResult{
+	public function onClickAir(Player $player, Vector3 $directionVector): bool{
 		$player->spawnPlatform();
-		return ItemUseResult::FAIL();
+		return false;
 	}
 
 	/**
-	 * Function onInteractBlock
+	 * Function onActivate
 	 * @param xPlayer $player
 	 * @param Block $blockReplace
 	 * @param Block $blockClicked
 	 * @param int $face
 	 * @param Vector3 $clickVector
-	 * @return ItemUseResult
+	 * @return bool
 	 */
-	public function onInteractBlock(Player $player, Block $blockReplace, Block $blockClicked, int $face, Vector3 $clickVector): ItemUseResult{
+	public function onActivate(Player $player, Block $blockReplace, Block $blockClicked, int $face, Vector3 $clickVector): bool{
 		$player->spawnPlatform();
-		return ItemUseResult::FAIL();
+		return false;
 	}
 }

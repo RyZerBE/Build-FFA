@@ -6,9 +6,9 @@
  */
 declare(strict_types=1);
 namespace xxAROX\BuildFFA\game;
+use pocketmine\level\Level;
 use pocketmine\math\Vector3;
 use pocketmine\Server;
-use pocketmine\world\World;
 use xxAROX\BuildFFA\event\MapChangeEvent;
 use xxAROX\BuildFFA\player\xPlayer;
 
@@ -26,10 +26,10 @@ class Arena{
 
 	/**
 	 * Arena constructor.
-	 * @param World $world
+	 * @param Level $world
 	 * @param ArenaSettings $settings
 	 */
-	public function __construct(private World $world, private ArenaSettings $settings){
+	public function __construct(private Level $world, private ArenaSettings $settings){
 	}
 
 	/**
@@ -84,9 +84,9 @@ class Arena{
 
 	/**
 	 * Function getWorld
-	 * @return World
+	 * @return Level
 	 */
-	public function getWorld(): World{
+	public function getWorld(): Level{
 		return $this->world;
 	}
 

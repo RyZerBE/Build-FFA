@@ -27,10 +27,11 @@ class BlockListener implements Listener{
 	 * @return void
 	 */
 	public function BlockBreakEvent(BlockBreakEvent $event): void{
-		if (Game::getInstance()->getArena()->isInProtectionArea($event->getBlock()->getPosition()->asVector3())) {
-			$event->cancel();
+		if (Game::getInstance()->getArena()->isInProtectionArea($event->getBlock()->asPosition()->asVector3())) {
+			$event->setCancelled();
 			return;
 		}
+		/** @noinspection PhpParamsInspection */
 		if (Game::getInstance()->filterPlayer($event->getPlayer())) {
 			Game::getInstance()->breakBlock($event->getBlock());
 			$event->setDrops([]);
@@ -38,10 +39,11 @@ class BlockListener implements Listener{
 	}
 
 	public function BlockPlaceEvent(BlockPlaceEvent $event): void{
-		if (Game::getInstance()->getArena()->isInProtectionArea($event->getBlock()->getPosition()->asVector3())) {
-			$event->cancel();
+		if (Game::getInstance()->getArena()->isInProtectionArea($event->getBlock()->asPosition()->asVector3())) {
+			$event->setCancelled();
 			return;
 		}
+		/** @noinspection PhpParamsInspection */
 		if (Game::getInstance()->filterPlayer($event->getPlayer())) {
 			if (!boolval($event->getItem()->getNamedTag()->getByte("pop", intval(false)))) {
 				$event->getItem()->setCount((random_int(1, 3) == 1) ? $event->getItem()->getMaxStackSize()

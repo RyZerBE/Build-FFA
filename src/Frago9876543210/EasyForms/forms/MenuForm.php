@@ -7,7 +7,7 @@ use Frago9876543210\EasyForms\elements\Button;
 use Frago9876543210\EasyForms\elements\FunctionalButton;
 use JetBrains\PhpStorm\ArrayShape;
 use pocketmine\form\FormValidationException;
-use pocketmine\player\Player;
+use pocketmine\Player;
 use xxAROX\Bridge\Bridge;
 
 use function array_merge;

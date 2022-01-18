@@ -12,12 +12,9 @@ use DaveRandom\CallbackValidator\CallbackType;
 use DaveRandom\CallbackValidator\ParameterType;
 use DaveRandom\CallbackValidator\ReturnType;
 use pocketmine\item\Item;
-use pocketmine\item\ItemIdentifier;
-use pocketmine\item\ItemUseResult;
 use pocketmine\math\Vector3;
-use pocketmine\player\Player;
+use pocketmine\Player;
 use pocketmine\utils\Utils;
-use Ramsey\Uuid\Uuid;
 use xxAROX\BuildFFA\BuildFFA;
 use xxAROX\BuildFFA\player\xPlayer;
 
@@ -38,22 +35,29 @@ class PlaceHolderItem extends Item{
 
 	/**
 	 * PlaceHolderItem constructor.
-	 * @param ItemIdentifier $identifier
+	 * @param int $id
+	 * @param int $meta
 	 * @param Item $placeholdersItem
 	 * @param int $countdown
 	 * @param null|Closure $allowItemCooldown
 	 */
-	public function __construct(ItemIdentifier $identifier, protected Item $placeholdersItem, protected int $countdown = 0, protected ?Closure $allowItemCooldown = null){
+	public function __construct(int $id, int $meta, protected Item $placeholdersItem, protected int $countdown = 0, protected ?Closure $allowItemCooldown = null){
 		if (!is_null($this->allowItemCooldown)) {
-			Utils::validateCallableSignature(new CallbackType(new ReturnType(BuiltInTypes::BOOL), new ParameterType("player", xPlayer::class)), $this->allowItemCooldown);
+			validateCallableSignature(new CallbackType(new ReturnType(BuiltInTypes::BOOL), new ParameterType("player", xPlayer::class)), $this->allowItemCooldown);
 		}
-		$this->placeholderIdentifier = Uuid::uuid4()->toString();
+		$this->placeholderIdentifier = \pocketmine\utils\UUID::fromRandom()->toString();
 		$this->placeholdersItem->getNamedTag()->setInt(BuildFFA::TAG_COUNTDOWN, $this->countdown);
-		parent::__construct($identifier, "Placeholder:{$identifier->getId()}:{$identifier->getMeta()}");
+		parent::__construct($id, $meta, "Placeholder:{$id}:{$meta}");
 		$this->setCustomName("§cNo {$placeholdersItem->getVanillaName()}");
 		applyReadonlyTag($this);
-		$this->placeholdersItem->setNamedTag($this->placeholdersItem->getNamedTag()->setString("__placeholderId", $this->placeholderIdentifier));
-		$this->setNamedTag($this->getNamedTag()->setString("__placeholderId", $this->placeholderIdentifier));
+
+		$nbt = $this->getNamedTag();
+		$nbt->setString(BuildFFA::TAG_PLACEHOLDER_IDENTIFIER, $this->placeholderIdentifier);
+		$this->setNamedTag($nbt);
+
+		$_nbt = $this->placeholdersItem->getNamedTag();
+		$_nbt->setString(BuildFFA::TAG_PLACEHOLDER_IDENTIFIER, $this->placeholderIdentifier);
+		$this->placeholdersItem->setNamedTag($_nbt);
 	}
 
 	/**
@@ -95,15 +99,5 @@ class PlaceHolderItem extends Item{
 	 */
 	public function getPlaceholdersItem(): Item{
 		return $this->placeholdersItem;
-	}
-
-	/**
-	 * Function onClickAir
-	 * @param Player $player
-	 * @param Vector3 $directionVector
-	 * @return ItemUseResult
-	 */
-	public function onClickAir(Player $player, Vector3 $directionVector): ItemUseResult{
-		return ItemUseResult::FAIL();
 	}
 }

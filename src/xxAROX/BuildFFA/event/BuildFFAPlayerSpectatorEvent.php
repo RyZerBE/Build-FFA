@@ -7,7 +7,6 @@
 declare(strict_types=1);
 namespace xxAROX\BuildFFA\event;
 use pocketmine\event\Cancellable;
-use pocketmine\event\CancellableTrait;
 use pocketmine\event\Event;
 use xxAROX\BuildFFA\game\Arena;
 use xxAROX\BuildFFA\player\xPlayer;
@@ -22,9 +21,6 @@ use xxAROX\BuildFFA\player\xPlayer;
  * @project BuildFFA
  */
 class BuildFFAPlayerSpectatorEvent extends Event implements Cancellable{
-	use CancellableTrait;
-
-
 	/**
 	 * BuildFFAPlayerSpectatorEvent constructor.
 	 * @param xPlayer $player

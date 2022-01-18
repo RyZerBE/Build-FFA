@@ -10,11 +10,9 @@ use Frago9876543210\EasyForms\elements\FunctionalButton;
 use Frago9876543210\EasyForms\forms\MenuForm;
 use pocketmine\block\Block;
 use pocketmine\item\Item;
-use pocketmine\item\ItemIdentifier;
 use pocketmine\item\ItemIds;
-use pocketmine\item\ItemUseResult;
 use pocketmine\math\Vector3;
-use pocketmine\player\Player;
+use pocketmine\Player;
 use xxAROX\BuildFFA\game\Game;
 use xxAROX\BuildFFA\player\xPlayer;
 
@@ -32,7 +30,7 @@ class SettingsItem extends Item{
 	 * SettingsItem constructor.
 	 */
 	public function __construct(){
-		parent::__construct(new ItemIdentifier(ItemIds::COMMAND_BLOCK, 0), "BuildFFA Settings");
+		parent::__construct(ItemIds::COMMAND_BLOCK, 0, "BuildFFA Settings");
 		$this->setCustomName("§dSettings");//TODO: language stuff
 		applyReadonlyTag($this);
 	}
@@ -49,13 +47,13 @@ class SettingsItem extends Item{
 	 * Function onClickAir
 	 * @param xPlayer $player
 	 * @param Vector3 $directionVector
-	 * @return ItemUseResult
+	 * @return bool
 	 */
-	public function onClickAir(Player $player, Vector3 $directionVector): ItemUseResult{
+	public function onClickAir(Player $player, Vector3 $directionVector): bool{
 		if (!$player->hasItemCooldown($this)) {
 			$this->sendForm($player);
 			$player->resetItemCooldown($this);
-			return ItemUseResult::FAIL();
+			return false;
 		}
 		return parent::onClickAir($player, $directionVector);
 	}
@@ -82,20 +80,20 @@ class SettingsItem extends Item{
 	}
 
 	/**
-	 * Function onInteractBlock
+	 * Function onActivate
 	 * @param xPlayer $player
 	 * @param Block $blockReplace
 	 * @param Block $blockClicked
 	 * @param int $face
 	 * @param Vector3 $clickVector
-	 * @return ItemUseResult
+	 * @return bool
 	 */
-	public function onInteractBlock(Player $player, Block $blockReplace, Block $blockClicked, int $face, Vector3 $clickVector): ItemUseResult{
+	public function onActivate(Player $player, Block $blockReplace, Block $blockClicked, int $face, Vector3 $clickVector): bool{
 		if (!$player->hasItemCooldown($this)) {
 			$this->sendForm($player);
 			$player->resetItemCooldown($this);
-			return ItemUseResult::FAIL();
+			return false;
 		}
-		return parent::onInteractBlock($player, $blockReplace, $blockClicked, $face, $clickVector);
+		return parent::onActivate($player, $blockReplace, $blockClicked, $face, $clickVector);
 	}
 }

@@ -7,7 +7,7 @@
 declare(strict_types=1);
 namespace xxAROX\BuildFFA\game;
 use JetBrains\PhpStorm\Pure;
-use pocketmine\block\VanillaBlocks;
+use pocketmine\block\BlockIds;
 use pocketmine\item\Armor;
 use pocketmine\item\Item;
 use pocketmine\item\ItemFactory;
@@ -29,18 +29,21 @@ class Kit{
 	 * Kit constructor.
 	 * @param string $display_name
 	 * @param Item[] $contents
-	 * @param Item $offhand
 	 * @param null|Armor $head
 	 * @param null|Armor $chest
 	 * @param null|Armor $leg
 	 * @param null|Armor $feet
 	 */
-	public function __construct(protected string $display_name, protected array $contents, protected Item $offhand, protected ?Armor $head, protected ?Armor $chest, protected ?Armor $leg, protected ?Armor $feet){
+	public function __construct(protected string $display_name, protected array $contents, protected ?Armor $head, protected ?Armor $chest, protected ?Armor $leg, protected ?Armor $feet){
 		foreach ($this->contents as $type => $item) {
 			if ($item instanceof PlaceHolderItem) {
-				$item->getPlaceholdersItem()->getNamedTag()->setString(BuildFFA::TAG_SORT_TYPE, $type);
+				$nbt = $item->getPlaceholdersItem()->getNamedTag();
+				$nbt->setString(BuildFFA::TAG_SORT_TYPE, $type);
+				$item->getPlaceholdersItem()->setNamedTag($nbt);
 			}
-			$item->setNamedTag($item->getNamedTag()->setString(BuildFFA::TAG_SORT_TYPE, $type));
+			$nbt = $item->getNamedTag();
+			$nbt->setString(BuildFFA::TAG_SORT_TYPE, $type);
+			$item->setNamedTag($nbt);
 		}
 	}
 
@@ -68,12 +71,11 @@ class Kit{
 		$player->getInventory()->clearAll();
 		$player->getArmorInventory()->clearAll();
 		$player->getCursorInventory()->clearAll();
-		$player->getOffHandInventory()->clearAll();
 		for ($slot = 9; $slot < $player->getInventory()->getSize(); $slot++) {
-			$player->getInventory()->setItem($slot, applyReadonlyTag(VanillaBlocks::BARRIER()->asItem()->setCustomName("§r")));
+			$player->getInventory()->setItem($slot, applyReadonlyTag(ItemFactory::get(BlockIds::INVISIBLE_BEDROCK)->setCustomName("§r")));
 		}
 		for ($slot = 0; $slot < $player->getCraftingGrid()->getSize(); $slot++) {
-			$player->getCraftingGrid()->setItem($slot, applyReadonlyTag(VanillaBlocks::BARRIER()->asItem()->setCustomName("§r")));
+			$player->getCraftingGrid()->setItem($slot, applyReadonlyTag(ItemFactory::get(BlockIds::INVISIBLE_BEDROCK)->setCustomName("§r")));
 		}
 		$checked = [];
 		foreach ($this->contents as $type => $item) {
@@ -91,17 +93,16 @@ class Kit{
 		foreach ($this->contents as $type => $item) {
 			if (isset($invSort[$type])) {
 				$player->getInventory()->setItem($invSort[$type], $item instanceof PlaceHolderItem
-					? $item->getPlaceholdersItem() : /*clone/*should 'all player same item-name' fix*/ $item);
+					? $item->getPlaceholdersItem() : $item);
 			} else {
 				$player->getInventory()->addItem($item instanceof PlaceHolderItem ? $item->getPlaceholdersItem()
-					: /*clone/*should 'all player same item-name' fix*/ $item);
+					: $item);
 			}
 		}
-		$player->getOffHandInventory()->setItem(0, $this->offhand);
-		$player->getArmorInventory()->setHelmet($this->head ?? ItemFactory::air());
-		$player->getArmorInventory()->setChestplate($this->chest ?? ItemFactory::air());
-		$player->getArmorInventory()->setLeggings($this->leg ?? ItemFactory::air());
-		$player->getArmorInventory()->setBoots($this->feet ?? ItemFactory::air());
+		$player->getArmorInventory()->setHelmet($this->head ?? ItemFactory::get(0));
+		$player->getArmorInventory()->setChestplate($this->chest ?? ItemFactory::get(0));
+		$player->getArmorInventory()->setLeggings($this->leg ?? ItemFactory::get(0));
+		$player->getArmorInventory()->setBoots($this->feet ?? ItemFactory::get(0));
 	}
 
 	/**
@@ -118,14 +119,6 @@ class Kit{
 	 */
 	public function getContents(): array{
 		return $this->contents;
-	}
-
-	/**
-	 * Function getOffhand
-	 * @return Item
-	 */
-	public function getOffhand(): Item{
-		return $this->offhand;
 	}
 
 	/**

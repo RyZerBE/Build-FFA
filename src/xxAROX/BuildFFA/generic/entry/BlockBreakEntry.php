@@ -8,7 +8,7 @@ declare(strict_types=1);
 namespace xxAROX\BuildFFA\generic\entry;
 use JetBrains\PhpStorm\Pure;
 use pocketmine\block\Block;
-use pocketmine\world\Position;
+use pocketmine\level\Position;
 
 
 /**
