@@ -31,8 +31,8 @@ class BlockEntity extends FallingBlock{
 	public function __construct(Position $position, Block $block){
 		$vec = $position->floor()->add(0.5, 0.5, 0.5);
 		$nbt = self::createBaseNBT(new Location($vec->x, $vec->y, $vec->z, 0, 0, $position->level));
-		$nbt->setInt("TileID", $block->getId());
-		$nbt->setInt("Data", $block->getDamage());
+		$nbt->setByte("Tile", $block->getId());
+		$nbt->setByte("Data", $block->getDamage());
 		parent::__construct($position->level, $nbt);
 	}
 

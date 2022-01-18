@@ -455,16 +455,20 @@ class xPlayer extends Player{
 		$this->setHealth($this->getMaxHealth());
 		$this->setGamemode(self::SURVIVAL);
 		$this->saveInvSort();
-		/** @var EnderPearl $enderpearl */
-		foreach ($this->enderpearls as $enderpearl) {
-			if (!$enderpearl->isFlaggedForDespawn()) {
-				$enderpearl->flagForDespawn();
+		if (property_exists($this, "enderpearls")) {
+			/** @var EnderPearl $enderpearl */
+			foreach ($this->enderpearls as $enderpearl) {
+				if (!$enderpearl->isFlaggedForDespawn()) {
+					$enderpearl->flagForDespawn();
+				}
 			}
+			unset($this->enderpearls);
+			$this->enderpearls = [];
 		}
-		unset($this->enderpearls);
-		$this->enderpearls = [];
-		unset($this->itemCountdowns);
-		$this->itemCountdowns = [];
+		if (property_exists($this, "itemCountdowns")) {
+			unset($this->itemCountdowns);
+			$this->itemCountdowns = [];
+		}
 		if (!$ev->isCancelled()) {
 			$this->teleport(Game::getInstance()->getArena()->getWorld()->getSafeSpawn());
 			$this->sendOtakaItems();
