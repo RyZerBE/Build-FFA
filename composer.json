@@ -4,11 +4,14 @@
 	"authors": [
 		{
 			"name": "xxAROX",
-			"email": "janmichaelsohn@gmail.com"
+			"email": "arox.email.0@gmail.com"
 		}
 	],
 	"require": {
 		"ext-yaml": "*",
 		"ext-mbstring": "*"
+	},
+	"require-dev": {
+		"pocketmine/pocketmine-mp": "^3.26.5"
 	}
 }

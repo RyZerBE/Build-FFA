@@ -2,9 +2,25 @@
 <project version="4">
   <component name="PhpIncludePathManager">
     <include_path>
-      <path value="$PROJECT_DIR$/../../Jibix/PocketMine-MP-4" />
       <path value="$PROJECT_DIR$/vendor/composer" />
+      <path value="$PROJECT_DIR$/vendor/pocketmine/binaryutils" />
+      <path value="$PROJECT_DIR$/vendor/pocketmine/callback-validator" />
+      <path value="$PROJECT_DIR$/vendor/pocketmine/classloader" />
+      <path value="$PROJECT_DIR$/vendor/pocketmine/log" />
+      <path value="$PROJECT_DIR$/vendor/pocketmine/log-pthreads" />
+      <path value="$PROJECT_DIR$/vendor/pocketmine/math" />
+      <path value="$PROJECT_DIR$/vendor/pocketmine/nbt" />
+      <path value="$PROJECT_DIR$/vendor/pocketmine/pocketmine-mp" />
+      <path value="$PROJECT_DIR$/vendor/pocketmine/raklib" />
+      <path value="$PROJECT_DIR$/vendor/pocketmine/snooze" />
+      <path value="$PROJECT_DIR$/vendor/pocketmine/spl" />
+      <path value="$PROJECT_DIR$/vendor/adhocore/json-comment" />
     </include_path>
   </component>
   <component name="PhpProjectSharedConfiguration" php_language_level="8.0" />
+  <component name="PhpUnit">
+    <phpunit_settings>
+      <PhpUnitSettings custom_loader_path="$PROJECT_DIR$/vendor/autoload.php" />
+    </phpunit_settings>
+  </component>
 </project>

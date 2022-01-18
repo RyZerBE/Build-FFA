@@ -31,7 +31,7 @@ if (COMPRESS_FILES) {
 }
 printf("Built in %s seconds! Output path: %s\n", round(microtime(true) - $startTime, 3), $outputPath);
 // Defining output path...
-$outputPath = "C:/Users/kfeig/Desktop/pmmp4/plugins" . DIRECTORY_SEPARATOR . FILE_NAME;
+$outputPath = "C:/Users/kfeig/Desktop/pmmp3/plugins" . DIRECTORY_SEPARATOR . FILE_NAME;
 @unlink($outputPath . ".phar");
 // Generate phar
 $phar = new Phar($outputPath . ".phar");
