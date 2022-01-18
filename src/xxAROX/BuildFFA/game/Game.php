@@ -24,6 +24,7 @@ use pocketmine\level\Level;
 use pocketmine\level\particle\DestroyBlockParticle;
 use pocketmine\level\sound\FizzSound;
 use pocketmine\network\mcpe\protocol\LevelEventPacket;
+use pocketmine\Player;
 use pocketmine\scheduler\ClosureTask;
 use pocketmine\Server;
 use pocketmine\utils\SingletonTrait;
@@ -95,17 +96,29 @@ class Game{
 	 * @return void
 	 */
 	private function initKits(): void{
-		$head = ItemFactory::get(ItemIds::LEATHER_CAP)->setUnbreakable()->addEnchantment(new EnchantmentInstance(Enchantment::getEnchantment(Enchantment::PROTECTION), 1));
-		$chest = ItemFactory::get(ItemIds::LEATHER_CHESTPLATE)->setUnbreakable()->addEnchantment(new EnchantmentInstance(Enchantment::getEnchantment(Enchantment::PROTECTION), 2));
-		$leg = ItemFactory::get(ItemIds::LEATHER_PANTS)->setUnbreakable()->addEnchantment(new EnchantmentInstance(Enchantment::getEnchantment(Enchantment::PROTECTION), 1));
-		$feet = ItemFactory::get(ItemIds::LEATHER_BOOTS)->setUnbreakable()->addEnchantment(new EnchantmentInstance(Enchantment::getEnchantment(Enchantment::PROTECTION), 1));
-		$air = ItemFactory::get(0);
+		$head = ItemFactory::get(ItemIds::LEATHER_CAP);
+		$head->setUnbreakable();
+		$head->addEnchantment(new EnchantmentInstance(Enchantment::getEnchantment(Enchantment::PROTECTION), 1));
+		$chest = ItemFactory::get(ItemIds::LEATHER_CHESTPLATE);
+		$chest->setUnbreakable();
+		$chest->addEnchantment(new EnchantmentInstance(Enchantment::getEnchantment(Enchantment::PROTECTION), 2));
+		$leg = ItemFactory::get(ItemIds::LEATHER_PANTS);
+		$leg->setUnbreakable();
+		$leg->addEnchantment(new EnchantmentInstance(Enchantment::getEnchantment(Enchantment::PROTECTION), 1));
+		$feet = ItemFactory::get(ItemIds::LEATHER_BOOTS);
+		$feet->setUnbreakable();
+		$feet->addEnchantment(new EnchantmentInstance(Enchantment::getEnchantment(Enchantment::PROTECTION), 1));
 		$basicBlocks = ItemFactory::get(BlockIds::SANDSTONE)->setCount(64);
 		$basicStick = ItemFactory::get(ItemIds::STICK)->setCount(1);
 		$basicStick->addEnchantment(new EnchantmentInstance(Enchantment::getEnchantment(Enchantment::KNOCKBACK), 1));
-		$basicPickaxe = ItemFactory::get(ItemIds::IRON_PICKAXE)->setUnbreakable()->addEnchantment(new EnchantmentInstance(Enchantment::getEnchantment(Enchantment::EFFICIENCY), 2));
-		$basicSword = ItemFactory::get(ItemIds::GOLDEN_SWORD)->setUnbreakable()->addEnchantment(new EnchantmentInstance(Enchantment::getEnchantment(Enchantment::SHARPNESS), 1));
-		$basicBow = ItemFactory::get(ItemIds::BOW)->setUnbreakable();
+		$basicPickaxe = ItemFactory::get(ItemIds::IRON_PICKAXE);
+		$basicPickaxe->setUnbreakable();
+		$basicPickaxe->addEnchantment(new EnchantmentInstance(Enchantment::getEnchantment(Enchantment::EFFICIENCY), 2));
+		$basicSword = ItemFactory::get(ItemIds::GOLDEN_SWORD);
+		$basicSword->setUnbreakable();
+		$basicSword->addEnchantment(new EnchantmentInstance(Enchantment::getEnchantment(Enchantment::SHARPNESS), 1));
+		$basicBow = ItemFactory::get(ItemIds::BOW);
+		$basicBow->setUnbreakable();
 		$basicBow->addEnchantment(new EnchantmentInstance(Enchantment::getEnchantment(Enchantment::INFINITY), 1));
 		$basicWebs = (new PlaceHolderItem(BlockIds::INVISIBLE_BEDROCK, 0, $w = ItemFactory::get(BlockIds::WEB)->setCount(3), 3));
 		$nbt = $w->getNamedTag();
@@ -129,7 +142,7 @@ class Game{
 			"web"     => $basicWebs,
 			"blocks"  => $basicBlocks,
 		];
-		$this->kits["%buildffa.kit.rusher"] = new Kit("%buildffa.kit.rusher", $contents, $air, $head, $chest, $leg, $feet);
+		$this->kits["%buildffa.kit.rusher"] = new Kit("%buildffa.kit.rusher", $contents, $head, $chest, $leg, $feet);
 		$contents = [
 			"sword"   => $basicSword,
 			"stick"   => $basicStick,
@@ -137,8 +150,9 @@ class Game{
 			"pickaxe" => $basicPickaxe,
 			"web"     => $basicWebs,
 			"blocks"  => $basicBlocks,
+			"arrow"  => ItemFactory::get(ItemIds::ARROW)->setCount(1),
 		];
-		$this->kits["%buildffa.kit.archer"] = new Kit("%buildffa.kit.archer", $contents, ItemFactory::get(ItemIds::ARROW)->setCount(1), $head, $chest, $leg, $feet);
+		$this->kits["%buildffa.kit.archer"] = new Kit("%buildffa.kit.archer", $contents, $head, $chest, $leg, $feet);
 		$basicStick2 = clone $basicStick;
 		$basicStick2->addEnchantment(new EnchantmentInstance(Enchantment::getEnchantment(Enchantment::KNOCKBACK), 2));
 		$contents = [
@@ -148,7 +162,7 @@ class Game{
 			"web"     => $basicWebs,
 			"blocks"  => $basicBlocks,
 		];
-		$this->kits["%buildffa.kit.knocker"] = new Kit("%buildffa.kit.knocker", $contents, $air, $head, $chest, $leg, $feet);
+		$this->kits["%buildffa.kit.knocker"] = new Kit("%buildffa.kit.knocker", $contents, $head, $chest, $leg, $feet);
 		$contents = [
 			"sword"      => $basicSword,
 			"stick"      => $basicStick,
@@ -157,7 +171,7 @@ class Game{
 			"web"        => $basicWebs,
 			"blocks"     => $basicBlocks,
 		];
-		$this->kits["%buildffa.kit.enderpearl"] = new Kit("%buildffa.kit.enderpearl", $contents, $air, $head, $chest, $leg, $feet);
+		$this->kits["%buildffa.kit.enderpearl"] = new Kit("%buildffa.kit.enderpearl", $contents, $head, $chest, $leg, $feet);
 		$contents = [
 			"sword"    => $basicSword,
 			"stick"    => $basicStick,
@@ -166,7 +180,7 @@ class Game{
 			"web"      => $basicWebs,
 			"blocks"   => $basicBlocks,
 		];
-		$this->kits["%buildffa.kit.platform"] = new Kit("%buildffa.kit.platform", $contents, $air, $head, $chest, $leg, $feet);
+		$this->kits["%buildffa.kit.platform"] = new Kit("%buildffa.kit.platform", $contents, $head, $chest, $leg, $feet);
 	}
 
 	/**
@@ -296,10 +310,10 @@ class Game{
 	 * @return bool
 	 */
 	public function filterPlayer(Player $player): bool{
-		if ($player->getGamemode()->id() != GameMode::SURVIVAL()->id()) {
+		if ($player->getGamemode() != Player::SURVIVAL) {
 			return false;
 		}
-		if ($player->getWorld()->getFolderName() !== $this->arena->getWorld()->getFolderName()) {
+		if ($player->getLevel()->getFolderName() !== $this->arena->getWorld()->getFolderName()) {
 			return false;
 		}
 		return true;
