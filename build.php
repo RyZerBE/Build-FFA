@@ -38,7 +38,7 @@ if($IS_GITHUB_ACTIONS){
 	}
 	file_put_contents($API, (is_array($description["api"]) ? explode(".", $description["api"][0])[0] : (is_string($description["api"]) ? explode(".", $description["api"])[0] : "???")), 0777);
 	file_put_contents($VERSION, $description["version"], 0777);
-	file_put_contents($FILE_NAME, $outputPath . ".phar", 0777);
+	file_put_contents($FILE_NAME, $outputPath, 0777);
 	file_put_contents($FOLDER, $to, 0777);
 }
 // Generate phar
