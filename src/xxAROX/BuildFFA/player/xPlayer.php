@@ -471,6 +471,22 @@ class xPlayer extends Player{
 		}
 	}
 
+	/**
+	 * Function __set
+	 * @param string $name
+	 * @param mixed $value
+	 * @return void
+	 */
 	public function __set($name, $value){
+		$this->$name = $value;
+	}
+
+	/**
+	 * Function __get
+	 * @param string $name
+	 * @return int|mixed
+	 */
+	public function __get($name){
+		return $this->$name;
 	}
 }
