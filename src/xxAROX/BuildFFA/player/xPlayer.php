@@ -199,7 +199,7 @@ class xPlayer extends Player{
 	/**
 	 * Function toggleSneak
 	 * @param bool $sneak
-	 * @return bool
+	 * @return void
 	 */
 	public function toggleSneak(bool $sneak): void{
 		if ($this->is_in_inv_sort && !$sneak) {
@@ -400,6 +400,11 @@ class xPlayer extends Player{
 		return parent::entityBaseTick($tickDiff);
 	}
 
+	/**
+	 * Function fall
+	 * @param float $fallDistance
+	 * @return void
+	 */
 	public function fall(float $fallDistance): void{
 		$damage = ceil($fallDistance - 3 - ($this->hasEffect(Effect::JUMP)
 				? $this->getEffect(Effect::JUMP)->getEffectLevel() : 0));
@@ -419,7 +424,7 @@ class xPlayer extends Player{
 	 * @return void
 	 */
 	public function attack(EntityDamageEvent $source): void{
-		if (Game::getInstance()->getArena()->isInProtectionArea($this->getPosition()->asVector3())) {
+		if (Game::getInstance()->getArena()->isInProtectionArea($this->getPosition()->asVector3()) || !$this->isAlive()) {
 			$source->setCancelled();
 		}
 		parent::attack($source);
