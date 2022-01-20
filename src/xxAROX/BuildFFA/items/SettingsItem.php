@@ -31,7 +31,7 @@ class SettingsItem extends Item{
 	 */
 	public function __construct(){
 		parent::__construct(ItemIds::COMMAND_BLOCK, 0, "BuildFFA Settings");
-		$this->setCustomName("§dSettings");//TODO: language stuff
+		$this->setCustomName("§dSettings");
 		applyReadonlyTag($this);
 	}
 

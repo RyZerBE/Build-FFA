@@ -16,6 +16,7 @@ use pocketmine\plugin\PluginDescription;
 use pocketmine\plugin\PluginLoader;
 use pocketmine\Server;
 use pocketmine\utils\SingletonTrait;
+use pocketmine\utils\TextFormat;
 use xxAROX\BuildFFA\command\SetupCommand;
 use xxAROX\BuildFFA\command\SkipCommand;
 use xxAROX\BuildFFA\entity\BlockEntity;
@@ -40,6 +41,7 @@ class BuildFFA extends PluginBase{
 	const TAG_READONLY               = "xxarox:inv:readonly";
 	const TAG_COUNTDOWN              = "xxarox:inv:countdown";
 	const TAG_PLACEHOLDER_IDENTIFIER = "__placeholderId";
+	const PREFIX = TextFormat::BOLD.TextFormat::DARK_AQUA."BuildFFA ".TextFormat::RESET;
 	use SingletonTrait;
 
 

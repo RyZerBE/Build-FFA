@@ -28,6 +28,7 @@ use pocketmine\Player;
 use pocketmine\scheduler\ClosureTask;
 use pocketmine\Server;
 use pocketmine\utils\SingletonTrait;
+use ryzerbe\core\language\LanguageProvider;
 use xxAROX\BuildFFA\BuildFFA;
 use xxAROX\BuildFFA\entity\BlockEntity;
 use xxAROX\BuildFFA\generic\entry\BlockBreakEntry;
@@ -141,8 +142,10 @@ class Game{
 			"pickaxe" => $basicPickaxe,
 			"web"     => $basicWebs,
 			"blocks"  => $basicBlocks,
+            "enderpearl" => $basicEnderpearl,
+            "platform" => $platform
 		];
-		$this->kits["%buildffa.kit.rusher"] = new Kit("%buildffa.kit.rusher", $contents, $head, $chest, $leg, $feet);
+		$this->kits["Rusher"] = new Kit("Rusher", $contents, $head, $chest, $leg, $feet);
 		$contents = [
 			"sword"   => $basicSword,
 			"stick"   => $basicStick,
@@ -150,37 +153,22 @@ class Game{
 			"pickaxe" => $basicPickaxe,
 			"web"     => $basicWebs,
 			"blocks"  => $basicBlocks,
+            "enderpearl" => $basicEnderpearl,
+            "platform" => $platform,
 			"arrow"  => ItemFactory::get(ItemIds::ARROW)->setCount(1),
 		];
-		$this->kits["%buildffa.kit.archer"] = new Kit("%buildffa.kit.archer", $contents, $head, $chest, $leg, $feet);
+		$this->kits["Archer"] = new Kit("Archer", $contents, $head, $chest, $leg, $feet);
 		$basicStick2 = clone $basicStick;
 		$basicStick2->addEnchantment(new EnchantmentInstance(Enchantment::getEnchantment(Enchantment::KNOCKBACK), 2));
 		$contents = [
-			"sword"   => $basicSword,
 			"stick"   => $basicStick2,
 			"pickaxe" => $basicPickaxe,
 			"web"     => $basicWebs,
 			"blocks"  => $basicBlocks,
+            "enderpearl" => $basicEnderpearl,
+            "platform" => $platform
 		];
-		$this->kits["%buildffa.kit.knocker"] = new Kit("%buildffa.kit.knocker", $contents, $head, $chest, $leg, $feet);
-		$contents = [
-			"sword"      => $basicSword,
-			"stick"      => $basicStick,
-			"enderpearl" => $basicEnderpearl,
-			"pickaxe"    => $basicPickaxe,
-			"web"        => $basicWebs,
-			"blocks"     => $basicBlocks,
-		];
-		$this->kits["%buildffa.kit.enderpearl"] = new Kit("%buildffa.kit.enderpearl", $contents, $head, $chest, $leg, $feet);
-		$contents = [
-			"sword"    => $basicSword,
-			"stick"    => $basicStick,
-			"platform" => $platform,
-			"pickaxe"  => $basicPickaxe,
-			"web"      => $basicWebs,
-			"blocks"   => $basicBlocks,
-		];
-		$this->kits["%buildffa.kit.platform"] = new Kit("%buildffa.kit.platform", $contents, $head, $chest, $leg, $feet);
+		$this->kits["Knocker"] = new Kit("Knocker", $contents, $head, $chest, $leg, $feet);
 	}
 
 	/**
@@ -190,12 +178,14 @@ class Game{
 	private function tick(): void{
 		if (!is_null($this->bossBar)) {
 			$this->bossBar->setPercentage(((self::MAP_CHANGE_INTERVAL * 20) / 100 * ($this->nextArenaChange - Server::getInstance()->getTick())) / 100);
-			foreach (Server::getInstance()->getOnlinePlayers() as $onlinePlayer) {
+
+			/** @var xPlayer $onlinePlayer */
+            foreach (Server::getInstance()->getOnlinePlayers() as $onlinePlayer) {
 				$minutes = intval(round((($this->nextArenaChange - Server::getInstance()->getTick()) / 20 / 60)));
 				if ($minutes > 0) {
-					$onlinePlayer->sendActionBarMessage("Map reset in " . $minutes . " minutes.");
+					$onlinePlayer->sendActionBarMessage(LanguageProvider::getMessageContainer("bffa-popup-map-change", $onlinePlayer));
 				} else {
-					$onlinePlayer->sendActionBarMessage("Map reset in <0 minutes.");
+                    $onlinePlayer->sendActionBarMessage(LanguageProvider::getMessageContainer("bffa-popup-few-seconds-map-change", $onlinePlayer));
 				}
 				$this->bossBar->addPlayer($onlinePlayer);
 			}

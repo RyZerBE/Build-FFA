@@ -56,11 +56,6 @@ class Arena{
 			$block_speed = Game::getInstance()->getArena()->settings->blocks_cooldown;
 			/** @var xPlayer $onlinePlayer */
 			foreach (Server::getInstance()->getOnlinePlayers() as $onlinePlayer) {
-				if ($this->settings->blocks_cooldown > $block_speed) {
-					$onlinePlayer->sendMessage("§9Block despawn takes longer"); //TODO: language stuff
-				} else if ($this->settings->blocks_cooldown < $block_speed) {
-					$onlinePlayer->sendMessage("§9Block will despawn faster"); //TODO: language stuff
-				}
 				unset($onlinePlayer->itemCountdowns);
 				$onlinePlayer->itemCountdowns = [];
 				$onlinePlayer->teleport($this->world->getSafeSpawn());

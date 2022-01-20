@@ -26,6 +26,7 @@ class SetupCommand extends Command{
 	 */
 	public function __construct(){
 		parent::__construct("setup", "Setup command", null, []);
+		$this->setPermission("game.setup");
 	}
 
 	/**
@@ -40,6 +41,10 @@ class SetupCommand extends Command{
 			$sender->sendMessage("§o§n§cNot f-f-f-for y-y-you!");
 			return;
 		}
+		if(!$this->testPermission($sender)) {
+            $sender->sendMessage("§o§n§cNot f-f-f-for y-y-you!");
+		    return;
+        }
 		if (isset($args[0]) && strtolower($args[0]) == "settings") {
 			if (!$this->testPermission($sender, "game.buildffa.settings")) {
 				return;

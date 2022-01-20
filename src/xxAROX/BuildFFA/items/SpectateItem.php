@@ -28,7 +28,7 @@ class SpectateItem extends Item{
 	 */
 	public function __construct(){
 		parent::__construct(ItemIds::ENDER_EYE, 0, "Spectate");
-		$this->setCustomName("§aSpectate"); // TODO: language stuff
+		$this->setCustomName("§cSpectate");
 		applyReadonlyTag($this);
 	}
 

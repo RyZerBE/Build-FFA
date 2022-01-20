@@ -9,8 +9,10 @@
 	],
 	"require": {
 		"ext-yaml": "*",
-		"ext-mbstring": "*"
-	},
+		"ext-mbstring": "*",
+      "ext-mysqli": "*",
+      "ext-zlib": "*"
+    },
 	"require-dev": {
 		"pocketmine/pocketmine-mp": "^3.26.5"
 	}

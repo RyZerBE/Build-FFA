@@ -28,7 +28,7 @@ class InvSortItem extends Item{
 	 */
 	public function __construct(){
 		parent::__construct(BlockIds::CHEST, 0, "Inventory sort");
-		$this->setCustomName("§cInv sort");//TODO: language stuff
+		$this->setCustomName("§6Inventory sort");
 		applyReadonlyTag($this);
 	}
 

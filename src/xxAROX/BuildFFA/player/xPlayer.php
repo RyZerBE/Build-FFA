@@ -13,6 +13,7 @@ use Frago9876543210\EasyForms\elements\Toggle;
 use Frago9876543210\EasyForms\forms\CustomForm;
 use Frago9876543210\EasyForms\forms\CustomFormResponse;
 use Frago9876543210\EasyForms\forms\MenuForm;
+use mysqli;
 use pocketmine\block\BlockFactory;
 use pocketmine\block\BlockIds;
 use pocketmine\command\Command;
@@ -23,8 +24,12 @@ use pocketmine\event\player\PlayerDeathEvent;
 use pocketmine\item\Item;
 use pocketmine\item\ItemFactory;
 use pocketmine\math\Vector3;
-use pocketmine\Player;
 use pocketmine\Server;
+use ryzerbe\core\language\LanguageProvider;
+use ryzerbe\core\player\PMMPPlayer;
+use ryzerbe\core\player\RyZerPlayer;
+use ryzerbe\core\player\RyZerPlayerProvider;
+use ryzerbe\core\util\async\AsyncExecutor;
 use xxAROX\BuildFFA\BuildFFA;
 use xxAROX\BuildFFA\event\BuildFFAPlayerChangeInvSortEvent;
 use xxAROX\BuildFFA\event\BuildFFAPlayerRespawnEvent;
@@ -40,6 +45,13 @@ use xxAROX\BuildFFA\items\MapItem;
 use xxAROX\BuildFFA\items\PlaceHolderItem;
 use xxAROX\BuildFFA\items\SettingsItem;
 use xxAROX\BuildFFA\items\SpectateItem;
+use function base64_decode;
+use function base64_encode;
+use function serialize;
+use function unserialize;
+use function zlib_decode;
+use function zlib_encode;
+use const ZLIB_ENCODING_DEFLATE;
 
 
 /**
@@ -50,7 +62,7 @@ use xxAROX\BuildFFA\items\SpectateItem;
  * @ide PhpStorm
  * @project BuildFFA
  */
-class xPlayer extends Player{
+class xPlayer extends PMMPPlayer {
 	/** @internal */
 	public ?Setup $setup = null;
 	/** @internal */
@@ -64,26 +76,43 @@ class xPlayer extends Player{
 	// NOTE: this is for internal api stuff
 	/** @internal */
 	public array $enderpearls = [];
+	/** @var string|null  */
+	public ?string $killer = null;
 	protected int $kill_streak = 0;
-	protected int $deaths = 0; //NOTE: lmao, i wrote that shit high af
-	protected int $kills = 0;
+	public int $deaths = 0;
+	public int $kills = 0;
 	protected ?Kit $selected_kit = null;
 	protected array $inv_sort = [];
 
-	/**
-	 * Function load
-	 * @param int $kills
-	 * @param int $deaths
-	 * @param null|array $inv_sort
-	 * @param null|string $kit_name
-	 * @return void
-	 */
-	public function load(int $kills, int $deaths, ?array $inv_sort = null, ?string $kit_name = null): void{
-		$this->kills = $kills;
-		$this->deaths = $deaths;
-		$this->kill_streak = 0;
+    /**
+     * Function load
+     * @return void
+     */
+	public function load(): void{
 		$this->inv_sort = $inv_sort ?? $this->inv_sort;
-		$this->selected_kit = Game::getInstance()->getKit($kit_name);
+		$name = $this->getName();
+		AsyncExecutor::submitMySQLAsyncTask("BuildFFA", function(mysqli $mysqli) use ($name): array{
+		    $res = $mysqli->query("SELECT * FROM bffa_data WHERE player='$name'");
+		    if($res->num_rows > 0) {
+		        $data = $res->fetch_assoc();
+		        return [
+		            "kit" => $data["selected_kit"],
+                    "sort" => unserialize(zlib_decode(base64_decode($data["inv_sorts"])))
+                ];
+            }
+
+		    return [
+		        "kit" => null,
+                "sort" => null
+            ];
+        }, function(Server $server, $data) use ($name): void{
+		    /** @var xPlayer $player */
+		    $player = $server->getPlayerExact($name);
+		    if($player === null) return;
+
+		    if($data["sort"] !== null) $player->inv_sort = $data["sort"];
+		    $player->selected_kit = Game::getInstance()->getKit($data["kit"]);
+        });
 	}
 
 	/**
@@ -91,7 +120,13 @@ class xPlayer extends Player{
 	 * @return void
 	 */
 	public function store(): void{
-		// TODO: @Baubo-LP
+	    $sorts = $this->inv_sort;
+	    $selected_kit = $this->selected_kit->getDisplayName();
+	    $playerName = $this->getName();
+		AsyncExecutor::submitMySQLAsyncTask("BuildFFA", function(mysqli $mysqli) use ($selected_kit, $sorts, $playerName): void{
+		    $sortString = base64_encode(zlib_encode(serialize($sorts), ZLIB_ENCODING_DEFLATE));
+		    $mysqli->query("INSERT INTO `bffa_data`(`player`, `inv_sorts`, `selected_kit`) VALUES ('$playerName', '$sortString', '$selected_kit') ON DUPLICATE KEY UPDATE inv_sorts='$sortString',selected_kit='$selected_kit'");
+        });
 	}
 
 	/**
@@ -218,7 +253,7 @@ class xPlayer extends Player{
 		if ($this->gamemode == self::SPECTATOR) {
 			return;
 		}
-		$barrier = applyReadonlyTag(ItemFactory::get(BlockIds::INVISIBLE_BEDROCK)->setCustomName("§r"));
+		$barrier = applyReadonlyTag(ItemFactory::get(-161)->setCustomName("§r"));
 		$this->inventory->clearAll();
 		$this->armorInventory->clearAll();
 		$this->cursorInventory->clearAll();
@@ -248,14 +283,14 @@ class xPlayer extends Player{
 	 */
 	public function sendMapSelect(): void{
 		if (count(Game::getInstance()->getArenas()) == 0) {
-			$this->sendMessage("§cLazy owner(ping him), no maps found..");// TODO: language stuff
+			$this->getRyZerPlayer()->sendTranslate("bffa-no-maps");
 			return;
 		}
 		if (count(Game::getInstance()->getArenas()) == 1) {
-			$this->sendMessage("§cOnly one map found, you have no choice..");// TODO: language stuff
+            $this->getRyZerPlayer()->sendTranslate("bffa-once-maps");
 			return;
 		}
-		$this->sendForm(new MenuForm("%ui.title.voting.map", "", array_map(fn(Arena $arena) => new FunctionalButton($arena->getWorld()->getFolderName() . "\n§c" . Game::getInstance()->mapVotes[$arena->getWorld()->getFolderName()] . " vote/s", function (xPlayer $player) use ($arena): void{
+		$this->sendForm(new MenuForm(LanguageProvider::getMessageContainer("bffa-map-voting", $this), "", array_map(fn(Arena $arena) => new FunctionalButton($arena->getWorld()->getFolderName() . "\n§c" . Game::getInstance()->mapVotes[$arena->getWorld()->getFolderName()] . " vote/s", function (xPlayer $player) use ($arena): void{
 			if ($arena->getWorld()->getFolderName() == $player->voted_map) {
 				Game::getInstance()->mapVotes[$player->voted_map]--;
 				$player->voted_map = "";
@@ -295,14 +330,14 @@ class xPlayer extends Player{
 	 */
 	public function sendKitSelect(): void{
 		if (count(Game::getInstance()->getKits()) == 0) {
-			$this->sendMessage("§cLazy owner(ping him), no kits found..");// TODO: language stuff
+			$this->getRyZerPlayer()->sendTranslate("bffa-no-kits-found");
 			return;
 		}
 		if (count(Game::getInstance()->getKits()) == 1) {
-			$this->sendMessage("§cOnly one kit found, you have no choice..");// TODO: language stuff
+            $this->getRyZerPlayer()->sendTranslate("bffa-once-kit");
 			return;
 		}
-		$this->sendForm(new MenuForm("%ui.title.voting.kit", "", array_map(fn(Kit $kit) => new FunctionalButton($kit->getDisplayName(), function (xPlayer $player) use ($kit): void{
+		$this->sendForm(new MenuForm(LanguageProvider::getMessageContainer("bffa-kit-form-description", $this), "", array_map(fn(Kit $kit) => new FunctionalButton($kit->getDisplayName(), function (xPlayer $player) use ($kit): void{
 			$player->setSelectedKit($kit);
 		}), Game::getInstance()->getKits())));
 	}
@@ -316,7 +351,7 @@ class xPlayer extends Player{
 		$ev->call();
 		if (!$ev->isCancelled()) {
 			$this->inventory->setHeldItemIndex(0);
-			$barrier = applyReadonlyTag(ItemFactory::get(BlockIds::INVISIBLE_BEDROCK)->setCustomName("§r"));
+			$barrier = applyReadonlyTag(ItemFactory::get(-161)->setCustomName("§r")); //-161 -> Barrier
 			$this->setGamemode(self::SPECTATOR);
 			$this->inventory->clearAll();
 			$this->cursorInventory->clearAll();
@@ -443,8 +478,17 @@ class xPlayer extends Player{
 			$this->armorInventory?->clearAll();
 		}
 		$this->setXpAndProgress(0, 0.0);
-		//TODO: death message
-		//$this->server->broadcastMessage($ev->getDeathMessage());
+		if($this->killer !== null) {
+		    $player = RyZerPlayerProvider::getRyzerPlayer($this->killer);
+		    if($player !== null) {
+		        $this->getRyZerPlayer()->sendTranslate("bffa-killed-by-player", ["#killer" => $player->getName(true)]);
+		        $player->sendTranslate("bffa-killed-player", ["#playername" => $this->getRyZerPlayer()->getName(true)]);
+		        /** @var xPlayer $bffaPlayer */
+		        $bffaPlayer = $player->getPlayer();
+		        $bffaPlayer->kills++;
+		    }
+        }
+		$this->deaths++;
 		$this->startDeathAnimation();
 		$this->setHealth($this->getMaxHealth());
 		$this->__respawn();

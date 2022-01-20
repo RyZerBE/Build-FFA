@@ -28,7 +28,7 @@ class MapItem extends Item{
 	 */
 	public function __construct(){
 		parent::__construct(ItemIds::MAP, 0, "Choose map");
-		$this->setCustomName("§eMap");//TODO: language	stuff
+		$this->setCustomName("§eMap");
 		applyReadonlyTag($this);
 	}
 

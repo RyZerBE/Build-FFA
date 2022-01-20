@@ -40,7 +40,7 @@ class SkipCommand extends Command{
 			return;
 		}
 		Game::getInstance()->skip();
-		$sender->sendMessage("§aSkipped"); //TODO: language stuff
+		$sender->sendMessage("§aSkipped");
 		Command::broadcastCommandMessage($sender, "Skipped current map", false);
 	}
 }
