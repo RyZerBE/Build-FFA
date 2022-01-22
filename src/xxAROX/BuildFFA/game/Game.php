@@ -252,7 +252,7 @@ class Game{
 		foreach ($this->destroyedBlocks as $encodedPos => $entry) {
 			if (microtime(true) >= $entry->getTimestamp()) {
 				$current = $entry->getPosition()->getLevel()->getBlock($entry->getPosition());
-				if ($current->getId() != BlockIds::AIR) {
+				if ($current->getId() === BlockIds::AIR) {
 					$entry->getPosition()->getLevel()->addParticle(new DestroyBlockParticle($entry->getPosition(), $current));
 					$entry->getPosition()->getLevel()->addSound(new FizzSound($entry->getPosition()));
 					$entry->getPosition()->getLevel()->setBlock($entry->getPosition(), $entry->getLegacy());
