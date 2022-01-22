@@ -6,6 +6,8 @@
  */
 declare(strict_types=1);
 namespace xxAROX\BuildFFA\listener;
+use pocketmine\event\entity\EntityDamageByEntityEvent;
+use pocketmine\event\entity\EntityDamageEvent;
 use pocketmine\event\entity\EntityTeleportEvent;
 use pocketmine\event\inventory\InventoryTransactionEvent;
 use pocketmine\event\Listener;
@@ -214,5 +216,20 @@ class PlayerListener implements Listener{
 				$player->itemCooldown($item);
 			}
 		}
+	}
+
+    public function onDamage(EntityDamageEvent $event){
+        $entity = $event->getEntity();
+        if(!$entity instanceof xPlayer) return;
+        if($event instanceof EntityDamageByEntityEvent) {
+            $damager = $event->getDamager();
+            if($damager instanceof Player) {
+                $entity->killer = $damager->getName();
+            }
+            return;
+        }
+        if($entity->getHealth() - $event->getFinalDamage() > 0) return;
+        $event->setCancelled();
+        $entity->onDeath();
 	}
 }

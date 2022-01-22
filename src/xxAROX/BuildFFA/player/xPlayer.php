@@ -117,18 +117,7 @@ class xPlayer extends PMMPPlayer {
 
 		    if($data["sort"] !== null) $player->inv_sort = $data["sort"];
 		    $player->selected_kit = Game::getInstance()->getKit($data["kit"]);
-            $player->getScoreboard()->setLines([
-                0 => "",
-                1 => TextFormat::GRAY."Map ".TextFormat::DARK_GRAY."⇨ ".TextFormat::GOLD.Game::getInstance()->getArena()->getWorld()->getFolderName(),
-                2 => TextFormat::GRAY."Kit ".TextFormat::DARK_GRAY."⇨ ".TextFormat::GOLD.(($this->getSelectedKit() === null) ? TextFormat::RED."???" : $this->getSelectedKit()->getDisplayName()),
-                3 => "",
-                4 => TextFormat::GRAY."○ Kills",
-                5 => TextFormat::DARK_GRAY."⇨ ".TextFormat::AQUA.$this->kills,
-                6 => TextFormat::GRAY."○ Deaths",
-                7 => TextFormat::DARK_GRAY."⇨ ".TextFormat::AQUA.$this->deaths,
-                8 => "",
-                9 => TextFormat::WHITE."⇨ ".TextFormat::AQUA."ryzer.be"
-            ]);
+            $player->updateScoreboard();
 		});
 	}
 
@@ -442,6 +431,7 @@ class xPlayer extends PMMPPlayer {
                     $bffaPlayer->kill_streak++;
                     $bffaPlayer->getSelectedKit()?->onFillUp($this);
                     $bffaPlayer->killer = null;
+
                     $bffaPlayer->setXpAndProgress($bffaPlayer->kill_streak, 0.0);
                     $bffaPlayer->playSound("random.levelup", 5.0, 1.0, [$bffaPlayer]);
                 }
@@ -506,7 +496,7 @@ class xPlayer extends PMMPPlayer {
 	 * Function onDeath
 	 * @return void
 	 */
-	protected function onDeath(): void{
+	public function onDeath(): void{
 		$this->doCloseInventory();
 		$ev = new PlayerDeathEvent($this, $this->getDrops(), "", $this->getXpDropAmount());
 		$ev->call();
@@ -526,6 +516,7 @@ class xPlayer extends PMMPPlayer {
 		        $bffaPlayer->kill_streak++;
 		        $bffaPlayer->getSelectedKit()?->onFillUp($this);
 		        $bffaPlayer->killer = null;
+		        $bffaPlayer->updateScoreboard();
 		        $bffaPlayer->setXpAndProgress($bffaPlayer->kill_streak, 0.0);
 		        $bffaPlayer->playSound("random.levelup", 5.0, 1.0, [$bffaPlayer]);
 		    }
@@ -533,7 +524,7 @@ class xPlayer extends PMMPPlayer {
 		$this->deaths++;
 		$this->kill_streak = 0;
         $this->killer = null;
-		$this->startDeathAnimation();
+		#$this->startDeathAnimation();
 		$this->setHealth($this->getMaxHealth());
 		$this->__respawn();
 	}
@@ -562,11 +553,15 @@ class xPlayer extends PMMPPlayer {
 			$this->teleport(Game::getInstance()->getArena()->getWorld()->getSafeSpawn());
 			$this->sendOtakaItems();
 		}
-		$this->getScoreboard()->clearScoreboard();
-		$this->getScoreboard()->setLines([
-		    0 => "",
-		    1 => TextFormat::GRAY."Map ".TextFormat::DARK_GRAY."⇨ ".TextFormat::GOLD.Game::getInstance()->getArena()->getWorld()->getFolderName(),
-		    2 => TextFormat::GRAY."Kit ".TextFormat::DARK_GRAY."⇨ ".TextFormat::GOLD.(($this->getSelectedKit() === null) ? TextFormat::RED."???" : $this->getSelectedKit()->getDisplayName()),
+		$this->updateScoreboard();
+	}
+
+    public function updateScoreboard(): void{
+	    $this->getScoreboard()->clearScoreboard();
+        $this->getScoreboard()->setLines([
+            0 => "",
+            1 => TextFormat::GRAY."Map ".TextFormat::DARK_GRAY."⇨ ".TextFormat::GOLD.Game::getInstance()->getArena()->getWorld()->getFolderName(),
+            2 => TextFormat::GRAY."Kit ".TextFormat::DARK_GRAY."⇨ ".TextFormat::GOLD.(($this->getSelectedKit() === null) ? TextFormat::RED."???" : $this->getSelectedKit()->getDisplayName()),
             3 => "",
             4 => TextFormat::GRAY."○ Kills",
             5 => TextFormat::DARK_GRAY."⇨ ".TextFormat::AQUA.$this->kills,
