@@ -25,16 +25,17 @@ use xxAROX\BuildFFA\player\xPlayer;
  * @project BuildFFA
  */
 class Kit{
-	/**
-	 * Kit constructor.
-	 * @param string $display_name
-	 * @param Item[] $contents
-	 * @param null|Armor $head
-	 * @param null|Armor $chest
-	 * @param null|Armor $leg
-	 * @param null|Armor $feet
-	 */
-	public function __construct(protected string $display_name, protected array $contents, protected ?Armor $head, protected ?Armor $chest, protected ?Armor $leg, protected ?Armor $feet){
+    /**
+     * Kit constructor.
+     * @param string $display_name
+     * @param Item[] $contents
+     * @param null|Armor $head
+     * @param null|Armor $chest
+     * @param null|Armor $leg
+     * @param null|Armor $feet
+     * @param bool $fillUpAfterDeath
+     */
+	public function __construct(protected string $display_name, protected array $contents, protected ?Armor $head, protected ?Armor $chest, protected ?Armor $leg, protected ?Armor $feet, protected $fillUpAfterDeath = false){
 		foreach ($this->contents as $type => $item) {
 			if ($item instanceof PlaceHolderItem) {
 				$nbt = $item->getPlaceholdersItem()->getNamedTag();
@@ -72,10 +73,10 @@ class Kit{
 		$player->getArmorInventory()->clearAll();
 		$player->getCursorInventory()->clearAll();
 		for ($slot = 9; $slot < $player->getInventory()->getSize(); $slot++) {
-			$player->getInventory()->setItem($slot, applyReadonlyTag(ItemFactory::get(BlockIds::INVISIBLE_BEDROCK)->setCustomName("§r")));
+			$player->getInventory()->setItem($slot, applyReadonlyTag(Item::get(-161)->setCustomName("§r")));
 		}
 		for ($slot = 0; $slot < $player->getCraftingGrid()->getSize(); $slot++) {
-			$player->getCraftingGrid()->setItem($slot, applyReadonlyTag(ItemFactory::get(BlockIds::INVISIBLE_BEDROCK)->setCustomName("§r")));
+			$player->getCraftingGrid()->setItem($slot, applyReadonlyTag(Item::get(-161)->setCustomName("§r")));
 		}
 		$checked = [];
 		foreach ($this->contents as $type => $item) {
@@ -92,8 +93,13 @@ class Kit{
 		unset($checked, $slot);
 		foreach ($this->contents as $type => $item) {
 			if (isset($invSort[$type])) {
-				$player->getInventory()->setItem($invSort[$type], $item instanceof PlaceHolderItem
-					? $item->getPlaceholdersItem() : $item);
+			    if($player->getInventory()->getItem($invSort[$type])->getId() === BlockIds::AIR) {
+                    $player->getInventory()->setItem($invSort[$type], $item instanceof PlaceHolderItem
+                        ? $item->getPlaceholdersItem() : $item);
+                }else {
+                    $player->getInventory()->addItem($item instanceof PlaceHolderItem ? $item->getPlaceholdersItem()
+                        : $item);
+                }
 			} else {
 				$player->getInventory()->addItem($item instanceof PlaceHolderItem ? $item->getPlaceholdersItem()
 					: $item);
@@ -152,4 +158,17 @@ class Kit{
 	public function getFeet(): ?Armor{
 		return $this->feet;
 	}
+
+    /**
+     * @return bool
+     */
+    public function fillUpAfterDeath(): bool{
+        return $this->fillUpAfterDeath;
+    }
+
+    public function onFillUp(xPlayer $player): void{
+        if(!$this->fillUpAfterDeath) return;
+
+        $this->equip($player);
+    }
 }

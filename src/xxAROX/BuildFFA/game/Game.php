@@ -18,6 +18,7 @@ use pocketmine\block\BlockIds;
 use pocketmine\event\block\BlockBreakEvent;
 use pocketmine\item\enchantment\Enchantment;
 use pocketmine\item\enchantment\EnchantmentInstance;
+use pocketmine\item\Item;
 use pocketmine\item\ItemFactory;
 use pocketmine\item\ItemIds;
 use pocketmine\level\Level;
@@ -112,6 +113,8 @@ class Game{
 		$basicBlocks = ItemFactory::get(BlockIds::SANDSTONE)->setCount(64);
 		$basicStick = ItemFactory::get(ItemIds::STICK)->setCount(1);
 		$basicStick->addEnchantment(new EnchantmentInstance(Enchantment::getEnchantment(Enchantment::KNOCKBACK), 1));
+		$knockerStick = ItemFactory::get(ItemIds::STICK)->setCount(1);
+		$knockerStick->addEnchantment(new EnchantmentInstance(Enchantment::getEnchantment(Enchantment::KNOCKBACK), 2));
 		$basicPickaxe = ItemFactory::get(ItemIds::IRON_PICKAXE);
 		$basicPickaxe->setUnbreakable();
 		$basicPickaxe->addEnchantment(new EnchantmentInstance(Enchantment::getEnchantment(Enchantment::EFFICIENCY), 2));
@@ -136,23 +139,24 @@ class Game{
 		$nbt = $w->getNamedTag();
 		$nbt->setByte("pop", intval(true));
 		$w->setNamedTag($nbt);
+		$rod = Item::get(ItemIds::FISHING_ROD);
+		$rod->setUnbreakable();
 		$contents = [
 			"sword"   => $basicSword,
 			"stick"   => $basicStick,
+            "blocks"  => $basicBlocks,
 			"pickaxe" => $basicPickaxe,
 			"web"     => $basicWebs,
-			"blocks"  => $basicBlocks,
             "enderpearl" => $basicEnderpearl,
             "platform" => $platform
 		];
 		$this->kits["Rusher"] = new Kit("Rusher", $contents, $head, $chest, $leg, $feet);
 		$contents = [
 			"sword"   => $basicSword,
-			"stick"   => $basicStick,
+            "blocks"  => $basicBlocks,
 			"bow"     => $basicBow,
 			"pickaxe" => $basicPickaxe,
 			"web"     => $basicWebs,
-			"blocks"  => $basicBlocks,
             "enderpearl" => $basicEnderpearl,
             "platform" => $platform,
 			"arrow"  => ItemFactory::get(ItemIds::ARROW)->setCount(1),
@@ -161,14 +165,34 @@ class Game{
 		$basicStick2 = clone $basicStick;
 		$basicStick2->addEnchantment(new EnchantmentInstance(Enchantment::getEnchantment(Enchantment::KNOCKBACK), 2));
 		$contents = [
-			"stick"   => $basicStick2,
+            "stick"   => $knockerStick,
 			"pickaxe" => $basicPickaxe,
-			"web"     => $basicWebs,
-			"blocks"  => $basicBlocks,
+            "blocks"  => $basicBlocks,
+            "web"     => $basicWebs,
             "enderpearl" => $basicEnderpearl,
             "platform" => $platform
 		];
 		$this->kits["Knocker"] = new Kit("Knocker", $contents, $head, $chest, $leg, $feet);
+        $contents = [
+            "sword"   => $basicSword,
+            "blocks"  => $basicBlocks,
+            "rod"     => $rod,
+            "pickaxe" => $basicPickaxe,
+            "web"     => $basicWebs,
+            "enderpearl" => $basicEnderpearl,
+            "platform" => $platform
+        ];
+        $this->kits["Basedef"] = new Kit("Basedef", $contents, $head, $chest, $leg, $feet);
+        $contents = [
+            "sword"   => $basicSword,
+            "blocks"  => $basicBlocks,
+            "snowballs"     => Item::get(ItemIds::SNOWBALL, 0, 8),
+            "pickaxe" => $basicPickaxe,
+            "web"     => $basicWebs,
+            "enderpearl" => $basicEnderpearl,
+            "platform" => $platform
+        ];
+        $this->kits["Snowballer"] = new Kit("Snowballer", $contents, $head, $chest, $leg, $feet);
 	}
 
 	/**
@@ -183,7 +207,7 @@ class Game{
             foreach (Server::getInstance()->getOnlinePlayers() as $onlinePlayer) {
 				$minutes = intval(round((($this->nextArenaChange - Server::getInstance()->getTick()) / 20 / 60)));
 				if ($minutes > 0) {
-					$onlinePlayer->sendActionBarMessage(LanguageProvider::getMessageContainer("bffa-popup-map-change", $onlinePlayer));
+					$onlinePlayer->sendActionBarMessage(LanguageProvider::getMessageContainer("bffa-popup-map-change", $onlinePlayer, ["#minutes" => $minutes]));
 				} else {
                     $onlinePlayer->sendActionBarMessage(LanguageProvider::getMessageContainer("bffa-popup-few-seconds-map-change", $onlinePlayer));
 				}
@@ -319,7 +343,7 @@ class Game{
 		foreach (array_diff(scandir(Server::getInstance()->getDataPath() . "worlds/"), ["..", "."]) as $world) {
 			if (!in_array($world, array_map(fn(Arena $arena) => $arena->getWorld()->getFolderName(), Game::getInstance()->getArenas()))) {
 				$worlds[] = new FunctionalButton($world, function (xPlayer $player) use ($world): void{
-					$player->sendMessage("now break block at respawn_height");
+					$player->sendMessage(Setup::PREFIX."now break block at respawn_height");
 					$player->setup = new Setup($player, BuildFFA::getInstance()->getDataFolder() . "config.yml", $world, 3, [
 						BlockBreakEvent::class => function (BlockBreakEvent $event): void{
 							/** @var xPlayer $player */

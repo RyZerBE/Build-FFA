@@ -13,6 +13,7 @@ use pocketmine\event\player\PlayerCreationEvent;
 use pocketmine\event\player\PlayerExhaustEvent;
 use pocketmine\event\player\PlayerInteractEvent;
 use pocketmine\event\player\PlayerItemHeldEvent;
+use pocketmine\event\player\PlayerJoinEvent;
 use pocketmine\event\player\PlayerLoginEvent;
 use pocketmine\event\player\PlayerMoveEvent;
 use pocketmine\event\player\PlayerQuitEvent;
@@ -23,6 +24,7 @@ use pocketmine\inventory\transaction\action\SlotChangeAction;
 use pocketmine\item\Item;
 use pocketmine\item\ItemIds;
 use pocketmine\Player;
+use ryzerbe\core\event\player\RyZerPlayerAuthEvent;
 use xxAROX\BuildFFA\BuildFFA;
 use xxAROX\BuildFFA\event\EnterArenaProtectionAreaEvent;
 use xxAROX\BuildFFA\event\LeaveArenaProtectionAreaEvent;
@@ -48,17 +50,21 @@ class PlayerListener implements Listener{
 		$event->setPlayerClass(xPlayer::class);
 	}
 
-	/**
-	 * Function PlayerLoginEvent
-	 * @param PlayerLoginEvent $event
-	 * @return void
-	 */
-	public function PlayerLoginEvent(PlayerLoginEvent $event): void{
+    /**
+     * Function PlayerLoginEvent
+     * @param RyZerPlayerAuthEvent $event
+     * @return void
+     */
+	public function RyZerPlayerAuth(RyZerPlayerAuthEvent $event): void{
 		/** @var xPlayer $player */
 		$player = $event->getPlayer();
-		$player->load(0, 0);
+		$player->load();
 		$player->teleport(Game::getInstance()->getArena()->getWorld()->getSafeSpawn());
 		$player->sendOtakaItems();
+	}
+
+    public function onJoin(PlayerJoinEvent $event){
+        $event->setJoinMessage("");
 	}
 
 	/**

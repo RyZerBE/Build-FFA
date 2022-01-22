@@ -23,13 +23,16 @@ use pocketmine\event\entity\EntityDamageEvent;
 use pocketmine\event\player\PlayerDeathEvent;
 use pocketmine\item\Item;
 use pocketmine\item\ItemFactory;
+use pocketmine\item\ItemIds;
 use pocketmine\math\Vector3;
 use pocketmine\Server;
+use pocketmine\utils\TextFormat;
 use ryzerbe\core\language\LanguageProvider;
 use ryzerbe\core\player\PMMPPlayer;
-use ryzerbe\core\player\RyZerPlayer;
 use ryzerbe\core\player\RyZerPlayerProvider;
 use ryzerbe\core\util\async\AsyncExecutor;
+use ryzerbe\core\util\scoreboard\Scoreboard;
+use ryzerbe\core\util\Settings;
 use xxAROX\BuildFFA\BuildFFA;
 use xxAROX\BuildFFA\event\BuildFFAPlayerChangeInvSortEvent;
 use xxAROX\BuildFFA\event\BuildFFAPlayerRespawnEvent;
@@ -83,6 +86,7 @@ class xPlayer extends PMMPPlayer {
 	public int $kills = 0;
 	protected ?Kit $selected_kit = null;
 	protected array $inv_sort = [];
+	protected Scoreboard $scoreboard;
 
     /**
      * Function load
@@ -91,6 +95,7 @@ class xPlayer extends PMMPPlayer {
 	public function load(): void{
 		$this->inv_sort = $inv_sort ?? $this->inv_sort;
 		$name = $this->getName();
+        $this->scoreboard = new Scoreboard($this->getRyZerPlayer(), TextFormat::DARK_AQUA."BuildFFA");
 		AsyncExecutor::submitMySQLAsyncTask("BuildFFA", function(mysqli $mysqli) use ($name): array{
 		    $res = $mysqli->query("SELECT * FROM bffa_data WHERE player='$name'");
 		    if($res->num_rows > 0) {
@@ -112,7 +117,19 @@ class xPlayer extends PMMPPlayer {
 
 		    if($data["sort"] !== null) $player->inv_sort = $data["sort"];
 		    $player->selected_kit = Game::getInstance()->getKit($data["kit"]);
-        });
+            $player->getScoreboard()->setLines([
+                0 => "",
+                1 => TextFormat::GRAY."Map ".TextFormat::DARK_GRAY."⇨ ".TextFormat::GOLD.Game::getInstance()->getArena()->getWorld()->getFolderName(),
+                2 => TextFormat::GRAY."Kit ".TextFormat::DARK_GRAY."⇨ ".TextFormat::GOLD.(($this->getSelectedKit() === null) ? TextFormat::RED."???" : $this->getSelectedKit()->getDisplayName()),
+                3 => "",
+                4 => TextFormat::GRAY."○ Kills",
+                5 => TextFormat::DARK_GRAY."⇨ ".TextFormat::AQUA.$this->kills,
+                6 => TextFormat::GRAY."○ Deaths",
+                7 => TextFormat::DARK_GRAY."⇨ ".TextFormat::AQUA.$this->deaths,
+                8 => "",
+                9 => TextFormat::WHITE."⇨ ".TextFormat::AQUA."ryzer.be"
+            ]);
+		});
 	}
 
 	/**
@@ -123,6 +140,7 @@ class xPlayer extends PMMPPlayer {
 	    $sorts = $this->inv_sort;
 	    $selected_kit = $this->selected_kit->getDisplayName();
 	    $playerName = $this->getName();
+	    $this->getScoreboard()->removeScoreboard();
 		AsyncExecutor::submitMySQLAsyncTask("BuildFFA", function(mysqli $mysqli) use ($selected_kit, $sorts, $playerName): void{
 		    $sortString = base64_encode(zlib_encode(serialize($sorts), ZLIB_ENCODING_DEFLATE));
 		    $mysqli->query("INSERT INTO `bffa_data`(`player`, `inv_sorts`, `selected_kit`) VALUES ('$playerName', '$sortString', '$selected_kit') ON DUPLICATE KEY UPDATE inv_sorts='$sortString',selected_kit='$selected_kit'");
@@ -253,7 +271,7 @@ class xPlayer extends PMMPPlayer {
 		if ($this->gamemode == self::SPECTATOR) {
 			return;
 		}
-		$barrier = applyReadonlyTag(ItemFactory::get(-161)->setCustomName("§r"));
+		$barrier = applyReadonlyTag(Item::get(-161)->setCustomName("§r"));
 		$this->inventory->clearAll();
 		$this->armorInventory->clearAll();
 		$this->cursorInventory->clearAll();
@@ -283,23 +301,24 @@ class xPlayer extends PMMPPlayer {
 	 */
 	public function sendMapSelect(): void{
 		if (count(Game::getInstance()->getArenas()) == 0) {
-			$this->getRyZerPlayer()->sendTranslate("bffa-no-maps");
+			$this->getRyZerPlayer()->sendTranslate("bffa-no-maps", [], BuildFFA::PREFIX);
 			return;
 		}
 		if (count(Game::getInstance()->getArenas()) == 1) {
-            $this->getRyZerPlayer()->sendTranslate("bffa-once-maps");
+            $this->getRyZerPlayer()->sendTranslate("bffa-once-maps", [], BuildFFA::PREFIX);
 			return;
 		}
-		$this->sendForm(new MenuForm(LanguageProvider::getMessageContainer("bffa-map-voting", $this), "", array_map(fn(Arena $arena) => new FunctionalButton($arena->getWorld()->getFolderName() . "\n§c" . Game::getInstance()->mapVotes[$arena->getWorld()->getFolderName()] . " vote/s", function (xPlayer $player) use ($arena): void{
-			if ($arena->getWorld()->getFolderName() == $player->voted_map) {
-				Game::getInstance()->mapVotes[$player->voted_map]--;
+		$this->sendForm(new MenuForm("Map Voting", LanguageProvider::getMessageContainer("bffa-map-voting", $this), array_map(fn(Arena $arena) => new FunctionalButton($arena->getWorld()->getFolderName() . "\n§c" . Game::getInstance()->mapVotes[$arena->getWorld()->getFolderName()] . " vote/s", function (xPlayer $player) use ($arena): void{
+			$vote = Settings::VOTING[$this->getRyZerPlayer()->getRank()->getRankName()] ?? 1;
+		    if ($arena->getWorld()->getFolderName() == $player->voted_map) {
+				Game::getInstance()->mapVotes[$player->voted_map] -= $vote;
 				$player->voted_map = "";
 			} else {
 				if (!empty($player->voted_map)) {
-					Game::getInstance()->mapVotes[$player->voted_map]--;
+					Game::getInstance()->mapVotes[$player->voted_map] -= $vote;
 				}
 				$player->voted_map = $arena->getWorld()->getFolderName();
-				Game::getInstance()->mapVotes[$player->voted_map]++;
+				Game::getInstance()->mapVotes[$player->voted_map] += $vote;
 			}
 		}), Game::getInstance()->getArenas())));
 	}
@@ -315,7 +334,7 @@ class xPlayer extends PMMPPlayer {
 		];
 		$this->sendForm(new CustomForm("BuildFFA Settings", array_merge((Server::getInstance()->isOp($this->getName())
 			? []
-			: [/* if you remove this you are not a good developer :> */
+			: [/* if you remove this you are not a good developer :> <!-- You are the weirdest developer bro, nobody will use this code, Jan.. - Lukas*/
 				new Label("§o§9BuildFFA by " . implode(", ", BuildFFA::getInstance()->getDescription()->getAuthors())),
 			]), $elements), function (xPlayer $player, CustomFormResponse $response): void{
 			Game::getInstance()->getArena()->getSettings()->enable_fall_damage = $response->getToggle()->getValue();
@@ -330,14 +349,14 @@ class xPlayer extends PMMPPlayer {
 	 */
 	public function sendKitSelect(): void{
 		if (count(Game::getInstance()->getKits()) == 0) {
-			$this->getRyZerPlayer()->sendTranslate("bffa-no-kits-found");
+			$this->getRyZerPlayer()->sendTranslate("bffa-no-kits-found", [], BuildFFA::PREFIX);
 			return;
 		}
 		if (count(Game::getInstance()->getKits()) == 1) {
-            $this->getRyZerPlayer()->sendTranslate("bffa-once-kit");
+            $this->getRyZerPlayer()->sendTranslate("bffa-once-kit", [], BuildFFA::PREFIX);
 			return;
 		}
-		$this->sendForm(new MenuForm(LanguageProvider::getMessageContainer("bffa-kit-form-description", $this), "", array_map(fn(Kit $kit) => new FunctionalButton($kit->getDisplayName(), function (xPlayer $player) use ($kit): void{
+		$this->sendForm(new MenuForm("Kits", LanguageProvider::getMessageContainer("bffa-kit-form-description", $this), array_map(fn(Kit $kit) => new FunctionalButton($kit->getDisplayName(), function (xPlayer $player) use ($kit): void{
 			$player->setSelectedKit($kit);
 		}), Game::getInstance()->getKits())));
 	}
@@ -351,7 +370,7 @@ class xPlayer extends PMMPPlayer {
 		$ev->call();
 		if (!$ev->isCancelled()) {
 			$this->inventory->setHeldItemIndex(0);
-			$barrier = applyReadonlyTag(ItemFactory::get(-161)->setCustomName("§r")); //-161 -> Barrier
+			$barrier = applyReadonlyTag(Item::get(-161)->setCustomName("§r")); //-161 -> Barrier
 			$this->setGamemode(self::SPECTATOR);
 			$this->inventory->clearAll();
 			$this->cursorInventory->clearAll();
@@ -367,7 +386,7 @@ class xPlayer extends PMMPPlayer {
 			for ($slot = 0; $slot < $this->craftingGrid->getSize(); $slot++) {
 				$this->craftingGrid->setItem($slot, $barrier);
 			}
-			$this->inventory->setItem(8, ItemFactory::get(BlockIds::IRON_DOOR_BLOCK)->setCustomName("§r"));
+			$this->inventory->setItem(8, ItemFactory::get(ItemIds::IRON_DOOR)->setCustomName("§r"));
 		}
 	}
 
@@ -481,14 +500,19 @@ class xPlayer extends PMMPPlayer {
 		if($this->killer !== null) {
 		    $player = RyZerPlayerProvider::getRyzerPlayer($this->killer);
 		    if($player !== null) {
-		        $this->getRyZerPlayer()->sendTranslate("bffa-killed-by-player", ["#killer" => $player->getName(true)]);
-		        $player->sendTranslate("bffa-killed-player", ["#playername" => $this->getRyZerPlayer()->getName(true)]);
+		        $this->getRyZerPlayer()->sendTranslate("bffa-killed-by-player", ["#killer" => $player->getName(true)],BuildFFA::PREFIX);
+		        $player->sendTranslate("bffa-killed-player", ["#playername" => $this->getRyZerPlayer()->getName(true)],BuildFFA::PREFIX);
 		        /** @var xPlayer $bffaPlayer */
 		        $bffaPlayer = $player->getPlayer();
 		        $bffaPlayer->kills++;
+		        $bffaPlayer->kill_streak++;
+		        $bffaPlayer->getSelectedKit()?->onFillUp($this);
+		        $bffaPlayer->killer = null;
 		    }
         }
 		$this->deaths++;
+		$this->kill_streak = 0;
+        $this->killer = null;
 		$this->startDeathAnimation();
 		$this->setHealth($this->getMaxHealth());
 		$this->__respawn();
@@ -518,6 +542,19 @@ class xPlayer extends PMMPPlayer {
 			$this->teleport(Game::getInstance()->getArena()->getWorld()->getSafeSpawn());
 			$this->sendOtakaItems();
 		}
+		$this->getScoreboard()->clearScoreboard();
+		$this->getScoreboard()->setLines([
+		    0 => "",
+		    1 => TextFormat::GRAY."Map ".TextFormat::DARK_GRAY."⇨ ".TextFormat::GOLD.Game::getInstance()->getArena()->getWorld()->getFolderName(),
+		    2 => TextFormat::GRAY."Kit ".TextFormat::DARK_GRAY."⇨ ".TextFormat::GOLD.(($this->getSelectedKit() === null) ? TextFormat::RED."???" : $this->getSelectedKit()->getDisplayName()),
+            3 => "",
+            4 => TextFormat::GRAY."○ Kills",
+            5 => TextFormat::DARK_GRAY."⇨ ".TextFormat::AQUA.$this->kills,
+            6 => TextFormat::GRAY."○ Deaths",
+            7 => TextFormat::DARK_GRAY."⇨ ".TextFormat::AQUA.$this->deaths,
+            8 => "",
+            9 => TextFormat::WHITE."⇨ ".TextFormat::AQUA."ryzer.be"
+        ]);
 	}
 
 	/**
@@ -538,4 +575,11 @@ class xPlayer extends PMMPPlayer {
 	public function __get($name){
 		return $this->$name;
 	}
+
+    /**
+     * @return Scoreboard
+     */
+    public function getScoreboard(): Scoreboard{
+        return $this->scoreboard;
+    }
 }

@@ -10,6 +10,7 @@ use pocketmine\event\block\BlockBreakEvent;
 use pocketmine\event\block\BlockPlaceEvent;
 use pocketmine\event\Listener;
 use xxAROX\BuildFFA\game\Game;
+use function random_int;
 
 
 /**

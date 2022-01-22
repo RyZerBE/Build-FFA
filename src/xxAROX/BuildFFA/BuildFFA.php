@@ -44,7 +44,6 @@ class BuildFFA extends PluginBase{
 	const PREFIX = TextFormat::BOLD.TextFormat::DARK_AQUA."BuildFFA ".TextFormat::RESET;
 	use SingletonTrait;
 
-
 	/**
 	 * BuildFFA constructor.
 	 * @param PluginLoader $loader

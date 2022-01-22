@@ -114,8 +114,8 @@ class Setup{
 						if (method_exists($event, "getPlayer")) {
 							$player = $event->getPlayer();
 							if ($player instanceof xPlayer && !is_null($player->setup) && $player->setup->id == $this->setup->id) {
-								if ($event instanceof Cancellable && method_exists($event, "cancel")) {
-									$event->cancel();
+								if ($event instanceof Cancellable && method_exists($event, "setCancelled")) {
+									$event->setCancelled();
 								}
 								if ($player->isSneaking()) {
 									$this->setup->sendMessage("Ignored.");
@@ -123,7 +123,7 @@ class Setup{
 								}
 								($this->eventListener)($event);
 								if ($event instanceof Cancellable) {
-									$event->cancel();
+									$event->setCancelled();
 								}
 							}
 						}
