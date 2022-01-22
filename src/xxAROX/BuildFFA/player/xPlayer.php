@@ -431,7 +431,25 @@ class xPlayer extends PMMPPlayer {
 	 */
 	public function entityBaseTick(int $tickDiff = 1): bool{
 		if ($this->getPosition()->y <= Game::getInstance()->getArena()->getSettings()->respawn_height) {
-			$this->__respawn();
+            if($this->killer !== null) {
+                $player = RyZerPlayerProvider::getRyzerPlayer($this->killer);
+                if($player !== null) {
+                    $this->getRyZerPlayer()->sendTranslate("bffa-killed-by-player", ["#killer" => $player->getName(true)],BuildFFA::PREFIX);
+                    $player->sendTranslate("bffa-killed-player", ["#playername" => $this->getRyZerPlayer()->getName(true)],BuildFFA::PREFIX);
+                    /** @var xPlayer $bffaPlayer */
+                    $bffaPlayer = $player->getPlayer();
+                    $bffaPlayer->kills++;
+                    $bffaPlayer->kill_streak++;
+                    $bffaPlayer->getSelectedKit()?->onFillUp($this);
+                    $bffaPlayer->killer = null;
+                    $bffaPlayer->setXpAndProgress($bffaPlayer->kill_streak, 0.0);
+                    $bffaPlayer->playSound("random.levelup", 5.0, 1.0, [$bffaPlayer]);
+                }
+            }
+            $this->deaths++;
+            $this->kill_streak = 0;
+            $this->killer = null;
+		    $this->__respawn();
 		}
 		if ($this->server->getTick() % 20 == 0) {
 			foreach ($this->itemCountdowns as $_ => $obj) {
@@ -508,6 +526,8 @@ class xPlayer extends PMMPPlayer {
 		        $bffaPlayer->kill_streak++;
 		        $bffaPlayer->getSelectedKit()?->onFillUp($this);
 		        $bffaPlayer->killer = null;
+		        $bffaPlayer->setXpAndProgress($bffaPlayer->kill_streak, 0.0);
+		        $bffaPlayer->playSound("random.levelup", 5.0, 1.0, [$bffaPlayer]);
 		    }
         }
 		$this->deaths++;
