@@ -226,7 +226,6 @@ class PlayerListener implements Listener{
             if($damager instanceof Player) {
                 $entity->killer = $damager->getName();
             }
-            return;
         }
         if($entity->getHealth() - $event->getFinalDamage() > 0) return;
         $event->setCancelled();
