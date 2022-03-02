@@ -9,6 +9,7 @@ namespace xxAROX\BuildFFA\listener;
 use pocketmine\event\entity\EntityDamageByEntityEvent;
 use pocketmine\event\entity\EntityDamageEvent;
 use pocketmine\event\entity\EntityTeleportEvent;
+use pocketmine\event\entity\ProjectileLaunchEvent;
 use pocketmine\event\inventory\InventoryTransactionEvent;
 use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerCreationEvent;
@@ -136,6 +137,13 @@ class PlayerListener implements Listener{
 		}
 	}
 
+    public function onProjectileLaunchEvent(ProjectileLaunchEvent $event){
+        $player = $event->getEntity()->getOwningEntity();
+        if($player instanceof xPlayer) {
+            if($player->is_in_inv_sort) $event->setCancelled();
+        }
+	}
+
 	/**
 	 * Function PlayerQuitEvent
 	 * @param PlayerQuitEvent $event
@@ -149,6 +157,7 @@ class PlayerListener implements Listener{
 			Game::getInstance()->mapVotes[$player->voted_map]--;
 		}
 		$player->store();
+		$event->setQuitMessage("");
 	}
 
 	/**

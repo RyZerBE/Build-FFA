@@ -85,6 +85,7 @@ class xPlayer extends PMMPPlayer {
 	public int $deaths = 0;
 	public int $kills = 0;
 	protected ?Kit $selected_kit = null;
+	public ?Kit $kit_vote = null;
 	protected array $inv_sort = [];
 	protected Scoreboard $scoreboard;
 
@@ -116,7 +117,8 @@ class xPlayer extends PMMPPlayer {
 		    if($player === null) return;
 
 		    if($data["sort"] !== null) $player->inv_sort = $data["sort"];
-		    $player->selected_kit = Game::getInstance()->getKit($data["kit"]);
+		    #$player->selected_kit = Game::getInstance()->getKit($data["kit"]);
+            $player->selected_kit = Game::getInstance()->kit;
             $player->updateScoreboard();
 		});
 	}
@@ -127,6 +129,9 @@ class xPlayer extends PMMPPlayer {
 	 */
 	public function store(): void{
 	    $sorts = $this->inv_sort;
+	    if($this->selected_kit === null)
+	    	$this->selected_kit = Game::getInstance()->kit;
+
 	    $selected_kit = $this->selected_kit->getDisplayName();
 	    $playerName = $this->getName();
 	    $this->getScoreboard()->removeScoreboard();
@@ -299,6 +304,8 @@ class xPlayer extends PMMPPlayer {
 		}
 		$this->sendForm(new MenuForm("Map Voting", LanguageProvider::getMessageContainer("bffa-map-voting", $this), array_map(fn(Arena $arena) => new FunctionalButton($arena->getWorld()->getFolderName() . "\n§c" . Game::getInstance()->mapVotes[$arena->getWorld()->getFolderName()] . " vote/s", function (xPlayer $player) use ($arena): void{
 			$vote = Settings::VOTING[$this->getRyZerPlayer()->getRank()->getRankName()] ?? 1;
+			if($player->hasPermission("game.votes.team")) $vote = 5;
+
 		    if ($arena->getWorld()->getFolderName() == $player->voted_map) {
 				Game::getInstance()->mapVotes[$player->voted_map] -= $vote;
 				$player->voted_map = "";
@@ -345,8 +352,29 @@ class xPlayer extends PMMPPlayer {
             $this->getRyZerPlayer()->sendTranslate("bffa-once-kit", [], BuildFFA::PREFIX);
 			return;
 		}
-		$this->sendForm(new MenuForm("Kits", LanguageProvider::getMessageContainer("bffa-kit-form-description", $this), array_map(fn(Kit $kit) => new FunctionalButton($kit->getDisplayName(), function (xPlayer $player) use ($kit): void{
-			$player->setSelectedKit($kit);
+		$votes = [];
+		/** @var xPlayer $player */
+        foreach(Server::getInstance()->getOnlinePlayers() as $player) {
+		    if($player->kit_vote === null) continue;
+		    if(!isset($votes[$player->kit_vote->getDisplayName()])) $votes[$player->kit_vote->getDisplayName()] = 0;
+
+            $vote = Settings::VOTING[$this->getRyZerPlayer()->getRank()->getRankName()] ?? 1;
+            if($player->hasPermission("game.votes.team")) $vote = 5;
+            $votes[$player->kit_vote->getDisplayName()] += $vote;
+        }
+
+		$this->sendForm(new MenuForm("Kits", LanguageProvider::getMessageContainer("bffa-kit-form-description", $this), array_map(fn(Kit $kit) => new FunctionalButton($kit->getDisplayName()."\n".TextFormat::RED.($votes[$kit->getDisplayName()] ?? 0)." vote/s", function (xPlayer $player) use ($kit): void{
+			#$player->setSelectedKit($kit);
+            if($player->kit_vote === null) {
+                $this->kit_vote = $kit;
+                return;
+            }
+
+            if ($kit->getDisplayName() == $player->kit_vote->getDisplayName()) {
+                $this->kit_vote = null;
+            } else {
+                $this->kit_vote = $kit;
+            }
 		}), Game::getInstance()->getKits())));
 	}
 
@@ -508,6 +536,7 @@ class xPlayer extends PMMPPlayer {
 		if($this->killer !== null) {
 		    $player = RyZerPlayerProvider::getRyzerPlayer($this->killer);
 		    if($player !== null) {
+		        $player->getPlayer()->setHealth($player->getPlayer()->getMaxHealth());
 		        $this->getRyZerPlayer()->sendTranslate("bffa-killed-by-player", ["#killer" => $player->getName(true)],BuildFFA::PREFIX);
 		        $player->sendTranslate("bffa-killed-player", ["#playername" => $this->getRyZerPlayer()->getName(true)],BuildFFA::PREFIX);
 		        /** @var xPlayer $bffaPlayer */

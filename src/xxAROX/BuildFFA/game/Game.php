@@ -15,6 +15,7 @@ use Frago9876543210\EasyForms\forms\MenuForm;
 use pocketmine\block\Block;
 use pocketmine\block\BlockFactory;
 use pocketmine\block\BlockIds;
+use pocketmine\entity\utils\Bossbar;
 use pocketmine\event\block\BlockBreakEvent;
 use pocketmine\item\enchantment\Enchantment;
 use pocketmine\item\enchantment\EnchantmentInstance;
@@ -29,7 +30,10 @@ use pocketmine\Player;
 use pocketmine\scheduler\ClosureTask;
 use pocketmine\Server;
 use pocketmine\utils\SingletonTrait;
+use pocketmine\utils\TextFormat;
 use ryzerbe\core\language\LanguageProvider;
+use ryzerbe\core\player\RyZerPlayerProvider;
+use ryzerbe\core\util\Settings;
 use xxAROX\BuildFFA\BuildFFA;
 use xxAROX\BuildFFA\entity\BlockEntity;
 use xxAROX\BuildFFA\generic\entry\BlockBreakEntry;
@@ -37,6 +41,11 @@ use xxAROX\BuildFFA\generic\entry\BlockEntry;
 use xxAROX\BuildFFA\items\overwrite\PlatformItem;
 use xxAROX\BuildFFA\items\PlaceHolderItem;
 use xxAROX\BuildFFA\player\xPlayer;
+use function array_rand;
+use function array_search;
+use function count;
+use function max;
+use function time;
 
 
 /**
@@ -49,17 +58,23 @@ use xxAROX\BuildFFA\player\xPlayer;
  */
 class Game{
 	const MAP_CHANGE_INTERVAL = (60 * 15);
+	const KIT_CHANGE_INTERVAL = (60 * 10);
 	use SingletonTrait;
-
 
 	public array $mapVotes = [];
 	protected ?BossBar $bossBar = null;
+
 	/** @var Kit[] */
 	protected array $kits = [];
+	public Kit $kit;
 	protected int $lastArenaChange = -1;
 	protected int $nextArenaChange = -1;
+	protected int $nextKitChange = -1;
+	protected int $lastKitChange = -1;
+
 	protected Arena|null $arena = null;
 	protected array $arenas = [];
+
 	/** @var BlockBreakEntry[] */
 	protected array $destroyedBlocks = [];
 	/** @var BlockEntry[] */
@@ -75,7 +90,8 @@ class Game{
 			if (count($arenas) > 1) {
 				$this->lastArenaChange = time();
 				$this->nextArenaChange = Server::getInstance()->getTick() + (self::MAP_CHANGE_INTERVAL * 20);
-				//$this->bossBar = new BossBar();
+				$this->bossBar = new BossBar();
+				$this->bossBar->setTitle(BuildFFA::PREFIX.TextFormat::WHITE." RyZer".TextFormat::RED."BE");
 			}
 			$this->arenas = $arenas;
 			$this->arena = $this->arenas[array_rand($this->arenas)];
@@ -90,6 +106,9 @@ class Game{
 			$this->mapVotes[$a->getWorld()->getFolderName()] = 0;
 		}
 		$this->initKits();
+		$this->kit = $this->kits[array_rand($this->kits)];
+		$this->lastKitChange = time();
+		$this->nextKitChange = Server::getInstance()->getTick() + (self::KIT_CHANGE_INTERVAL * 20);
 		BuildFFA::getInstance()->getScheduler()->scheduleRepeatingTask(new ClosureTask(function (int $_): void{ $this->tick(); }), 1);
 	}
 
@@ -101,7 +120,7 @@ class Game{
 		$head = ItemFactory::get(ItemIds::LEATHER_CAP);
 		$head->setUnbreakable();
 		$head->addEnchantment(new EnchantmentInstance(Enchantment::getEnchantment(Enchantment::PROTECTION), 1));
-		$chest = ItemFactory::get(ItemIds::LEATHER_CHESTPLATE);
+		$chest = ItemFactory::get(ItemIds::CHAINMAIL_CHESTPLATE);
 		$chest->setUnbreakable();
 		$chest->addEnchantment(new EnchantmentInstance(Enchantment::getEnchantment(Enchantment::PROTECTION), 2));
 		$leg = ItemFactory::get(ItemIds::LEATHER_PANTS);
@@ -161,18 +180,7 @@ class Game{
             "platform" => $platform,
 			"arrow"  => ItemFactory::get(ItemIds::ARROW)->setCount(1),
 		];
-		$this->kits["Archer"] = new Kit("Archer", $contents, $head, $chest, $leg, $feet);
-		$basicStick2 = clone $basicStick;
-		$basicStick2->addEnchantment(new EnchantmentInstance(Enchantment::getEnchantment(Enchantment::KNOCKBACK), 2));
-		$contents = [
-            "stick"   => $knockerStick,
-			"pickaxe" => $basicPickaxe,
-            "blocks"  => $basicBlocks,
-            "web"     => $basicWebs,
-            "enderpearl" => $basicEnderpearl,
-            "platform" => $platform
-		];
-		$this->kits["Knocker"] = new Kit("Knocker", $contents, $head, $chest, $leg, $feet);
+		$this->kits["Spammer"] = new Kit("Archer", $contents, $head, $chest, $leg, $feet);
         $contents = [
             "sword"   => $basicSword,
             "blocks"  => $basicBlocks,
@@ -201,17 +209,26 @@ class Game{
 	 */
 	private function tick(): void{
 		if (!is_null($this->bossBar)) {
-			$this->bossBar->setPercentage(((self::MAP_CHANGE_INTERVAL * 20) / 100 * ($this->nextArenaChange - Server::getInstance()->getTick())) / 100);
+			$this->bossBar->setHealthPercent(((self::MAP_CHANGE_INTERVAL * 20) / 100 * ($this->nextArenaChange - Server::getInstance()->getTick())) / 100);
 
 			/** @var xPlayer $onlinePlayer */
             foreach (Server::getInstance()->getOnlinePlayers() as $onlinePlayer) {
 				$minutes = intval(round((($this->nextArenaChange - Server::getInstance()->getTick()) / 20 / 60)));
-				if ($minutes > 0) {
-					$onlinePlayer->sendActionBarMessage(LanguageProvider::getMessageContainer("bffa-popup-map-change", $onlinePlayer, ["#minutes" => $minutes]));
-				} else {
-                    $onlinePlayer->sendActionBarMessage(LanguageProvider::getMessageContainer("bffa-popup-few-seconds-map-change", $onlinePlayer));
-				}
-				$this->bossBar->addPlayer($onlinePlayer);
+				$minutesKit = intval(round((($this->nextKitChange - Server::getInstance()->getTick()) / 20 / 60)));
+				if($minutesKit >= 0 && $minutes >= 0) {
+                    $onlinePlayer->sendActionBarMessage(LanguageProvider::getMessageContainer("bffa-popup-map-change", $onlinePlayer, ["#minutes" => $minutes])
+                        ."\n".LanguageProvider::getMessageContainer("bffa-popup-kit-change", $onlinePlayer, ["#minutes" => $minutesKit]));
+                }else if($minutesKit >= 0 && $minutes < 1) {
+                    $onlinePlayer->sendActionBarMessage(BuildFFA::PREFIX.LanguageProvider::getMessageContainer("bffa-popup-few-seconds-map-change", $onlinePlayer, ["#minutes" => $minutes])
+                        ."\n".LanguageProvider::getMessageContainer("bffa-popup-kit-change", $onlinePlayer, ["#minutes" => $minutesKit]));
+                }else if($minutesKit < 1 && $minutes > 0) {
+                    $onlinePlayer->sendActionBarMessage(BuildFFA::PREFIX.LanguageProvider::getMessageContainer("bffa-popup-map-change", $onlinePlayer, ["#minutes" => $minutes])
+                        ."\n".LanguageProvider::getMessageContainer("bffa-popup-few-seconds-kit-change", $onlinePlayer, ["#minutes" => $minutesKit]));
+
+                }else if($minutes < 1 && $minutesKit < 0) {
+                    $onlinePlayer->sendActionBarMessage(BuildFFA::PREFIX.LanguageProvider::getMessageContainer("bffa-popup-few-seconds-map-change", $onlinePlayer)
+                        ."\n".LanguageProvider::getMessageContainer("bffa-popup-few-seconds-kit-change", $onlinePlayer, ["#minutes" => $minutesKit]));
+                }
 			}
 		}
 		if ($this->lastArenaChange != -1 && Server::getInstance()->getTick() >= $this->nextArenaChange) {
@@ -236,10 +253,52 @@ class Game{
 					$this->lastArenaChange = time();
 					$this->nextArenaChange = Server::getInstance()->getTick() + (Game::MAP_CHANGE_INTERVAL * 20);
 					unset($current);
-					break;
+					foreach(Server::getInstance()->getOnlinePlayers() as $player) {
+                        $player->sendMessage(BuildFFA::PREFIX.LanguageProvider::getMessageContainer("bffa-map-change", $player->getName(), ["#map" => TextFormat::GREEN.$arena->getWorld()->getFolderName()]));
+                    }
+                    break;
 				}
 			}
 		}
+
+		if($this->lastKitChange != -1 && Server::getInstance()->getTick() >= $this->nextKitChange){
+            /** @var xPlayer $player */
+            $kitVotes = [];
+            foreach(Server::getInstance()->getOnlinePlayers() as $player){
+                if($player->kit_vote === null) continue;
+                $rbePlayer = RyZerPlayerProvider::getRyzerPlayer($player->getName());
+                if($rbePlayer === null) continue;
+                if(empty($kitVotes[$player->kit_vote->getDisplayName()])) $kitVotes[$player->kit_vote->getDisplayName()] = 0;
+
+                $vote = Settings::VOTING[$rbePlayer->getRank()->getRankName()] ?? 1;
+                if($player->hasPermission("game.votes.team")) $vote = 5;
+
+                $kitVotes[$player->kit_vote->getDisplayName()] += $vote;
+            }
+
+            if(count($kitVotes) === 0) {
+                foreach(Server::getInstance()->getOnlinePlayers() as $player) {
+                    $player->sendMessage(BuildFFA::PREFIX.LanguageProvider::getMessageContainer("bffa-kit-continue", $player->getName(), ["#kit" => TextFormat::GREEN.$this->kit->getDisplayName()]));
+                }
+                $this->lastKitChange = time();
+                $this->nextKitChange = Server::getInstance()->getTick() + (Game::KIT_CHANGE_INTERVAL * 20);
+            }else{
+                $kit = $this->getKit(array_search(max($kitVotes), $kitVotes));
+                $this->kit = $kit;
+                $this->lastKitChange = time();
+                $this->nextKitChange = Server::getInstance()->getTick() + (Game::KIT_CHANGE_INTERVAL * 20);
+                if($this->kit->getDisplayName() === $kit->getDisplayName()) {
+                    $player->sendMessage(BuildFFA::PREFIX.LanguageProvider::getMessageContainer("bffa-kit-continue", $player->getName(), ["#kit" => TextFormat::GREEN.$this->kit->getDisplayName()]));
+                }else {
+                    foreach(Server::getInstance()->getOnlinePlayers() as $player) {
+                        $player->setSelectedKit($kit);
+                        $player->sendMessage(BuildFFA::PREFIX.LanguageProvider::getMessageContainer("bffa-kit-change", $player->getName(), ["#kit" => TextFormat::GREEN.$kit->getDisplayName()]));
+                    }
+                }
+            }
+        }
+
+
 		foreach ($this->placedBlocks as $encodedPos => $entry) {
 			if (microtime(true) >= $entry->getTimestamp()) {
 				$entry->getPosition()->getLevel()->addParticle(new DestroyBlockParticle($entry->getPosition(), $entry->getPosition()->getLevel()->getBlock($entry->getPosition())));
