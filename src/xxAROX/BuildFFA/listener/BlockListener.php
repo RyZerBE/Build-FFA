@@ -11,7 +11,6 @@ use pocketmine\event\block\BlockBreakEvent;
 use pocketmine\event\block\BlockPlaceEvent;
 use pocketmine\event\block\BlockUpdateEvent;
 use pocketmine\event\Listener;
-use pocketmine\item\ItemIds;
 use xxAROX\BuildFFA\game\Game;
 use function random_int;
 
@@ -62,7 +61,7 @@ class BlockListener implements Listener{
 
 	public function BlockUpdateEvent(BlockUpdateEvent $event){
 		$block = $event->getBlock();
-		if($block->getId() === BlockIds::LADDER) {
+		if($block->getId() === BlockIds::LADDER || $block->getId() === BlockIds::WATER || $block->getId() === BlockIds::FLOWING_WATER) {
 			$event->setCancelled();
 		}
 	}

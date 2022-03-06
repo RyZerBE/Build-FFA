@@ -10,6 +10,7 @@ use pocketmine\event\entity\EntityDamageByEntityEvent;
 use pocketmine\event\entity\EntityDamageEvent;
 use pocketmine\event\entity\EntityTeleportEvent;
 use pocketmine\event\entity\ProjectileLaunchEvent;
+use pocketmine\event\inventory\CraftItemEvent;
 use pocketmine\event\inventory\InventoryTransactionEvent;
 use pocketmine\event\Listener;
 use pocketmine\event\player\PlayerCreationEvent;
@@ -27,6 +28,7 @@ use pocketmine\inventory\transaction\action\SlotChangeAction;
 use pocketmine\item\Item;
 use pocketmine\item\ItemIds;
 use pocketmine\Player;
+use ryzerbe\core\entity\EnderPearl;
 use ryzerbe\core\event\player\RyZerPlayerAuthEvent;
 use xxAROX\BuildFFA\BuildFFA;
 use xxAROX\BuildFFA\event\EnterArenaProtectionAreaEvent;
@@ -139,8 +141,14 @@ class PlayerListener implements Listener{
 
     public function onProjectileLaunchEvent(ProjectileLaunchEvent $event){
         $player = $event->getEntity()->getOwningEntity();
+        $entity = $event->getEntity();
         if($player instanceof xPlayer) {
             if($player->is_in_inv_sort) $event->setCancelled();
+            if(!$event->isCancelled()) {
+            	if($entity instanceof EnderPearl || $entity instanceof \pocketmine\entity\projectile\EnderPearl) {
+            		$player->enderpearls[] = $entity->getId();
+				}
+			}
         }
 	}
 
@@ -171,6 +179,10 @@ class PlayerListener implements Listener{
 		if ($event->getPlayer()->getGamemode() == Player::SPECTATOR && $event->getItem()->getId() == ItemIds::IRON_DOOR) {
 			$player->__respawn();
 		}
+	}
+	
+	public function CraftEvent(CraftItemEvent $event) {
+		$event->setCancelled();
 	}
 
 	/**

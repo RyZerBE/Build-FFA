@@ -568,12 +568,15 @@ class xPlayer extends PMMPPlayer {
 		$this->setHealth($this->getMaxHealth());
 		$this->setGamemode(self::SURVIVAL);
 		$this->saveInvSort();
-		/** @var EnderPearl $enderpearl */
-		foreach ($this->enderpearls as $enderpearl) {
+
+		foreach ($this->enderpearls as $enderpearlId) {
+			$enderpearl = $this->getLevel()->getEntity($enderpearlId);
+			if($enderpearl === null) continue;
 			if (!$enderpearl->isFlaggedForDespawn()) {
 				$enderpearl->flagForDespawn();
 			}
 		}
+
 		unset($this->enderpearls);
 		$this->enderpearls = [];
 		unset($this->itemCountdowns);

@@ -35,9 +35,8 @@ class EnderPearl extends \pocketmine\item\EnderPearl{
 		$nbt = Entity::createBaseNBT($player->add(0, $player->getEyeHeight(), 0), $directionVector, $player->yaw, $player->pitch);
 		$this->addExtraTags($nbt);
 		$projectile = Entity::createEntity($this->getProjectileEntityType(), $player->getLevelNonNull(), $nbt, $player);
-		if ($projectile !== null) {
-			$projectile->setMotion($projectile->getMotion()->multiply($this->getThrowForce()));
-		}
+		$projectile?->setMotion($projectile->getMotion()->multiply($this->getThrowForce()));
+
 		$this->pop();
 		if ($projectile instanceof Projectile) {
 			$projectileEv = new ProjectileLaunchEvent($projectile);
@@ -45,11 +44,12 @@ class EnderPearl extends \pocketmine\item\EnderPearl{
 			if ($projectileEv->isCancelled()) {
 				$projectile->flagForDespawn();
 			} else {
-				$player->enderpearls[] = $projectile;
+				$player->enderpearls[] = $projectile->getId();
 				$projectile->spawnToAll();
 				$player->getLevelNonNull()->broadcastLevelSoundEvent($player, LevelSoundEventPacket::SOUND_THROW, 0, EntityIds::PLAYER);
 			}
 		} else if ($projectile !== null) {
+			$player->enderpearls[] = $projectile->getId();
 			$projectile->spawnToAll();
 		} else {
 			return false;
