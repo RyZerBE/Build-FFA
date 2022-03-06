@@ -243,7 +243,10 @@ class Game{
 				$maps = array_flip($_maps);
 			}
 			shuffle($maps);
-			$worldName = $maps[max($this->mapVotes)];
+			$worldName = $maps[max($this->mapVotes)] ?? null;
+			if($worldName === null) {
+				$worldName = $maps[array_rand($maps)];
+			}
 			unset($_maps, $maps);
 			foreach ($this->arenas as $arena) {
 				if ($arena->getWorld()->getFolderName() == $worldName) {
@@ -301,9 +304,11 @@ class Game{
 
 		foreach ($this->placedBlocks as $encodedPos => $entry) {
 			if (microtime(true) >= $entry->getTimestamp()) {
+				$block = $entry->getPosition()->getLevel()->getBlock($entry->getPosition());
 				$entry->getPosition()->getLevel()->addParticle(new DestroyBlockParticle($entry->getPosition(), $entry->getPosition()->getLevel()->getBlock($entry->getPosition())));
 				$fallingBlock = new BlockEntity($entry->getPosition(), $entry->getPosition()->getLevel()->getBlock($entry->getPosition()));
 				$fallingBlock->spawnToAll();
+
 				$entry->getPosition()->getLevel()->setBlock($entry->getPosition(), BlockFactory::get(0));
 				unset($this->placedBlocks[$encodedPos]);
 			}
@@ -311,11 +316,11 @@ class Game{
 		foreach ($this->destroyedBlocks as $encodedPos => $entry) {
 			if (microtime(true) >= $entry->getTimestamp()) {
 				$current = $entry->getPosition()->getLevel()->getBlock($entry->getPosition());
-				if ($current->getId() === BlockIds::AIR) {
-					$entry->getPosition()->getLevel()->addParticle(new DestroyBlockParticle($entry->getPosition(), $current));
-					$entry->getPosition()->getLevel()->addSound(new FizzSound($entry->getPosition()));
-					$entry->getPosition()->getLevel()->setBlock($entry->getPosition(), $entry->getLegacy());
-				}
+				if ($current->getId() != BlockIds::AIR)
+					continue;
+				$entry->getPosition()->getLevel()->addParticle(new DestroyBlockParticle($entry->getPosition(), $current));
+				$entry->getPosition()->getLevel()->addSound(new FizzSound($entry->getPosition()));
+				$entry->getPosition()->getLevel()->setBlock($entry->getPosition(), $entry->getLegacy());
 				unset($this->destroyedBlocks[$encodedPos]);
 			}
 		}
@@ -361,9 +366,6 @@ class Game{
 	 * @return void
 	 */
 	public function placeBlock(Block $block, int $additionalSeconds = 0): void{
-		if (isset($this->destroyedBlocks[encodePosition($block->asPosition())])) {
-			return;
-		}
 		$extraTime = match (true) {
 			$block->getId() == BlockIds::END_STONE => 5,
 			$block->getId() == BlockIds::EMERALD_BLOCK => 10,

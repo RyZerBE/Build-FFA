@@ -7,11 +7,16 @@
 declare(strict_types=1);
 namespace xxAROX\BuildFFA\entity;
 use pocketmine\block\Block;
+use pocketmine\block\BlockFactory;
+use pocketmine\block\BlockIds;
 use pocketmine\entity\Entity;
 use pocketmine\entity\object\FallingBlock;
+use pocketmine\item\ItemIds;
 use pocketmine\level\Location;
 use pocketmine\level\Position;
 use pocketmine\level\sound\PopSound;
+use pocketmine\nbt\tag\ByteTag;
+use pocketmine\nbt\tag\IntTag;
 
 
 /**
@@ -31,7 +36,7 @@ class BlockEntity extends FallingBlock{
 	public function __construct(Position $position, Block $block){
 		$vec = $position->floor()->add(0.5, 0.5, 0.5);
 		$nbt = self::createBaseNBT(new Location($vec->x, $vec->y, $vec->z, 0, 0, $position->level));
-		$nbt->setByte("Tile", $block->getId());
+		$nbt->setByte("Tile", ($block->getId() === 0) ? BlockIds::INVISIBLE_BEDROCK : $block->getId());
 		$nbt->setByte("Data", $block->getDamage());
 		parent::__construct($position->level, $nbt);
 	}

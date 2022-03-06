@@ -183,12 +183,21 @@ class PlayerListener implements Listener{
 		if (!Game::getInstance()->filterPlayer($event->getTransaction()->getSource())) {
 			return;
 		}
+		$player = $event->getTransaction()->getSource();
+		if(!$player instanceof xPlayer) {
+			return;
+		}
+
 		foreach ($event->getTransaction()->getActions() as $action) {
 			if ($action instanceof DropItemAction) {
 				$event->setCancelled();
 				return;
 			}
 			if (!$action instanceof SlotChangeAction) {
+				return;
+			}
+			if(!$player->is_in_inv_sort) {
+				$event->setCancelled();
 				return;
 			}
 			if ($action->getInventory() instanceof ArmorInventory) {

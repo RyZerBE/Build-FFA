@@ -6,9 +6,12 @@
  */
 declare(strict_types=1);
 namespace xxAROX\BuildFFA\listener;
+use pocketmine\block\BlockIds;
 use pocketmine\event\block\BlockBreakEvent;
 use pocketmine\event\block\BlockPlaceEvent;
+use pocketmine\event\block\BlockUpdateEvent;
 use pocketmine\event\Listener;
+use pocketmine\item\ItemIds;
 use xxAROX\BuildFFA\game\Game;
 use function random_int;
 
@@ -47,11 +50,20 @@ class BlockListener implements Listener{
 		/** @noinspection PhpParamsInspection */
 		if (Game::getInstance()->filterPlayer($event->getPlayer())) {
 			if (!boolval($event->getItem()->getNamedTag()->getByte("pop", intval(false)))) {
-				$event->getItem()->setCount((random_int(1, 3) == 1) ? $event->getItem()->getMaxStackSize()
-					: $event->getItem()->getCount());
-				$event->getPlayer()->getInventory()->setItemInHand($event->getItem());
+				if($event->getItem()->getId() != BlockIds::LADDER) {
+					$event->getItem()->setCount((random_int(1, 3) == 1) ? $event->getItem()->getMaxStackSize()
+						: $event->getItem()->getCount());
+					$event->getPlayer()->getInventory()->setItemInHand($event->getItem());
+				}
 			}
 			Game::getInstance()->placeBlock($event->getBlock());
+		}
+	}
+
+	public function BlockUpdateEvent(BlockUpdateEvent $event){
+		$block = $event->getBlock();
+		if($block->getId() === BlockIds::LADDER) {
+			$event->setCancelled();
 		}
 	}
 }
