@@ -6,6 +6,8 @@
  */
 declare(strict_types=1);
 namespace xxAROX\BuildFFA\listener;
+use pocketmine\block\BlockIds;
+use pocketmine\entity\projectile\Snowball;
 use pocketmine\event\entity\EntityDamageByEntityEvent;
 use pocketmine\event\entity\EntityDamageEvent;
 use pocketmine\event\entity\EntityTeleportEvent;
@@ -239,7 +241,7 @@ class PlayerListener implements Listener{
 	public function PlayerInteractEvent(PlayerInteractEvent $event): void{
 		/** @var xPlayer $player */
 		$player = $event->getPlayer();
-		$item = $event->getItem();
+		$item = $player->getInventory()->getItemInHand();
 		$placeholder = $player->getSelectedKit()->getPlaceholderByIdentifier($item->getNamedTag()->getString(BuildFFA::TAG_PLACEHOLDER_IDENTIFIER, ""));
 		if (!is_null($placeholder) && $item->getCount() == 1 && !$item->equals($placeholder, true, false)) {
 			if ($placeholder->allowItemCooldown($player)) {

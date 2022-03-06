@@ -478,6 +478,7 @@ class xPlayer extends PMMPPlayer {
 				$placeholder_item = $this->itemCountdowns[$_][3];
 				if ($secondsLeft <= 0) {
 					unset($this->itemCountdowns[$_]);
+					$item = $placeholder_item->getPlaceholdersItem();
 					$this->inventory->setItem($slot, $placeholder_item->getPlaceholdersItem());
 				} else {
 					$item = clone $placeholder_item;

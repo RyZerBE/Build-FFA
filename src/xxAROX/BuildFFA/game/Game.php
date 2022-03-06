@@ -38,7 +38,9 @@ use xxAROX\BuildFFA\BuildFFA;
 use xxAROX\BuildFFA\entity\BlockEntity;
 use xxAROX\BuildFFA\generic\entry\BlockBreakEntry;
 use xxAROX\BuildFFA\generic\entry\BlockEntry;
+use xxAROX\BuildFFA\items\overwrite\EnderPearl;
 use xxAROX\BuildFFA\items\overwrite\PlatformItem;
+use xxAROX\BuildFFA\items\overwrite\SnowballItem;
 use xxAROX\BuildFFA\items\PlaceHolderItem;
 use xxAROX\BuildFFA\player\xPlayer;
 use function array_rand;
@@ -143,7 +145,7 @@ class Game{
 		$basicBow = ItemFactory::get(ItemIds::BOW);
 		$basicBow->setUnbreakable();
 		$basicBow->addEnchantment(new EnchantmentInstance(Enchantment::getEnchantment(Enchantment::INFINITY), 1));
-		$basicWebs = (new PlaceHolderItem(BlockIds::INVISIBLE_BEDROCK, 0, $w = ItemFactory::get(BlockIds::WEB)->setCount(3), 3));
+		$basicWebs = (new PlaceHolderItem(BlockIds::INVISIBLE_BEDROCK, 0, $w = ItemFactory::get(BlockIds::WEB)->setCount(3), 5));
 		$nbt = $w->getNamedTag();
 		$nbt->setByte("pop", intval(true));
 		$w->setNamedTag($nbt);
@@ -160,6 +162,7 @@ class Game{
 		$w->setNamedTag($nbt);
 		$rod = Item::get(ItemIds::FISHING_ROD);
 		$rod->setUnbreakable();
+		$snowballs = ItemFactory::get(ItemIds::SNOWBALL)->setCount(8);
 		$contents = [
 			"sword"   => $basicSword,
 			"stick"   => $basicStick,
@@ -194,7 +197,7 @@ class Game{
         $contents = [
             "sword"   => $basicSword,
             "blocks"  => $basicBlocks,
-            "snowballs"     => Item::get(ItemIds::SNOWBALL, 0, 8),
+            "snowballs"     => $snowballs,
             "pickaxe" => $basicPickaxe,
             "web"     => $basicWebs,
             "enderpearl" => $basicEnderpearl,
@@ -287,7 +290,6 @@ class Game{
                 $this->nextKitChange = Server::getInstance()->getTick() + (Game::KIT_CHANGE_INTERVAL * 20);
             }else{
                 $kit = $this->getKit(array_search(max($kitVotes), $kitVotes));
-                $this->kit = $kit;
                 $this->lastKitChange = time();
                 $this->nextKitChange = Server::getInstance()->getTick() + (Game::KIT_CHANGE_INTERVAL * 20);
                 if($this->kit->getDisplayName() === $kit->getDisplayName()) {
@@ -298,6 +300,7 @@ class Game{
                         $player->sendMessage(BuildFFA::PREFIX.LanguageProvider::getMessageContainer("bffa-kit-change", $player->getName(), ["#kit" => TextFormat::GREEN.$kit->getDisplayName()]));
                     }
                 }
+				$this->kit = $kit;
             }
         }
 
@@ -332,6 +335,7 @@ class Game{
 	 */
 	public function skip(): void{
 		$this->nextArenaChange = 0;
+		$this->nextKitChange = 0;
 	}
 
 	/**
